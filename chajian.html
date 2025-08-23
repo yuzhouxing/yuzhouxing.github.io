@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiomet游戏辅助面板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #0a0e17;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: auto 1fr auto;
+            gap: 15px;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        
+        header {
+            grid-column: 1 / 4;
+            background: linear-gradient(90deg, #1a1f2d 0%, #252b3d 100%);
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            background: linear-gradient(45deg, #6e8afa, #fa6eca);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6e8afa, #fa6eca);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+        
+        nav a {
+            color: #b0b5c7;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            font-size: 16px;
+        }
+        
+        nav a:hover {
+            color: #6e8afa;
+        }
+        
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            background: #1a1f2d;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .game-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .game-frame {
+            width: 100%;
+            height: 600px;
+            background: #0f121b;
+            border-radius: 8px;
+            border: 2px solid #2a3143;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #5a6278;
+            font-size: 18px;
+        }
+        
+        .sidebar {
+            background: linear-gradient(180deg, #1a1f2d 0%, #252b3d 100%);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-sidebar {
+            grid-column: 1;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .right-sidebar {
+            grid-column: 3;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .widget {
+            background: #252b3d;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .widget-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #6e8afa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            background: #6e8afa;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background: #5a75e0;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: #1c2130;
+            border: 1px solid #2a3143;
+            border-radius: 8px;
+            padding: 12px;
+            color: #e0e0e0;
+            resize: vertical;
+        }
+        
+        .shortcut-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a3143;
+        }
+        
+        .key {
+            background: #2a3143;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        footer {
+            grid-column: 1 / 4;
+            grid-row: 3;
+            text-align: center;
+            padding: 20px;
+            background: #1a1f2d;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto auto;
+            }
+            
+            header, .main-content, .left-sidebar, .right-sidebar, footer {
+                grid-column: 1;
+            }
+            
+            .left-sidebar, .right-sidebar {
+                grid-row: auto;
+                margin-bottom: 15px;
+            }
+            
+            .main-content {
+                grid-row: 3;
+            }
+            
+            footer {
+                grid-row: 5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-img">K</div>
+                <h1>KIOMET 游戏助手</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#"><i class="fas fa-home"></i> 首页</a></li>
+                    <li><a href="#"><i class="fas fa-gamepad"></i> 游戏</a></li>
+                    <li><a href="#"><i class="fas fa-tools"></i> 工具</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> 关于</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <aside class="sidebar left-sidebar">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-clock"></i> 计时器</h3>
+                <div class="timer-display">
+                    <span id="timer">00:00:00</span>
+                </div>
+                <div class="timer-controls">
+                    <button id="startTimer">开始</button>
+                    <button id="pauseTimer">暂停</button>
+                    <button id="resetTimer">重置</button>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-sticky-note"></i> 游戏笔记</h3>
+                <textarea placeholder="记录你的游戏策略、技巧或重要信息..."></textarea>
+                <button style="margin-top: 10px;">保存笔记</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="game-container">
+                <div class="game-frame">
+                    <p>Kiomet游戏将加载在这里 | <a href="https://kiomet.com" style="color: #6e8afa;">前往Kiomet.com</a></p>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar right-sidebar">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-keyboard"></i> 快捷键</h3>
+                <div class="shortcut-list">
+                    <div class="shortcut-item">
+                        <span>快速保存</span>
+                        <span class="key">Ctrl + S</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>截图</span>
+                        <span class="key">F12</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>显示/隐藏界面</span>
+                        <span class="key">F1</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>快速退出</span>
+                        <span class="key">Esc</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-calculator"></i> 资源计算</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <input type="number" placeholder="资源数量" style="padding: 8px; background: #1c2130; border: 1px solid #2a3143; border-radius: 6px; color: white;">
+                    <button>计算生产效率</button>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-users"></i> 团队聊天</h3>
+                <div style="height: 120px; background: #1c2130; border-radius: 8px; padding: 10px; overflow-y: auto; margin-bottom: 10px;">
+                    <p>[团队] 玩家1: 有人要组队吗？</p>
+                    <p>[团队] 玩家2: 10分钟后副本门口见</p>
+                </div>
+                <div style="display: flex;">
+                    <input type="text" placeholder输入消息..." style="flex: 1; padding: 8px; background: #1c2130; border: 1px solid #2a3143; border-radius: 6px 0 0 6px; color: white;">
+                    <button style="border-radius: 0 6px 6px 0;">发送</button>
+                </div>
+            </div>
+        </aside>
+
+        <footer>
+            <p>Kiomet游戏助手 &copy; 2023 - 本工具仅供游戏辅助使用，与Kiomet无直接关联</p>
+        </footer>
+    </div>
+
+    <script>
+        // 计时器功能
+        let timerInterval;
+        let timerRunning = false;
+        let seconds = 0, minutes = 0, hours = 0;
+        
+        const timerDisplay = document.getElementById('timer');
+        const startTimerBtn = document.getElementById('startTimer');
+        const pauseTimerBtn = document.getElementById('pauseTimer');
+        const resetTimerBtn = document.getElementById('resetTimer');
+        
+        function updateTimer() {
+            seconds++;
+            if (seconds >= 60) {
+                seconds = 0;
+                minutes++;
+                if (minutes >= 60) {
+                    minutes = 0;
+                    hours++;
+                }
+            }
+            
+            timerDisplay.textContent = 
+                (hours ? (hours > 9 ? hours : "0" + hours) : "00") + ":" + 
+                (minutes ? (minutes > 9 ? minutes : "0" + minutes) : "00") + ":" + 
+                (seconds > 9 ? seconds : "0" + seconds);
+        }
+        
+        startTimerBtn.addEventListener('click', () => {
+            if (!timerRunning) {
+                timerInterval = setInterval(updateTimer, 1000);
+                timerRunning = true;
+            }
+        });
+        
+        pauseTimerBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerRunning = false;
+        });
+        
+        resetTimerBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            seconds = 0; minutes = 0; hours = 0;
+            timerDisplay.textContent = "00:00:00";
+        });
+    </script>
+</body>
+</html>
