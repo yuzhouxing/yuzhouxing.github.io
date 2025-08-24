@@ -263,13 +263,18 @@
             color: #e0e0e0;
         }
         
-        .translation-result {
-            background: #1c2130;
+        .translation-frame-container {
+            height: 400px;
             border: 1px solid #3a4155;
             border-radius: 8px;
-            padding: 12px;
-            min-height: 100px;
-            color: #e0e0e0;
+            overflow: hidden;
+        }
+        
+        .translation-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
         }
         
         .translation-controls {
@@ -403,6 +408,15 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .translation-tips {
+            background: rgba(110, 138, 250, 0.1);
+            border-left: 4px solid #6e8afa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -463,7 +477,7 @@
 
         <aside class="sidebar right-sidebar">
             <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-language"></i> 翻译器</h3>
+                <h3 class="widget-title"><i class="fas fa-language"></i> 百度翻译</h3>
                 <div class="translation-container">
                     <div class="language-selectors">
                         <select id="sourceLang">
@@ -477,7 +491,7 @@
                             <option value="ru">俄语</option>
                             <option value="es">西班牙语</option>
                         </select>
-                        <i class="fas fa-exchange-alt" style="align-self: center;"></i>
+                        <i class="fas fa-exchange-alt" style="align-self: center; color: #6e8afa;"></i>
                         <select id="targetLang">
                             <option value="en">英语</option>
                             <option value="zh">中文</option>
@@ -490,23 +504,22 @@
                         </select>
                     </div>
                     
-                    <textarea id="translationInput" placeholder="输入要翻译的文本..."></textarea>
-                    
-                    <div class="translation-controls">
-                        <button id="translateBtn"><i class="fas fa-language"></i> 翻译</button>
-                        <button id="clearTranslation"><i class="fas fa-trash"></i> 清除</button>
+                    <div class="translation-frame-container">
+                        <iframe 
+                            src="https://fanyi.baidu.com/" 
+                            class="translation-frame" 
+                            id="baiduTranslateFrame"
+                            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                            loading="lazy">
+                        </iframe>
                     </div>
                     
-                    <div class="translation-result" id="translationOutput">
-                        翻译结果将显示在这里...
+                    <div class="translation-tips">
+                        <i class="fas fa-info-circle"></i> 提示：直接在百度翻译界面中输入文本进行翻译
                     </div>
                     
-                    <div class="api-status status-offline" id="apiStatus">
-                        检测API状态...
-                    </div>
-                    
-                    <div class="translation-history" id="translationHistory">
-                        <div class="history-item">欢迎使用翻译器 → Welcome to use the translator</div>
+                    <div class="api-status status-online">
+                        <i class="fas fa-check-circle"></i> 百度翻译已加载
                     </div>
                 </div>
             </div>
@@ -515,7 +528,7 @@
                 <h3 class="widget-title"><i class="fas fa-keyboard"></i> 快捷键</h3>
                 <div class="shortcut-list">
                     <div class="shortcut-item">
-                        <span>快速翻译</span>
+                        <span>聚焦翻译框</span>
                         <span class="key">Ctrl + T</span>
                     </div>
                     <div class="shortcut-item">
@@ -638,6 +651,7 @@
         
         // iframe加载状态检测
         const kiometFrame = document.getElementById('kiometFrame');
+        const baiduTranslateFrame = document.getElementById('baiduTranslateFrame');
         
         kiometFrame.addEventListener('load', function() {
             console.log('Kiomet游戏加载完成');
@@ -647,200 +661,51 @@
             console.log('Kiomet游戏加载失败');
         });
         
-        // 翻译功能 - 使用免费的LibreTranslate API
-        const translationInput = document.getElementById('translationInput');
-        const translationOutput = document.getElementById('translationOutput');
-        const translateBtn = document.getElementById('translateBtn');
-        const clearTranslationBtn = document.getElementById('clearTranslation');
-        const translationHistory = document.getElementById('translationHistory');
+        baiduTranslateFrame.addEventListener('load', function() {
+            console.log('百度翻译加载完成');
+            document.querySelector('.api-status').innerHTML = '<i class="fas fa-check-circle"></i> 百度翻译已就绪';
+        });
+        
+        // 语言选择变化时重新加载翻译页面
         const sourceLang = document.getElementById('sourceLang');
         const targetLang = document.getElementById('targetLang');
-        const apiStatus = document.getElementById('apiStatus');
         
-        // 可用的免费翻译API端点列表
-        const translateEndpoints = [
-            'https://libretranslate.com/translate',
-            'https://translate.argosopentech.com/translate',
-            'https://trans.zillyhuhn.com/translate'
-        ];
-        
-        let currentEndpointIndex = 0;
-        
-        // 检测API状态
-        async function checkAPIStatus() {
-            apiStatus.innerHTML = '<span class="loading"></span> 检测API状态...';
-            
-            for (let i = 0; i < translateEndpoints.length; i++) {
-                const endpoint = translateEndpoints[i];
-                try {
-                    const response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            q: "test",
-                            source: "en",
-                            target: "es"
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        currentEndpointIndex = i;
-                        apiStatus.className = 'api-status status-online';
-                        apiStatus.innerHTML = `<i class="fas fa-check-circle"></i> API连接正常 (${new URL(endpoint).hostname})`;
-                        return true;
-                    }
-                } catch (error) {
-                    console.log(`API ${endpoint} 不可用:`, error);
-                }
-            }
-            
-            apiStatus.className = 'api-status status-offline';
-            apiStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> 所有API端点均不可用，使用模拟翻译';
-            return false;
-        }
-        
-        // 初始化时检测API状态
-        checkAPIStatus();
-        
-        // 翻译函数
-        async function translateText(text, source, target) {
-            // 如果source是auto，尝试检测语言
-            if (source === 'auto') {
-                // 简单的中英文检测
-                if (/[\u4e00-\u9fa5]/.test(text)) {
-                    source = 'zh';
-                } else {
-                    source = 'en';
-                }
-            }
-            
-            // 如果源语言和目标语言相同，直接返回文本
-            if (source === target) {
-                return text;
-            }
-            
-            try {
-                const endpoint = translateEndpoints[currentEndpointIndex];
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        q: text,
-                        source: source,
-                        target: target
-                    })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.translatedText;
-                } else {
-                    throw new Error('API响应错误');
-                }
-            } catch (error) {
-                console.error('翻译API错误:', error);
-                // 如果API失败，使用模拟翻译作为后备方案
-                return simulateTranslation(text, target);
-            }
-        }
-        
-        // 模拟翻译函数（当API不可用时使用）
-        function simulateTranslation(text, target) {
-            const translations = {
-                'hello': {
-                    'zh': '你好',
-                    'ja': 'こんにちは',
-                    'ko': '안녕하세요',
-                    'fr': 'Bonjour',
-                    'de': 'Hallo',
-                    'ru': 'Привет',
-                    'es': 'Hola'
-                },
-                'welcome': {
-                    'zh': '欢迎',
-                    'ja': 'ようこそ',
-                    'ko': '환영합니다',
-                    'fr': 'Bienvenue',
-                    'de': 'Willkommen',
-                    'ru': 'Добро пожаловать',
-                    'es': 'Bienvenido'
-                },
-                'game': {
-                    'zh': '游戏',
-                    'ja': 'ゲーム',
-                    'ko': '게임',
-                    'fr': 'Jeu',
-                    'de': 'Spiel',
-                    'ru': 'Игра',
-                    'es': 'Juego'
-                },
-                'strategy': {
-                    'zh': '策略',
-                    'ja': '戦略',
-                    'ko': '전략',
-                    'fr': 'Stratégie',
-                    'de': 'Strategie',
-                    'ru': 'Стратегия',
-                    'es': 'Estrategia'
-                }
-            };
-            
-            const lowerText = text.toLowerCase();
-            if (lowerText in translations && target in translations[lowerText]) {
-                return translations[lowerText][target];
-            }
-            
-            // 默认返回文本加上目标语言标记
-            return `${text} [${target.toUpperCase()}]`;
-        }
-        
-        translateBtn.addEventListener('click', async () => {
-            const text = translationInput.value.trim();
-            if (!text) return;
-            
+        function updateTranslationPage() {
             const source = sourceLang.value;
             const target = targetLang.value;
             
-            translationOutput.innerHTML = '<span class="loading"></span> 翻译中...';
-            translateBtn.disabled = true;
-            
-            try {
-                const result = await translateText(text, source, target);
-                translationOutput.textContent = result;
-                
-                // 添加到历史记录
-                const historyItem = document.createElement('div');
-                historyItem.className = 'history-item';
-                historyItem.textContent = `${text} → ${result}`;
-                translationHistory.prepend(historyItem);
-                
-                // 限制历史记录数量
-                if (translationHistory.children.length > 5) {
-                    translationHistory.removeChild(translationHistory.lastChild);
-                }
-            } catch (error) {
-                translationOutput.textContent = "翻译失败，请重试";
-            } finally {
-                translateBtn.disabled = false;
+            // 百度翻译URL参数
+            let url = 'https://fanyi.baidu.com/';
+            if (source !== 'auto' && target !== 'auto') {
+                url += `#${source}/${target}/`;
             }
-        });
+            
+            baiduTranslateFrame.src = url;
+            document.querySelector('.api-status').innerHTML = '<span class="loading"></span> 切换语言中...';
+        }
         
-        clearTranslationBtn.addEventListener('click', () => {
-            translationInput.value = '';
-            translationOutput.textContent = '翻译结果将显示在这里...';
-        });
+        sourceLang.addEventListener('change', updateTranslationPage);
+        targetLang.addEventListener('change', updateTranslationPage);
         
         // 添加快捷键支持
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 't') {
                 e.preventDefault();
-                translationInput.focus();
+                // 尝试聚焦到翻译iframe中的输入框
+                try {
+                    const translateFrame = document.getElementById('baiduTranslateFrame');
+                    const input = translateFrame.contentWindow.document.querySelector('textarea');
+                    if (input) {
+                        input.focus();
+                    }
+                } catch (error) {
+                    console.log('无法直接访问翻译iframe内容');
+                }
             }
         });
+        
+        // 初始化百度翻译
+        updateTranslationPage();
     </script>
 </body>
 </html>
