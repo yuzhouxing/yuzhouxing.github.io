@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KioMate</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2530 0%, #2c3e50 100%);
+            color: #ecf0f1;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+        
+        header {
+            grid-column: 1 / 4;
+            background: rgba(26, 37, 48, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+        
+        nav a {
+            color: #b0b5c7;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        
+        nav a:hover {
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .sidebar {
+            background: rgba(26, 37, 48, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+        
+        .game-container {
+            background: rgba(26, 37, 48, 0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100%;
+        }
+        
+        .game-tabs {
+            display: flex;
+            background: rgba(39, 55, 70, 0.9);
+            padding: 10px 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .game-tab {
+            padding: 10px 20px;
+            background: rgba(52, 73, 94, 0.7);
+            margin-right: 5px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .game-tab.active {
+            background: rgba(26, 37, 48, 0.9);
+            color: #3498db;
+        }
+        
+        .game-frame {
+            width: 100%;
+            height: 100%;
+            background: #0f121b;
+            border: none;
+            flex: 1;
+        }
+        
+        .widget {
+            background: rgba(39, 55, 70, 0.9);
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .widget-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .timer-display {
+            font-size: 28px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            background: rgba(26, 37, 48, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            color: #2ecc71;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            flex: 1;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #2980b9, #27ae60);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            color: #e0e0e0;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .translation-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+        }
+        
+        .language-selectors {
+            display: flex;
+            gap: 10px;
+        }
+        
+        select {
+            flex: 1;
+            padding: 10px;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #e0e0e0;
+        }
+        
+        .translation-frame-container {
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .translation-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        
+        .api-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .status-online {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid #2ecc71;
+        }
+        
+        .status-offline {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 37, 48, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(52, 152, 219, 0.5);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3498db;
+        }
+        
+        .translation-tips {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .chatroom-widget {
+            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .chatroom-widget:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chatroom-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .chatroom-desc {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .chatroom-btn {
+            background: white;
+            color: #2c3e50;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .chatroom-btn:hover {
+            background: #ecf0f1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-img">K</div>
+                <h1>KioMate</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#"><i class="fas fa-home"></i> 首页</a></li>
+                    <li><a href="#"><i class="fas fa-gamepad"></i> 游戏</a></li>
+                    <li><a href="#"><i class="fas fa-comments"></i> 聊天室</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> 关于</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <aside class="sidebar">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-clock"></i> 计时器</h3>
+                <div class="timer-display">
+                    <span id="timer">00:00:00</span>
+                </div>
+                <div class="timer-controls">
+                    <button id="startTimer"><i class="fas fa-play"></i> 开始</button>
+                    <button id="pauseTimer"><i class="fas fa-pause"></i> 暂停</button>
+                    <button id="resetTimer"><i class="fas fa-redo"></i> 重置</button>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-sticky-note"></i> 聊天内容编辑器</h3>
+                <textarea id="gameNotes" placeholder="便于玩家编写聊天信息..."></textarea>
+                <button id="saveNotes" style="margin-top: 10px;"><i class="fas fa-save"></i> 保存笔记</button>
+            </div>
+            
+            <div class="chatroom-widget" onclick="openChatroom()">
+                <div class="chatroom-title">Kiomet联盟聊天室</div>
+                <div class="chatroom-desc">加入七大联盟公共交流区，与玩家实时聊天</div>
+                <button class="chatroom-btn">立即加入</button>
+            </div>
+        </aside>
+
+        <main class="game-container">
+            <div class="game-tabs">
+                <div class="game-tab active">Kiomet游戏</div>
+                <div class="game-tab">游戏控制台</div>
+                <div class="game-tab">排行榜</div>
+            </div>
+            <iframe src="https://kiomet.com" class="game-frame" id="kiometFrame"></iframe>
+        </main>
+
+        <aside class="sidebar">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-language"></i> 百度翻译</h3>
+                <div class="translation-container">
+                    <div class="language-selectors">
+                        <select id="sourceLang">
+                            <option value="auto">自动检测</option>
+                            <option value="zh">中文</option>
+                            <option value="en">英语</option>
+                            <option value="ja">日语</option>
+                            <option value="ko">韩语</option>
+                            <option value="fr">法语</option>
+                            <option value="de">德语</option>
+                            <option value="ru">俄语</option>
+                            <option value="es">西班牙语</option>
+                        </select>
+                        <i class="fas fa-exchange-alt" style="align-self: center; color: #3498db;"></i>
+                        <select id="targetLang">
+                            <option value="en">英语</option>
+                            <option value="zh">中文</option>
+                            <option value="ja">日语</option>
+                            <option value="ko">韩语</option>
+                            <option value="fr">法语</option>
+                            <option value="de">德语</option>
+                            <option value="ru">俄语</option>
+                            <option value="es">西班牙语</option>
+                        </select>
+                    </div>
+                    
+                    <div class="translation-frame-container">
+                        <iframe 
+                            src="https://fanyi.baidu.com/m/trans" 
+                            class="translation-frame" 
+                            id="baiduTranslateFrame"
+                            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                    
+                    <div class="translation-tips">
+                        <i class="fas fa-info-circle"></i> 提示：直接在百度翻译界面中输入文本进行翻译
+                    </div>
+                    
+                    <div class="api-status status-online">
+                        <i class="fas fa-check-circle"></i> 百度翻译已加载
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // 计时器功能
+        let timerInterval;
+        let timerRunning = false;
+        let seconds = 0, minutes = 0, hours = 0;
+        
+        const timerDisplay = document.getElementById('timer');
+        const startTimerBtn = document.getElementById('startTimer');
+        const pauseTimerBtn = document.getElementById('pauseTimer');
+        const resetTimerBtn = document.getElementById('resetTimer');
+        
+        function updateTimer() {
+            seconds++;
+            if (seconds >= 60) {
+                seconds = 0;
+                minutes++;
+                if (minutes >= 60) {
+                    minutes = 0;
+                    hours++;
+                }
+            }
+            
+            timerDisplay.textContent = 
+                (hours ? (hours > 9 ? hours : "0" + hours) : "00") + ":" + 
+                (minutes ? (minutes > 9 ? minutes : "0" + minutes) : "00") + ":" + 
+                (seconds > 9 ? seconds : "0" + seconds);
+        }
+        
+        startTimerBtn.addEventListener('click', () => {
+            if (!timerRunning) {
+                timerInterval = setInterval(updateTimer, 1000);
+                timerRunning = true;
+                startTimerBtn.innerHTML = '<i class="fas fa-play"></i> 运行中';
+                startTimerBtn.style.background = 'linear-gradient(to right, #27ae60, #229954)';
+            }
+        });
+        
+        pauseTimerBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            startTimerBtn.innerHTML = '<i class="fas fa-play"></i> 开始';
+            startTimerBtn.style.background = 'linear-gradient(to right, #3498db, #2ecc71)';
+        });
+        
+        resetTimerBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            seconds = 0; minutes = 0; hours = 0;
+            timerDisplay.textContent = "00:00:00";
+            startTimerBtn.innerHTML = '<i class="fas fa-play"></i> 开始';
+            startTimerBtn.style.background = 'linear-gradient(to right, #3498db, #2ecc71)';
+        });
+        
+        // 笔记保存功能
+        const gameNotes = document.getElementById('gameNotes');
+        const saveNotesBtn = document.getElementById('saveNotes');
+        
+        // 加载保存的笔记
+        const savedNotes = localStorage.getItem('kiometNotes');
+        if (savedNotes) {
+            gameNotes.value = savedNotes;
+        }
+        
+        saveNotesBtn.addEventListener('click', () => {
+            localStorage.setItem('kiometNotes', gameNotes.value);
+            saveNotesBtn.innerHTML = '<i class="fas fa-check"></i> 已保存!';
+            setTimeout(() => {
+                saveNotesBtn.innerHTML = '<i class="fas fa-save"></i> 保存笔记';
+            }, 2000);
+        });
+        
+        // iframe加载状态检测
+        const kiometFrame = document.getElementById('kiometFrame');
+        const baiduTranslateFrame = document.getElementById('baiduTranslateFrame');
+        
+        kiometFrame.addEventListener('load', function() {
+            console.log('Kiomet游戏加载完成');
+        });
+        
+        kiometFrame.addEventListener('error', function() {
+            console.log('Kiomet游戏加载失败');
+        });
+        
+        baiduTranslateFrame.addEventListener('load', function() {
+            console.log('百度翻译加载完成');
+            document.querySelector('.api-status').innerHTML = '<i class="fas fa-check-circle"></i> 百度翻译已就绪';
+        });
+        
+        // 语言选择变化时重新加载翻译页面
+        const sourceLang = document.getElementById('sourceLang');
+        const targetLang = document.getElementById('targetLang');
+        
+        function updateTranslationPage() {
+            const source = sourceLang.value;
+            const target = targetLang.value;
+            
+            // 百度翻译URL参数
+            let url = 'https://fanyi.baidu.com/m/trans';
+            if (source !== 'auto' && target !== 'auto') {
+                url += `#${source}/${target}/`;
+            }
+            
+            baiduTranslateFrame.src = url;
+            document.querySelector('.api-status').innerHTML = '<span class="loading"></span> 切换语言中...';
+        }
+        
+        sourceLang.addEventListener('change', updateTranslationPage);
+        targetLang.addEventListener('change', updateTranslationPage);
+        
+        // 联盟聊天室功能
+        function openChatroom() {
+            alert("即将打开Kiomet联盟聊天室...\n\n七大联盟公共交流区:\n- dictators\n- FSA\n- EVE\n- 天烬联盟\n- SBA\n- LOONG\n- 怪诞小镇");
+            // 实际应用中这里可以打开新窗口或跳转到聊天室页面
+            window.open('https://nightly.paw.msgbyte.com/invite/ROHVvHVM', '_blank');
+        }
+        
+        // 添加快捷键支持
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+T 聚焦翻译
+            if (e.ctrlKey && e.key === 't') {
+                e.preventDefault();
+                try {
+                    const translateFrame = document.getElementById('baiduTranslateFrame');
+                    const input = translateFrame.contentWindow.document.querySelector('textarea');
+                    if (input) {
+                        input.focus();
+                    }
+                } catch (error) {
+                    console.log('无法直接访问翻译iframe内容');
+                }
+            }
+            
+            // C键打开聊天室
+            if (e.key === 'c' || e.key === 'C') {
+                openChatroom();
+            }
+        });
+        
+        // 初始化百度翻译
+        updateTranslationPage();
+    </script>
+</body>
+</html>
