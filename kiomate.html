@@ -346,6 +346,7 @@
             cursor: pointer;
             transition: all 0.3s;
             margin-top: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .chatroom-widget:hover {
@@ -392,27 +393,32 @@
             background: rgba(52, 152, 219, 0.2);
             border: 1px solid rgba(52, 152, 219, 0.3);
             border-radius: 6px;
-            padding: 8px;
+            padding: 10px;
             color: #3498db;
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
         }
         
-        .shortcut-btn:hover {
-            background: rgba(52, 152, 219, 0.3);
+        .shortcut-btn:hover, .shortcut-btn:active {
+            background: rgba(52, 152, 219, 0.4);
             transform: translateY(-2px);
         }
         
         .shortcut-key {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
             margin-bottom: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 5px;
+            display: inline-block;
+            min-width: 30px;
         }
         
         .shortcut-desc {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
         }
         
         /* 响应式设计 */
@@ -453,6 +459,79 @@
             
             .shortcut-btn {
                 min-width: 70px;
+                padding: 8px;
+            }
+            
+            .shortcut-key {
+                font-size: 18px;
+            }
+        }
+        
+        /* 反馈消息样式 */
+        .feedback-message {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 2000;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            animation: fadeInOut 2s forwards;
+            font-size: 14px;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        
+        /* 手机专用快捷键栏 */
+        .mobile-shortcuts {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 37, 48, 0.95);
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            z-index: 700;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+        
+        .mobile-shortcut {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 8px;
+            min-width: 60px;
+        }
+        
+        .mobile-shortcut-key {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .mobile-shortcut-desc {
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-shortcuts {
+                display: flex;
+            }
+            
+            .float-buttons {
+                bottom: 70px;
             }
         }
         
@@ -532,16 +611,19 @@
         <!-- 游戏快捷键模拟 -->
         <div class="widget">
             <h3 class="widget-title"><i class="fas fa-gamepad"></i> 游戏快捷键</h3>
+            <p style="font-size: 12px; margin-bottom: 10px; color: #aaa;">
+                注意: 由于浏览器限制，快捷键需要游戏窗口获得焦点才能生效。请先点击游戏画面，然后再使用快捷键按钮。
+            </p>
             <div class="shortcut-buttons">
-                <div class="shortcut-btn" onclick="simulateKeyPress('t')">
+                <div class="shortcut-btn" onclick="handleShortcut('t')">
                     <div class="shortcut-key">T</div>
                     <div class="shortcut-desc">搜索同类单位</div>
                 </div>
-                <div class="shortcut-btn" onclick="simulateKeyPress('g')">
+                <div class="shortcut-btn" onclick="handleShortcut('g')">
                     <div class="shortcut-key">G</div>
                     <div class="shortcut-desc">显示兵线</div>
                 </div>
-                <div class="shortcut-btn" onclick="simulateKeyPress('h')">
+                <div class="shortcut-btn" onclick="handleShortcut('h')">
                     <div class="shortcut-key">H</div>
                     <div class="shortcut-desc">定位国王</div>
                 </div>
@@ -616,6 +698,26 @@
                     <span class="key">H</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 手机专用快捷键栏 -->
+    <div class="mobile-shortcuts">
+        <div class="mobile-shortcut" onclick="handleShortcut('t')">
+            <div class="mobile-shortcut-key">T</div>
+            <div class="mobile-shortcut-desc">搜索单位</div>
+        </div>
+        <div class="mobile-shortcut" onclick="handleShortcut('g')">
+            <div class="mobile-shortcut-key">G</div>
+            <div class="mobile-shortcut-desc">显示兵线</div>
+        </div>
+        <div class="mobile-shortcut" onclick="handleShortcut('h')">
+            <div class="mobile-shortcut-key">H</div>
+            <div class="mobile-shortcut-desc">定位国王</div>
+        </div>
+        <div class="mobile-shortcut" onclick="focusGame()">
+            <div class="mobile-shortcut-key"><i class="fas fa-gamepad"></i></div>
+            <div class="mobile-shortcut-desc">聚焦游戏</div>
         </div>
     </div>
 
@@ -740,63 +842,66 @@
             window.open('https://nightly.paw.msgbyte.com/invite/ROHVvHVM', '_blank');
         }
         
-        // 模拟键盘按键功能
-        function simulateKeyPress(key) {
-            // 创建键盘事件
-            const eventObj = new KeyboardEvent('keydown', {
-                key: key,
-                code: `Key${key.toUpperCase()}`,
-                keyCode: key.toUpperCase().charCodeAt(0),
-                which: key.toUpperCase().charCodeAt(0),
-                bubbles: true,
-                cancelable: true
-            });
-            
-            // 派发事件到游戏iframe
+        // 聚焦到游戏窗口
+        function focusGame() {
             const gameFrame = document.getElementById('kiometFrame');
-            if (gameFrame && gameFrame.contentWindow) {
-                try {
-                    gameFrame.contentWindow.document.dispatchEvent(eventObj);
-                    console.log(`已发送按键: ${key}`);
+            gameFrame.focus();
+            showFeedback("已聚焦到游戏窗口，现在可以使用快捷键");
+        }
+        
+        // 处理快捷键
+        function handleShortcut(key) {
+            const gameFrame = document.getElementById('kiometFrame');
+            
+            // 先尝试直接发送按键事件（可能因安全限制失败）
+            try {
+                // 创建输入框并插入到游戏中（备用方案）
+                const input = document.createElement('input');
+                input.style.position = 'fixed';
+                input.style.top = '-100px';
+                input.style.left = '0';
+                input.type = 'text';
+                document.body.appendChild(input);
+                
+                // 聚焦到输入框并模拟按键
+                input.focus();
+                setTimeout(() => {
+                    // 尝试发送按键
+                    const event = new KeyboardEvent('keydown', {
+                        key: key,
+                        keyCode: key.charCodeAt(0),
+                        which: key.charCodeAt(0),
+                        bubbles: true
+                    });
                     
-                    // 显示按键反馈
-                    showKeyFeedback(key);
-                } catch (e) {
-                    console.log("无法直接向游戏发送按键，尝试聚焦后发送");
-                    // 备用方案：先聚焦到游戏窗口，然后发送按键
+                    input.dispatchEvent(event);
+                    
+                    // 移除输入框
+                    document.body.removeChild(input);
+                    
+                    // 重新聚焦到游戏
                     gameFrame.focus();
-                    document.activeElement.dispatchEvent(eventObj);
-                }
-            } else {
-                // 如果无法访问iframe内容，尝试发送到当前文档
-                document.dispatchEvent(eventObj);
+                    
+                    showFeedback(`已发送快捷键: ${key.toUpperCase()}`);
+                }, 100);
+            } catch (e) {
+                showFeedback("请先点击游戏画面获得焦点");
             }
         }
         
-        // 显示按键反馈
-        function showKeyFeedback(key) {
-            // 创建反馈元素
+        // 显示反馈消息
+        function showFeedback(message) {
+            // 移除旧的反馈消息
+            const oldFeedback = document.querySelector('.feedback-message');
+            if (oldFeedback) {
+                oldFeedback.remove();
+            }
+            
+            // 创建新的反馈消息
             const feedback = document.createElement('div');
-            feedback.textContent = `已发送: ${key.toUpperCase()}`;
-            feedback.style.position = 'fixed';
-            feedback.style.top = '60px';
-            feedback.style.right = '20px';
-            feedback.style.background = 'rgba(52, 152, 219, 0.9)';
-            feedback.style.color = 'white';
-            feedback.style.padding = '8px 12px';
-            feedback.style.borderRadius = '4px';
-            feedback.style.zIndex = '1000';
-            feedback.style.fontSize = '14px';
-            feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
-            
+            feedback.className = 'feedback-message';
+            feedback.textContent = message;
             document.body.appendChild(feedback);
-            
-            // 2秒后移除反馈
-            setTimeout(() => {
-                if (document.body.contains(feedback)) {
-                    document.body.removeChild(feedback);
-                }
-            }, 2000);
         }
         
         // 快捷键支持
@@ -820,18 +925,15 @@
             
             // T/G/H 游戏快捷键
             if (e.key === 't' || e.key === 'T') {
-                // 搜索同类单位
-                showKeyFeedback('T');
+                showFeedback("快捷键: T - 搜索同类单位");
             }
             
             if (e.key === 'g' || e.key === 'G') {
-                // 显示兵线
-                showKeyFeedback('G');
+                showFeedback("快捷键: G - 显示兵线");
             }
             
             if (e.key === 'h' || e.key === 'H') {
-                // 定位国王
-                showKeyFeedback('H');
+                showFeedback("快捷键: H - 定位国王");
             }
             
             // ESC键关闭所有侧边栏
@@ -842,6 +944,11 @@
                 toggleRight.classList.remove('active');
             }
         });
+        
+        // 初始提示
+        setTimeout(() => {
+            showFeedback("提示: 使用前请先点击游戏画面获得焦点");
+        }, 3000);
     </script>
 </body>
 </html>
