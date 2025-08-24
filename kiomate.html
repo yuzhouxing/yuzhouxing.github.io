@@ -42,7 +42,7 @@
             position: fixed;
             top: 0;
             bottom: 0;
-            width: 320px;
+            width: 380px;
             background: rgba(26, 37, 48, 0.97);
             z-index: 900;
             transition: transform 0.3s ease;
@@ -54,7 +54,7 @@
         
         .left-sidebar {
             left: 0;
-            transform: translateX(-275px); /* 只露出小部分 */
+            transform: translateX(-100%);
         }
         
         .left-sidebar.active {
@@ -63,18 +63,19 @@
         
         .sidebar-handle {
             position: absolute;
-            right: 10px;
+            right: -40px;
             top: 50%;
             transform: translateY(-50%);
-            width: 20px;
-            height: 80px;
-            background: rgba(52, 152, 219, 0.5);
-            border-radius: 4px;
+            width: 40px;
+            height: 100px;
+            background: rgba(52, 152, 219, 0.8);
+            border-radius: 0 8px 8px 0;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             color: white;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.3);
         }
         
         /* 浮动按钮 */
@@ -190,7 +191,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            height: calc(100vh - 120px); /* 适应整个侧边栏高度 */
+            height: calc(100vh - 120px);
         }
         
         .language-selectors {
@@ -209,7 +210,7 @@
         }
         
         .translation-frame-container {
-            height: 100%; /* 高度自适应 */
+            height: calc(100% - 60px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             overflow: hidden;
@@ -239,7 +240,7 @@
         .shortcut-item {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 14px;
         }
@@ -250,11 +251,11 @@
         
         .key {
             background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 3px;
+            padding: 3px 8px;
+            border-radius: 4px;
             font-family: monospace;
             color: #3498db;
-            font-size: 12px;
+            font-size: 13px;
         }
         
         /* 聊天室入口 */
@@ -302,11 +303,12 @@
         @media (max-width: 768px) {
             .sidebar {
                 width: 90%;
-                transform: translateX(-100%);
             }
             
-            .left-sidebar.active {
-                transform: translateX(0);
+            .sidebar-handle {
+                right: -35px;
+                width: 35px;
+                height: 80px;
             }
         }
         
@@ -354,27 +356,36 @@
             display: block;
         }
         
-        .minimized-view {
-            position: absolute;
+        .minimized-handle {
+            position: fixed;
+            left: 0;
             top: 50%;
-            right: -40px;
-            transform: translateY(-50%) rotate(90deg);
-            transform-origin: center;
-            color: #3498db;
-            font-size: 14px;
-            font-weight: bold;
-            white-space: nowrap;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 80px;
+            background: rgba(52, 152, 219, 0.8);
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s;
+            color: white;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.3);
+            z-index: 850;
+            display: none;
         }
         
-        .minimized-view:hover {
-            opacity: 1;
+        .minimized-handle.visible {
+            display: flex;
         }
     </style>
 </head>
 <body>
+    <!-- 最小化时的把手 -->
+    <div class="minimized-handle" id="minimizedHandle">
+        <i class="fas fa-chevron-right"></i>
+    </div>
+
     <!-- 游戏容器 -->
     <div class="game-container">
         <iframe src="https://kiomet.com" class="game-frame" id="kiometFrame"></iframe>
@@ -383,11 +394,7 @@
     <!-- 左侧工具栏 -->
     <div class="sidebar left-sidebar" id="leftSidebar">
         <div class="sidebar-handle" id="sidebarHandle">
-            <i class="fas fa-bars"></i>
-        </div>
-        
-        <div class="minimized-view" id="minimizedView">
-            KioMate 工具面板
+            <i class="fas fa-chevron-left"></i>
         </div>
         
         <div class="tab-container">
@@ -473,24 +480,6 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-cog"></i> 辅助快捷键</h3>
-                <div class="shortcut-list">
-                    <div class="shortcut-item">
-                        <span>显示/隐藏工具</span>
-                        <span class="key">T</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>显示/隐藏翻译</span>
-                        <span class="key">G</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>打开聊天室</span>
-                        <span class="key">H</span>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -511,13 +500,27 @@
         // 侧边栏切换功能
         const leftSidebar = document.getElementById('leftSidebar');
         const sidebarHandle = document.getElementById('sidebarHandle');
-        const minimizedView = document.getElementById('minimizedView');
+        const minimizedHandle = document.getElementById('minimizedHandle');
         const floatTools = document.getElementById('floatTools');
         const floatTranslate = document.getElementById('floatTranslate');
         
         // 标签切换功能
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
+        
+        function toggleSidebar() {
+            const isActive = leftSidebar.classList.contains('active');
+            if (isActive) {
+                leftSidebar.classList.remove('active');
+                minimizedHandle.classList.add('visible');
+            } else {
+                leftSidebar.classList.add('active');
+                minimizedHandle.classList.remove('visible');
+            }
+        }
+        
+        sidebarHandle.addEventListener('click', toggleSidebar);
+        minimizedHandle.addEventListener('click', toggleSidebar);
         
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -533,31 +536,24 @@
                 
                 // 确保侧边栏是展开状态
                 leftSidebar.classList.add('active');
+                minimizedHandle.classList.remove('visible');
             });
         });
-        
-        function toggleSidebar() {
-            leftSidebar.classList.toggle('active');
-        }
-        
-        sidebarHandle.addEventListener('click', toggleSidebar);
-        minimizedView.addEventListener('click', toggleSidebar);
         
         floatTools.addEventListener('click', () => {
             // 切换到工具标签并展开侧边栏
             tabs[0].click();
-            leftSidebar.classList.add('active');
         });
         
         floatTranslate.addEventListener('click', () => {
             // 切换到翻译标签并展开侧边栏
             tabs[1].click();
-            leftSidebar.classList.add('active');
         });
         
         // 点击游戏区域关闭侧边栏
         document.querySelector('.game-container').addEventListener('click', () => {
             leftSidebar.classList.remove('active');
+            minimizedHandle.classList.add('visible');
         });
         
         // 计时器功能
@@ -637,6 +633,7 @@
                 e.preventDefault();
                 tabs[0].click();
                 leftSidebar.classList.toggle('active');
+                minimizedHandle.classList.toggle('visible');
             }
             
             // G键 显示/隐藏翻译
@@ -644,6 +641,7 @@
                 e.preventDefault();
                 tabs[1].click();
                 leftSidebar.classList.toggle('active');
+                minimizedHandle.classList.toggle('visible');
             }
             
             // H键打开聊天室
@@ -654,6 +652,7 @@
             // ESC键关闭侧边栏
             if (e.key === 'Escape') {
                 leftSidebar.classList.remove('active');
+                minimizedHandle.classList.add('visible');
             }
         });
     </script>
