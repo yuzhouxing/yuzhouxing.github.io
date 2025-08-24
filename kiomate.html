@@ -54,7 +54,7 @@
         
         .left-sidebar {
             left: 0;
-            transform: translateX(-85%);
+            transform: translateX(-275px); /* 只露出小部分 */
         }
         
         .left-sidebar.active {
@@ -190,6 +190,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            height: calc(100vh - 120px); /* 适应整个侧边栏高度 */
         }
         
         .language-selectors {
@@ -208,7 +209,7 @@
         }
         
         .translation-frame-container {
-            height: 300px;
+            height: 100%; /* 高度自适应 */
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             overflow: hidden;
@@ -352,6 +353,25 @@
         .tab-content.active {
             display: block;
         }
+        
+        .minimized-view {
+            position: absolute;
+            top: 50%;
+            right: -40px;
+            transform: translateY(-50%) rotate(90deg);
+            transform-origin: center;
+            color: #3498db;
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .minimized-view:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -364,6 +384,10 @@
     <div class="sidebar left-sidebar" id="leftSidebar">
         <div class="sidebar-handle" id="sidebarHandle">
             <i class="fas fa-bars"></i>
+        </div>
+        
+        <div class="minimized-view" id="minimizedView">
+            KioMate 工具面板
         </div>
         
         <div class="tab-container">
@@ -399,7 +423,7 @@
         </div>
         
         <div class="tab-content" id="translate-tab">
-            <div class="widget">
+            <div class="widget" style="height: calc(100vh - 120px);">
                 <h3 class="widget-title"><i class="fas fa-language"></i> 百度翻译</h3>
                 <div class="translation-container">
                     <div class="language-selectors">
@@ -449,6 +473,24 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-cog"></i> 辅助快捷键</h3>
+                <div class="shortcut-list">
+                    <div class="shortcut-item">
+                        <span>显示/隐藏工具</span>
+                        <span class="key">T</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>显示/隐藏翻译</span>
+                        <span class="key">G</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>打开聊天室</span>
+                        <span class="key">H</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -469,6 +511,7 @@
         // 侧边栏切换功能
         const leftSidebar = document.getElementById('leftSidebar');
         const sidebarHandle = document.getElementById('sidebarHandle');
+        const minimizedView = document.getElementById('minimizedView');
         const floatTools = document.getElementById('floatTools');
         const floatTranslate = document.getElementById('floatTranslate');
         
@@ -498,6 +541,8 @@
         }
         
         sidebarHandle.addEventListener('click', toggleSidebar);
+        minimizedView.addEventListener('click', toggleSidebar);
+        
         floatTools.addEventListener('click', () => {
             // 切换到工具标签并展开侧边栏
             tabs[0].click();
