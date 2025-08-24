@@ -450,8 +450,8 @@
             </div>
 
             <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-sticky-note"></i> 游戏笔记</h3>
-                <textarea id="gameNotes" placeholder="记录你的游戏策略、技巧或重要信息..."></textarea>
+                <h3 class="widget-title"><i class="fas fa-sticky-note"></i> 聊天内容编辑器</h3>
+                <textarea id="gameNotes" placeholder="便于玩家编写聊天信息..."></textarea>
                 <button id="saveNotes" style="margin-top: 10px;"><i class="fas fa-save"></i> 保存笔记</button>
             </div>
             
@@ -506,7 +506,7 @@
                     
                     <div class="translation-frame-container">
                         <iframe 
-                            src="https://fanyi.baidu.com/" 
+                            src="https://fanyi.baidu.com/m/trans" 
                             class="translation-frame" 
                             id="baiduTranslateFrame"
                             sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
@@ -525,23 +525,23 @@
             </div>
 
             <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-keyboard"></i> 快捷键</h3>
+                <h3 class="widget-title"><i class="fas fa-keyboard"></i> 快捷键一览</h3>
                 <div class="shortcut-list">
                     <div class="shortcut-item">
-                        <span>聚焦翻译框</span>
-                        <span class="key">Ctrl + T</span>
+                        <span>定位国王</span>
+                        <span class="key">H</span>
                     </div>
                     <div class="shortcut-item">
-                        <span>截图</span>
-                        <span class="key">F12</span>
+                        <span>显示兵线</span>
+                        <span class="key">G</span>
                     </div>
                     <div class="shortcut-item">
-                        <span>显示/隐藏界面</span>
-                        <span class="key">F1</span>
+                        <span>搜索同类单位</span>
+                        <span class="key">T</span>
                     </div>
                     <div class="shortcut-item">
-                        <span>快速退出</span>
-                        <span class="key">Esc</span>
+                        <span>等待更新……</span>
+                        <span class="key">等待更新</span>
                     </div>
                 </div>
             </div>
@@ -552,7 +552,7 @@
             <div class="stats">
                 <div class="stat-item">
                     <i class="fas fa-users"></i>
-                    <span>在线玩家: <span class="stat-value">1,245</span></span>
+                    <span>在线玩家: <span class="stat-value">未知</span></span>
                 </div>
                 <div class="stat-item">
                     <i class="fas fa-clock"></i>
@@ -675,7 +675,7 @@
             const target = targetLang.value;
             
             // 百度翻译URL参数
-            let url = 'https://fanyi.baidu.com/';
+            let url = 'https://fanyi.baidu.com/m/trans';
             if (source !== 'auto' && target !== 'auto') {
                 url += `#${source}/${target}/`;
             }
