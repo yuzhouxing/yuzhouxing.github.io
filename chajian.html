@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiomet游戏辅助面板</title>
+    <title>Kiomet游戏助手</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -14,8 +14,8 @@
         }
         
         body {
-            background: linear-gradient(135deg, #0a0e17 0%, #1a2435 100%);
-            color: #e0e0e0;
+            background: linear-gradient(135deg, #1a2530 0%, #2c3e50 100%);
+            color: #ecf0f1;
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -31,14 +31,14 @@
         
         header {
             grid-column: 1 / 4;
-            background: linear-gradient(90deg, #1a1f2d 0%, #252b3d 100%);
+            background: rgba(26, 37, 48, 0.95);
             padding: 15px 25px;
             border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            border: 1px solid #3a4155;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .logo {
@@ -49,7 +49,7 @@
         
         .logo h1 {
             font-size: 28px;
-            background: linear-gradient(45deg, #6e8afa, #fa6eca);
+            background: linear-gradient(45deg, #3498db, #2ecc71);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 800;
@@ -59,14 +59,14 @@
         .logo-img {
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #6e8afa, #fa6eca);
+            background: linear-gradient(135deg, #3498db, #2ecc71);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 20px;
-            box-shadow: 0 0 15px rgba(110, 138, 250, 0.5);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
         }
         
         nav ul {
@@ -86,21 +86,21 @@
         }
         
         nav a:hover {
-            color: #6e8afa;
-            background: rgba(110, 138, 250, 0.1);
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
             transform: translateY(-2px);
         }
         
         .main-content {
             grid-column: 2;
             grid-row: 2;
-            background: #1a1f2d;
+            background: rgba(26, 37, 48, 0.8);
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
-            border: 1px solid #3a4155;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .game-container {
@@ -112,14 +112,14 @@
         
         .game-tabs {
             display: flex;
-            background: #252b3d;
+            background: rgba(39, 55, 70, 0.9);
             padding: 10px 15px 0;
-            border-bottom: 1px solid #3a4155;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .game-tab {
             padding: 10px 20px;
-            background: #2a3143;
+            background: rgba(52, 73, 94, 0.7);
             margin-right: 5px;
             border-radius: 8px 8px 0 0;
             cursor: pointer;
@@ -128,8 +128,8 @@
         }
         
         .game-tab.active {
-            background: #1a1f2d;
-            color: #6e8afa;
+            background: rgba(26, 37, 48, 0.9);
+            color: #3498db;
         }
         
         .game-frame {
@@ -141,11 +141,11 @@
         }
         
         .sidebar {
-            background: linear-gradient(180deg, #1a1f2d 0%, #252b3d 100%);
+            background: rgba(26, 37, 48, 0.8);
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            border: 1px solid #3a4155;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .left-sidebar {
@@ -165,36 +165,36 @@
         }
         
         .widget {
-            background: #252b3d;
+            background: rgba(39, 55, 70, 0.9);
             border-radius: 10px;
             padding: 18px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            border: 1px solid #3a4155;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .widget-title {
             font-size: 18px;
             margin-bottom: 15px;
-            color: #6e8afa;
+            color: #3498db;
             display: flex;
             align-items: center;
             gap: 10px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #3a4155;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .timer-display {
             font-size: 28px;
             text-align: center;
             font-family: 'Courier New', monospace;
-            background: #1c2130;
+            background: rgba(26, 37, 48, 0.5);
             padding: 15px;
             border-radius: 8px;
             margin: 10px 0;
-            color: #6e8afa;
+            color: #2ecc71;
             font-weight: bold;
             letter-spacing: 2px;
-            border: 1px solid #3a4155;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .timer-controls {
@@ -204,7 +204,7 @@
         }
         
         button {
-            background: linear-gradient(to right, #6e8afa, #8a6efa);
+            background: linear-gradient(to right, #3498db, #2ecc71);
             color: white;
             border: none;
             padding: 10px 15px;
@@ -216,7 +216,7 @@
         }
         
         button:hover {
-            background: linear-gradient(to right, #5a75e0, #7a5ae0);
+            background: linear-gradient(to right, #2980b9, #27ae60);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
@@ -228,8 +228,8 @@
         textarea {
             width: 100%;
             height: 150px;
-            background: #1c2130;
-            border: 1px solid #3a4155;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             padding: 12px;
             color: #e0e0e0;
@@ -239,8 +239,8 @@
         
         textarea:focus {
             outline: none;
-            border-color: #6e8afa;
-            box-shadow: 0 0 0 2px rgba(110, 138, 250, 0.2);
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
         
         .translation-container {
@@ -257,15 +257,15 @@
         select {
             flex: 1;
             padding: 10px;
-            background: #1c2130;
-            border: 1px solid #3a4155;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             color: #e0e0e0;
         }
         
         .translation-frame-container {
             height: 400px;
-            border: 1px solid #3a4155;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             overflow: hidden;
         }
@@ -275,11 +275,6 @@
             height: 100%;
             border: none;
             background: white;
-        }
-        
-        .translation-controls {
-            display: flex;
-            gap: 10px;
         }
         
         .api-status {
@@ -307,11 +302,11 @@
             grid-row: 3;
             text-align: center;
             padding: 20px;
-            background: #1a1f2d;
+            background: rgba(26, 37, 48, 0.8);
             border-radius: 12px;
             margin-top: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            border: 1px solid #3a4155;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .stats {
@@ -328,8 +323,54 @@
         }
         
         .stat-value {
-            color: #6e8afa;
+            color: #3498db;
             font-weight: bold;
+        }
+        
+        /* 联盟聊天室入口 */
+        .chatroom-widget {
+            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .chatroom-widget:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chatroom-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .chatroom-desc {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .chatroom-btn {
+            background: white;
+            color: #2c3e50;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .chatroom-btn:hover {
+            background: #ecf0f1;
+            transform: scale(1.05);
         }
         
         /* 响应式设计 */
@@ -363,36 +404,35 @@
         }
         
         ::-webkit-scrollbar-track {
-            background: #1a1f2d;
+            background: rgba(26, 37, 48, 0.5);
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #3a4155;
+            background: rgba(52, 152, 219, 0.5);
             border-radius: 4px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-            background: #6e8afa;
+            background: #3498db;
         }
         
-        .translation-history {
-            margin-top: 15px;
-            max-height: 150px;
-            overflow-y: auto;
-            border: 1px solid #3a4155;
-            border-radius: 8px;
-            padding: 10px;
-            background: #1c2130;
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .history-item {
-            padding: 8px;
-            border-bottom: 1px solid #3a4155;
-            font-size: 14px;
-        }
-        
-        .history-item:last-child {
+        .shortcut-item:last-child {
             border-bottom: none;
+        }
+        
+        .key {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #3498db;
         }
         
         .loading {
@@ -401,7 +441,7 @@
             height: 20px;
             border: 3px solid rgba(255,255,255,.3);
             border-radius: 50%;
-            border-top-color: #6e8afa;
+            border-top-color: #3498db;
             animation: spin 1s ease-in-out infinite;
         }
         
@@ -410,8 +450,8 @@
         }
 
         .translation-tips {
-            background: rgba(110, 138, 250, 0.1);
-            border-left: 4px solid #6e8afa;
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
             padding: 10px;
             border-radius: 4px;
             margin-top: 10px;
@@ -430,7 +470,7 @@
                 <ul>
                     <li><a href="#"><i class="fas fa-home"></i> 首页</a></li>
                     <li><a href="#"><i class="fas fa-gamepad"></i> 游戏</a></li>
-                    <li><a href="#"><i class="fas fa-tools"></i> 工具</a></li>
+                    <li><a href="#"><i class="fas fa-comments"></i> 聊天室</a></li>
                     <li><a href="#"><i class="fas fa-info-circle"></i> 关于</a></li>
                 </ul>
             </nav>
@@ -455,12 +495,11 @@
                 <button id="saveNotes" style="margin-top: 10px;"><i class="fas fa-save"></i> 保存笔记</button>
             </div>
             
-            <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-bolt"></i> 快速操作</h3>
-                <div class="timer-controls">
-                    <button id="quickSave"><i class="fas fa-save"></i> 快速保存</button>
-                    <button id="quickLoad"><i class="fas fa-file-import"></i> 快速加载</button>
-                </div>
+            <!-- 联盟聊天室入口 -->
+            <div class="chatroom-widget" onclick="openChatroom()">
+                <div class="chatroom-title">Kiomet联盟聊天室</div>
+                <div class="chatroom-desc">加入七大联盟公共交流区，与玩家实时聊天</div>
+                <button class="chatroom-btn">立即加入</button>
             </div>
         </aside>
 
@@ -491,7 +530,7 @@
                             <option value="ru">俄语</option>
                             <option value="es">西班牙语</option>
                         </select>
-                        <i class="fas fa-exchange-alt" style="align-self: center; color: #6e8afa;"></i>
+                        <i class="fas fa-exchange-alt" style="align-self: center; color: #3498db;"></i>
                         <select id="targetLang">
                             <option value="en">英语</option>
                             <option value="zh">中文</option>
@@ -539,16 +578,12 @@
                         <span>搜索同类单位</span>
                         <span class="key">T</span>
                     </div>
-                    <div class="shortcut-item">
-                        <span>等待更新……</span>
-                        <span class="key">等待更新</span>
-                    </div>
                 </div>
             </div>
         </aside>
 
         <footer>
-            <p>Kiomet游戏助手 &copy; 2023 - 本工具仅供游戏辅助使用，与Kiomet无直接关联</p>
+            <p>Kiomet游戏助手 &copy; 2025 - 本工具由联盟聊天室开发，仅供游戏辅助使用</p>
             <div class="stats">
                 <div class="stat-item">
                     <i class="fas fa-users"></i>
@@ -557,6 +592,10 @@
                 <div class="stat-item">
                     <i class="fas fa-clock"></i>
                     <span>运行时间: <span class="stat-value" id="uptime">00:00:00</span></span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-comments"></i>
+                    <span>联盟聊天室: <span class="stat-value">74人</span></span>
                 </div>
             </div>
         </footer>
@@ -595,7 +634,7 @@
                 timerInterval = setInterval(updateTimer, 1000);
                 timerRunning = true;
                 startTimerBtn.innerHTML = '<i class="fas fa-play"></i> 运行中';
-                startTimerBtn.style.background = 'linear-gradient(to right, #2ecc71, #27ae60)';
+                startTimerBtn.style.background = 'linear-gradient(to right, #27ae60, #229954)';
             }
         });
         
@@ -603,7 +642,7 @@
             clearInterval(timerInterval);
             timerRunning = false;
             startTimerBtn.innerHTML = '<i class="fas fa-play"></i> 开始';
-            startTimerBtn.style.background = 'linear-gradient(to right, #6e8afa, #8a6efa)';
+            startTimerBtn.style.background = 'linear-gradient(to right, #3498db, #2ecc71)';
         });
         
         resetTimerBtn.addEventListener('click', () => {
@@ -612,7 +651,7 @@
             seconds = 0; minutes = 0; hours = 0;
             timerDisplay.textContent = "00:00:00";
             startTimerBtn.innerHTML = '<i class="fas fa-play"></i> 开始';
-            startTimerBtn.style.background = 'linear-gradient(to right, #6e8afa, #8a6efa)';
+            startTimerBtn.style.background = 'linear-gradient(to right, #3498db, #2ecc71)';
         });
         
         // 笔记保存功能
@@ -687,11 +726,18 @@
         sourceLang.addEventListener('change', updateTranslationPage);
         targetLang.addEventListener('change', updateTranslationPage);
         
+        // 联盟聊天室功能
+        function openChatroom() {
+            alert("即将打开Kiomet联盟聊天室...\n\n七大联盟公共交流区:\n- dictators\n- FSA\n- EVE\n- 天烬联盟\n- SBA\n- LOONG\n- 怪诞小镇");
+            // 实际应用中这里可以打开新窗口或跳转到聊天室页面
+            window.open('https://nightly.paw.msgbyte.com/invite/ROHVvHVM', '_blank');
+        }
+        
         // 添加快捷键支持
         document.addEventListener('keydown', (e) => {
+            // Ctrl+T 聚焦翻译
             if (e.ctrlKey && e.key === 't') {
                 e.preventDefault();
-                // 尝试聚焦到翻译iframe中的输入框
                 try {
                     const translateFrame = document.getElementById('baiduTranslateFrame');
                     const input = translateFrame.contentWindow.document.querySelector('textarea');
@@ -701,6 +747,11 @@
                 } catch (error) {
                     console.log('无法直接访问翻译iframe内容');
                 }
+            }
+            
+            // C键打开聊天室
+            if (e.key === 'c' || e.key === 'C') {
+                openChatroom();
             }
         });
         
