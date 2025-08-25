@@ -557,33 +557,30 @@
         }
         
         // 发送消息
+        // 发送消息
         async function sendMessage() {
-            const message = chatInput.value.trim();
-            if (!message) return;
-            
-            const { error } = await supabase
-                .from('kiomet_chat')
-                .insert([
-                    { 
-                        username: username, 
-                        message: message,
-                        timestamp: new Date().toISOString()
-                    }
-                ]);
-            
-            if (error) {
-                console.error('发送消息错误:', error);
-            } else {
-                chatInput.value = '';
-            }
-        }
-        
-        chatSend.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
+           const message = chatInput.value.trim();
+           if (!message) return;
+    
+           // 先在本地显示消息（立即反馈）
+           const tempMessage = {
+               username: username,
+               message: message,
+               timestamp: new Date().toISOString()
+           };
+           addMessageToChat(tempMessage);
+    
+           const { error } = await supabase
+               .from('kiomet_chat')
+               .insert([tempMessage]);
+    
+           if (error) {
+               console.error('发送消息错误:', error);
+               // 可选：从界面移除失败的消息
+           } else {
+               chatInput.value = '';
+           }
+       }
         
         // 接收实时消息
         supabase
