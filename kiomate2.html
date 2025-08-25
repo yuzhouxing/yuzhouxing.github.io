@@ -93,11 +93,6 @@
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
         }
         
-        .float-btn.active {
-            background: linear-gradient(135deg, #2ecc71, #3498db);
-            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.5);
-        }
-        
         /* 小部件样式 */
         .widget {
             background: rgba(39, 55, 70, 0.8);
@@ -312,34 +307,36 @@
             background: #3498db;
         }
         
-        .tab-container {
+        .minimized-handle {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 80px;
+            background: rgba(52, 152, 219, 0.8);
+            border-radius: 0 8px 8px 0;
             display: flex;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .tab {
-            padding: 8px 15px;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            opacity: 0.7;
-            transition: all 0.3s;
-        }
-        
-        .tab.active {
-            opacity: 1;
-            border-bottom: 2px solid #3498db;
-        }
-        
-        .tab-content {
+            color: white;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.3);
+            z-index: 850;
             display: none;
         }
         
-        .tab-content.active {
-            display: block;
+        .minimized-handle.visible {
+            display: flex;
         }
     </style>
 </head>
 <body>
+    <!-- 最小化时的把手 -->
+    <div class="minimized-handle" id="minimizedHandle">
+        <i class="fas fa-chevron-right"></i>
+    </div>
+
     <!-- 游戏容器 -->
     <div class="game-container">
         <iframe src="https://kiomet.com" class="game-frame" id="kiometFrame"></iframe>
@@ -347,151 +344,118 @@
 
     <!-- 左侧工具栏 -->
     <div class="sidebar left-sidebar" id="leftSidebar">
-        <div class="tab-container">
-            <div class="tab active" data-tab="tools">工具</div>
-            <div class="tab" data-tab="translate">翻译</div>
-            <div class="tab" data-tab="shortcuts">快捷键</div>
-        </div>
-        
-        <div class="tab-content active" id="tools-tab">
-            <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-clock"></i> kiomet计时器</h3>
-                <div class="timer-display">
-                    <span id="timer">00:00:00</span>
-                </div>
-                <div class="timer-controls">
-                    <button id="startTimer"><i class="fas fa-play"></i> 开始</button>
-                    <button id="pauseTimer"><i class="fas fa-pause"></i> 暂停</button>
-                    <button id="resetTimer"><i class="fas fa-redo"></i> 重置</button>
-                </div>
+        <div class="widget">
+            <h3 class="widget-title"><i class="fas fa-clock"></i> kiomet计时器</h3>
+            <div class="timer-display">
+                <span id="timer">00:00:00</span>
             </div>
+            <div class="timer-controls">
+                <button id="startTimer"><i class="fas fa-play"></i> 开始</button>
+                <button id="pauseTimer"><i class="fas fa-pause"></i> 暂停</button>
+                <button id="resetTimer"><i class="fas fa-redo"></i> 重置</button>
+            </div>
+        </div>
 
-            <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-sticky-note"></i> kiomet聊天编辑器</h3>
-                <textarea id="gameNotes" placeholder="解决kiomet聊天框难以操作问题"></textarea>
-                <button id="saveNotes" style="margin-top: 10px;"><i class="fas fa-save"></i> 保存内容</button>
-            </div>
-            
-            <div class="chatroom-widget" onclick="openChatroom()">
-                <div class="chatroom-title">Kiomet联盟聊天室</div>
-                <div class="chatroom-desc">加入七大联盟公共交流区</div>
-                <button class="chatroom-btn">立即加入</button>
-            </div>
+        <div class="widget">
+            <h3 class="widget-title"><i class="fas fa-sticky-note"></i> kiomet聊天编辑器</h3>
+            <textarea id="gameNotes" placeholder="解决kiomet聊天框难以操作问题"></textarea>
+            <button id="saveNotes" style="margin-top: 10px;"><i class="fas fa-save"></i> 保存内容</button>
         </div>
         
-        <div class="tab-content" id="translate-tab">
-            <div class="widget" style="height: calc(100vh - 120px);">
-                <h3 class="widget-title"><i class="fas fa-language"></i> 百度翻译</h3>
-                <div class="translation-container">
-                    <div class="language-selectors">
-                        <select id="sourceLang">
-                            <option value="auto">自动检测</option>
-                            <option value="zh">中文</option>
-                            <option value="en">英语</option>
-                        </select>
-                        <select id="targetLang">
-                            <option value="en">英语</option>
-                            <option value="zh">中文</option>
-                        </select>
-                    </div>
-                    
-                    <div class="translation-frame-container">
-                        <iframe 
-                            src="https://fanyi.baidu.com/m/trans" 
-                            class="translation-frame" 
-                            id="baiduTranslateFrame"
-                            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                            loading="lazy">
-                        </iframe>
-                    </div>
-                    
-                    <div class="api-status status-online">
-                        <i class="fas fa-check-circle"></i> 百度翻译已加载
-                    </div>
+        <div class="widget">
+            <h3 class="widget-title"><i class="fas fa-language"></i> 百度翻译</h3>
+            <div class="translation-container">
+                <div class="language-selectors">
+                    <select id="sourceLang">
+                        <option value="auto">自动检测</option>
+                        <option value="zh">中文</option>
+                        <option value="en">英语</option>
+                    </select>
+                    <select id="targetLang">
+                        <option value="en">英语</option>
+                        <option value="zh">中文</option>
+                    </select>
+                </div>
+                
+                <div class="translation-frame-container">
+                    <iframe 
+                        src="https://fanyi.baidu.com/m/trans" 
+                        class="translation-frame" 
+                        id="baiduTranslateFrame"
+                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                        loading="lazy">
+                    </iframe>
+                </div>
+                
+                <div class="api-status status-online">
+                    <i class="fas fa-check-circle"></i> 百度翻译已加载
                 </div>
             </div>
         </div>
         
-        <div class="tab-content" id="shortcuts-tab">
-            <div class="widget">
-                <h3 class="widget-title"><i class="fas fa-keyboard"></i> 游戏快捷键</h3>
-                <div class="shortcut-list">
-                    <div class="shortcut-item">
-                        <span>定位国王</span>
-                        <span class="key">H</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>显示兵线</span>
-                        <span class="key">G</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>搜索同类单位</span>
-                        <span class="key">T</span>
-                    </div>
+        <div class="widget">
+            <h3 class="widget-title"><i class="fas fa-keyboard"></i> 游戏快捷键</h3>
+            <div class="shortcut-list">
+                <div class="shortcut-item">
+                    <span>定位国王</span>
+                    <span class="key">H</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>显示兵线</span>
+                    <span class="key">G</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>搜索同类单位</span>
+                    <span class="key">T</span>
                 </div>
             </div>
+        </div>
+        
+        <div class="chatroom-widget" onclick="openChatroom()">
+            <div class="chatroom-title">Kiomet联盟聊天室</div>
+            <div class="chatroom-desc">加入七大联盟公共交流区</div>
+            <button class="chatroom-btn">立即加入</button>
         </div>
     </div>
 
     <!-- 浮动按钮 -->
     <div class="float-buttons">
-        <button class="float-btn" id="floatTools">
-            <i class="fas fa-tools"></i>
+        <button class="float-btn" id="floatToggle">
+            <i class="fas fa-bars" id="toggleIcon"></i>
         </button>
-        <button class="float-btn" id="floatTranslate">
-            <i class="fas fa-language"></i>
+        <button class="float-btn" id="floatChat" onclick="openChatroom()">
+            <i class="fas fa-comments"></i>
         </button>
     </div>
 
     <script>
         // 侧边栏切换功能
         const leftSidebar = document.getElementById('leftSidebar');
-        const floatTools = document.getElementById('floatTools');
-        const floatTranslate = document.getElementById('floatTranslate');
-        
-        // 标签切换功能
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
+        const minimizedHandle = document.getElementById('minimizedHandle');
+        const floatToggle = document.getElementById('floatToggle');
+        const toggleIcon = document.getElementById('toggleIcon');
         
         function toggleSidebar() {
-            leftSidebar.classList.toggle('active');
-            floatTools.classList.toggle('active');
+            const isActive = leftSidebar.classList.contains('active');
+            if (isActive) {
+                leftSidebar.classList.remove('active');
+                minimizedHandle.classList.add('visible');
+                toggleIcon.className = 'fas fa-bars';
+            } else {
+                leftSidebar.classList.add('active');
+                minimizedHandle.classList.remove('visible');
+                toggleIcon.className = 'fas fa-times';
+            }
         }
         
-        floatTools.addEventListener('click', () => {
-            // 切换到工具标签并展开侧边栏
-            tabs[0].click();
-            toggleSidebar();
-        });
-        
-        floatTranslate.addEventListener('click', () => {
-            // 切换到翻译标签并展开侧边栏
-            tabs[1].click();
-            toggleSidebar();
-        });
+        floatToggle.addEventListener('click', toggleSidebar);
+        minimizedHandle.addEventListener('click', toggleSidebar);
         
         // 点击游戏区域关闭侧边栏
         document.querySelector('.game-container').addEventListener('click', () => {
             leftSidebar.classList.remove('active');
-            floatTools.classList.remove('active');
-        });
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabId = tab.getAttribute('data-tab');
-                
-                // 移除所有active类
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(tc => tc.classList.remove('active'));
-                
-                // 添加active类到当前标签和内容
-                tab.classList.add('active');
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-                
-                // 确保侧边栏是展开状态
-                leftSidebar.classList.add('active');
-                floatTools.classList.add('active');
-            });
+            minimizedHandle.classList.add('visible');
+            toggleIcon.className = 'fas fa-bars';
         });
         
         // 计时器功能
@@ -566,17 +530,9 @@
         
         // 快捷键支持
         document.addEventListener('keydown', (e) => {
-            // T键 显示/隐藏工具
+            // T键 显示/隐藏侧边栏
             if (e.key === 't' || e.key === 'T') {
                 e.preventDefault();
-                tabs[0].click();
-                toggleSidebar();
-            }
-            
-            // G键 显示/隐藏翻译
-            if (e.key === 'g' || e.key === 'G') {
-                e.preventDefault();
-                tabs[1].click();
                 toggleSidebar();
             }
             
@@ -588,7 +544,8 @@
             // ESC键关闭侧边栏
             if (e.key === 'Escape') {
                 leftSidebar.classList.remove('active');
-                floatTools.classList.remove('active');
+                minimizedHandle.classList.add('visible');
+                toggleIcon.className = 'fas fa-bars';
             }
         });
     </script>
