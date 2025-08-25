@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KioMate</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -50,6 +51,8 @@
             padding: 15px;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 5px 0 15px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
         }
         
         .left-sidebar {
@@ -174,7 +177,6 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            height: calc(100vh - 120px);
         }
         
         .language-selectors {
@@ -193,7 +195,7 @@
         }
         
         .translation-frame-container {
-            height: calc(100% - 60px);
+            height: 200px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             overflow: hidden;
@@ -241,45 +243,77 @@
             font-size: 13px;
         }
         
-        /* 聊天室入口 */
-        .chatroom-widget {
-            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
+        /* 聊天室样式 */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: auto;
         }
         
-        .chatroom-widget:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 200px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(26, 37, 48, 0.5);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .chatroom-title {
-            font-size: 16px;
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(52, 152, 219, 0.2);
+        }
+        
+        .message-sender {
             font-weight: bold;
-            margin-bottom: 8px;
+            color: #3498db;
+            margin-bottom: 4px;
+        }
+        
+        .message-content {
+            font-size: 14px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: right;
+            margin-top: 4px;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .chat-send {
+            background: linear-gradient(to right, #3498db, #2ecc71);
             color: white;
-        }
-        
-        .chatroom-desc {
-            font-size: 12px;
-            margin-bottom: 12px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .chatroom-btn {
-            background: white;
-            color: #2c3e50;
             border: none;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-size: 12px;
+            font-weight: 500;
         }
         
         /* 响应式设计 */
@@ -305,29 +339,6 @@
         
         ::-webkit-scrollbar-thumb:hover {
             background: #3498db;
-        }
-        
-        .minimized-handle {
-            position: fixed;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 30px;
-            height: 80px;
-            background: rgba(52, 152, 219, 0.8);
-            border-radius: 0 8px 8px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: white;
-            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.3);
-            z-index: 850;
-            display: none;
-        }
-        
-        .minimized-handle.visible {
-            display: flex;
         }
     </style>
 </head>
@@ -407,10 +418,20 @@
             </div>
         </div>
         
-        <div class="chatroom-widget" onclick="openChatroom()">
-            <div class="chatroom-title">Kiomet联盟聊天室</div>
-            <div class="chatroom-desc">加入七大联盟公共交流区</div>
-            <button class="chatroom-btn">立即加入</button>
+        <!-- Supabase聊天功能 -->
+        <div class="chat-container">
+            <h3 class="widget-title"><i class="fas fa-comments"></i> 联盟聊天室</h3>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message">
+                    <div class="message-sender">系统</div>
+                    <div class="message-content">欢迎使用Kiomet联盟聊天室！</div>
+                    <div class="message-time">刚刚</div>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chatInput" placeholder="输入消息..." />
+                <button class="chat-send" id="chatSend">发送</button>
+            </div>
         </div>
     </div>
 
@@ -422,9 +443,14 @@
     </div>
 
     <script>
+        // Supabase初始化
+        const supabaseUrl = 'https://meeuseqgrbegaalrayeu.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lZXVzZXFncmJlZ2FhbHJheWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0MjUsImV4cCI6MjA3MTcwODQyNX0.DSLAtwP-vrFYyVeBH0l9_tyoQF2rHHW6jPcnsQ7dKEM';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
         // 侧边栏切换功能
         const leftSidebar = document.getElementById('leftSidebar');
-        const minimizedHandle = document.getElementById('minimizedHandle');
         const floatToggle = document.getElementById('floatToggle');
         const toggleIcon = document.getElementById('toggleIcon');
         
@@ -432,22 +458,18 @@
             const isActive = leftSidebar.classList.contains('active');
             if (isActive) {
                 leftSidebar.classList.remove('active');
-                minimizedHandle.classList.add('visible');
                 toggleIcon.className = 'fas fa-bars';
             } else {
                 leftSidebar.classList.add('active');
-                minimizedHandle.classList.remove('visible');
                 toggleIcon.className = 'fas fa-times';
             }
         }
         
         floatToggle.addEventListener('click', toggleSidebar);
-        minimizedHandle.addEventListener('click', toggleSidebar);
         
         // 点击游戏区域关闭侧边栏
         document.querySelector('.game-container').addEventListener('click', () => {
             leftSidebar.classList.remove('active');
-            minimizedHandle.classList.add('visible');
             toggleIcon.className = 'fas fa-bars';
         });
         
@@ -515,11 +537,140 @@
             }, 2000);
         });
         
-        // 联盟聊天室功能
-        function openChatroom() {
-            alert("即将打开Kiomet联盟聊天室...\n\n七大联盟公共交流区:\n- dictators\n- FSA\n- EVE\n- 天烬联盟\n- SBA\n- LOONG\n- 怪诞小镇");
-            window.open('https://nightly.paw.msgbyte.com/invite/ROHVvHVM', '_blank');
+        // Supabase聊天功能
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatSend = document.getElementById('chatSend');
+        
+        // 生成随机用户名
+        function generateRandomName() {
+            const nouns = ['guest', 'visitor'];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            return noun + Math.floor(Math.random() * 1000);
         }
+        
+        // 获取或创建用户名
+        let username = localStorage.getItem('kiometUsername');
+        if (!username) {
+            username = generateRandomName();
+            localStorage.setItem('kiometUsername', username);
+        }
+        
+        // 发送消息
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            const { error } = await supabase
+                .from('kiomet_chat')
+                .insert([
+                    { 
+                        username: username, 
+                        message: message,
+                        timestamp: new Date().toISOString()
+                    }
+                ]);
+            
+            if (error) {
+                console.error('发送消息错误:', error);
+            } else {
+                chatInput.value = '';
+            }
+        }
+        
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // 接收实时消息
+        supabase
+            .channel('kiomet_chat_channel')
+            .on('postgres_changes', 
+                { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'kiomet_chat' 
+                }, 
+                (payload) => {
+                    addMessageToChat(payload.new);
+                }
+            )
+            .subscribe();
+        
+        // 加载历史消息
+        async function loadMessages() {
+            const { data, error } = await supabase
+                .from('kiomet_chat')
+                .select('*')
+                .order('timestamp', { ascending: false })
+                .limit(20);
+            
+            if (error) {
+                console.error('加载消息错误:', error);
+                return;
+            }
+            
+            // 清空当前消息（除了系统消息）
+            while (chatMessages.children.length > 1) {
+                chatMessages.removeChild(chatMessages.lastChild);
+            }
+            
+            // 添加历史消息（逆序）
+            data.reverse().forEach(addMessageToChat);
+            
+            // 滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // 添加消息到聊天窗口
+        function addMessageToChat(messageData) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            
+            const senderElement = document.createElement('div');
+            senderElement.className = 'message-sender';
+            senderElement.textContent = messageData.username;
+            
+            const contentElement = document.createElement('div');
+            contentElement.className = 'message-content';
+            contentElement.textContent = messageData.message;
+            
+            const timeElement = document.createElement('div');
+            timeElement.className = 'message-time';
+            timeElement.textContent = formatTime(messageData.timestamp);
+            
+            messageElement.appendChild(senderElement);
+            messageElement.appendChild(contentElement);
+            messageElement.appendChild(timeElement);
+            
+            chatMessages.appendChild(messageElement);
+            
+            // 滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // 格式化时间
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) { // 1分钟内
+                return '刚刚';
+            } else if (diff < 3600000) { // 1小时内
+                return Math.floor(diff / 60000) + '分钟前';
+            } else if (diff < 86400000) { // 1天内
+                return Math.floor(diff / 3600000) + '小时前';
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+        
+        // 加载消息
+        loadMessages();
         
         // 快捷键支持
         document.addEventListener('keydown', (e) => {
@@ -529,15 +680,9 @@
                 toggleSidebar();
             }
             
-            // H键打开聊天室
-            if (e.key === 'h' || e.key === 'H') {
-                openChatroom();
-            }
-            
             // ESC键关闭侧边栏
             if (e.key === 'Escape') {
                 leftSidebar.classList.remove('active');
-                minimizedHandle.classList.add('visible');
                 toggleIcon.className = 'fas fa-bars';
             }
         });
