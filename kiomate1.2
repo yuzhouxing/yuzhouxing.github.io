@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KioMate</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #0a0e17;
+            color: #ecf0f1;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 游戏容器 */
+        .game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0e17;
+            z-index: 1;
+        }
+        
+        .game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 380px;
+            background: rgba(26, 37, 48, 0.97);
+            z-index: 900;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            padding: 15px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .left-sidebar {
+            left: 0;
+            transform: translateX(-100%);
+        }
+        
+        .left-sidebar.active {
+            transform: translateX(0);
+        }
+        
+        /* 浮动按钮 */
+        .float-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 800;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .float-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+        
+        .float-btn:hover {
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .float-btn.active {
+            background: linear-gradient(135deg, #2ecc71, #3498db);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.5);
+        }
+        
+        /* 小部件样式 */
+        .widget {
+            background: rgba(39, 55, 70, 0.8);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .widget-title {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .timer-display {
+            font-size: 24px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            background: rgba(26, 37, 48, 0.5);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            color: #2ecc71;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #2980b9, #27ae60);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 80px;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e0e0;
+            resize: vertical;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .translation-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: calc(100vh - 120px);
+        }
+        
+        .language-selectors {
+            display: flex;
+            gap: 8px;
+        }
+        
+        select {
+            flex: 1;
+            padding: 8px;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        .translation-frame-container {
+            height: calc(100% - 60px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .translation-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        
+        .api-status {
+            margin-top: 8px;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .status-online {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid #2ecc71;
+        }
+        
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+        }
+        
+        .shortcut-item:last-child {
+            border-bottom: none;
+        }
+        
+        .key {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #3498db;
+            font-size: 13px;
+        }
+        
+        /* 聊天室入口 */
+        .chatroom-widget {
+            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .chatroom-widget:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chatroom-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: white;
+        }
+        
+        .chatroom-desc {
+            font-size: 12px;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .chatroom-btn {
+            background: white;
+            color: #2c3e50;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 90%;
+            }
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 37, 48, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(52, 152, 219, 0.5);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3498db;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            opacity: 1;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 游戏容器 -->
+    <div class="game-container">
+        <iframe src="https://kiomet.com" class="game-frame" id="kiometFrame"></iframe>
+    </div>
+
+    <!-- 左侧工具栏 -->
+    <div class="sidebar left-sidebar" id="leftSidebar">
+        <div class="tab-container">
+            <div class="tab active" data-tab="tools">工具</div>
+            <div class="tab" data-tab="translate">翻译</div>
+            <div class="tab" data-tab="shortcuts">快捷键</div>
+        </div>
+        
+        <div class="tab-content active" id="tools-tab">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-clock"></i> kiomet计时器</h3>
+                <div class="timer-display">
+                    <span id="timer">00:00:00</span>
+                </div>
+                <div class="timer-controls">
+                    <button id="startTimer"><i class="fas fa-play"></i> 开始</button>
+                    <button id="pauseTimer"><i class="fas fa-pause"></i> 暂停</button>
+                    <button id="resetTimer"><i class="fas fa-redo"></i> 重置</button>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-sticky-note"></i> kiomet聊天编辑器</h3>
+                <textarea id="gameNotes" placeholder="解决kiomet聊天框难以操作问题"></textarea>
+                <button id="saveNotes" style="margin-top: 10px;"><i class="fas fa-save"></i> 保存内容</button>
+            </div>
+            
+            <div class="chatroom-widget" onclick="openChatroom()">
+                <div class="chatroom-title">Kiomet联盟聊天室</div>
+                <div class="chatroom-desc">加入七大联盟公共交流区</div>
+                <button class="chatroom-btn">立即加入</button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="translate-tab">
+            <div class="widget" style="height: calc(100vh - 120px);">
+                <h3 class="widget-title"><i class="fas fa-language"></i> 百度翻译</h3>
+                <div class="translation-container">
+                    <div class="language-selectors">
+                        <select id="sourceLang">
+                            <option value="auto">自动检测</option>
+                            <option value="zh">中文</option>
+                            <option value="en">英语</option>
+                        </select>
+                        <select id="targetLang">
+                            <option value="en">英语</option>
+                            <option value="zh">中文</option>
+                        </select>
+                    </div>
+                    
+                    <div class="translation-frame-container">
+                        <iframe 
+                            src="https://fanyi.baidu.com/m/trans" 
+                            class="translation-frame" 
+                            id="baiduTranslateFrame"
+                            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                    
+                    <div class="api-status status-online">
+                        <i class="fas fa-check-circle"></i> 百度翻译已加载
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="shortcuts-tab">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-keyboard"></i> 游戏快捷键</h3>
+                <div class="shortcut-list">
+                    <div class="shortcut-item">
+                        <span>定位国王</span>
+                        <span class="key">H</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>显示兵线</span>
+                        <span class="key">G</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>搜索同类单位</span>
+                        <span class="key">T</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动按钮 -->
+    <div class="float-buttons">
+        <button class="float-btn" id="floatTools">
+            <i class="fas fa-tools"></i>
+        </button>
+        <button class="float-btn" id="floatTranslate">
+            <i class="fas fa-language"></i>
+        </button>
+    </div>
+
+    <script>
+        // 侧边栏切换功能
+        const leftSidebar = document.getElementById('leftSidebar');
+        const floatTools = document.getElementById('floatTools');
+        const floatTranslate = document.getElementById('floatTranslate');
+        
+        // 标签切换功能
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        function toggleSidebar() {
+            leftSidebar.classList.toggle('active');
+            floatTools.classList.toggle('active');
+        }
+        
+        floatTools.addEventListener('click', () => {
+            // 切换到工具标签并展开侧边栏
+            tabs[0].click();
+            toggleSidebar();
+        });
+        
+        floatTranslate.addEventListener('click', () => {
+            // 切换到翻译标签并展开侧边栏
+            tabs[1].click();
+            toggleSidebar();
+        });
+        
+        // 点击游戏区域关闭侧边栏
+        document.querySelector('.game-container').addEventListener('click', () => {
+            leftSidebar.classList.remove('active');
+            floatTools.classList.remove('active');
+        });
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // 移除所有active类
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                // 添加active类到当前标签和内容
+                tab.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+                
+                // 确保侧边栏是展开状态
+                leftSidebar.classList.add('active');
+                floatTools.classList.add('active');
+            });
+        });
+        
+        // 计时器功能
+        let timerInterval;
+        let timerRunning = false;
+        let seconds = 0, minutes = 0, hours = 0;
+        
+        const timerDisplay = document.getElementById('timer');
+        const startTimerBtn = document.getElementById('startTimer');
+        const pauseTimerBtn = document.getElementById('pauseTimer');
+        const resetTimerBtn = document.getElementById('resetTimer');
+        
+        function updateTimer() {
+            seconds++;
+            if (seconds >= 60) {
+                seconds = 0;
+                minutes++;
+                if (minutes >= 60) {
+                    minutes = 0;
+                    hours++;
+                }
+            }
+            
+            timerDisplay.textContent = 
+                (hours ? (hours > 9 ? hours : "0" + hours) : "00") + ":" + 
+                (minutes ? (minutes > 9 ? minutes : "0" + minutes) : "00") + ":" + 
+                (seconds > 9 ? seconds : "0" + seconds);
+        }
+        
+        startTimerBtn.addEventListener('click', () => {
+            if (!timerRunning) {
+                timerInterval = setInterval(updateTimer, 1000);
+                timerRunning = true;
+            }
+        });
+        
+        pauseTimerBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerRunning = false;
+        });
+        
+        resetTimerBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            seconds = 0; minutes = 0; hours = 0;
+            timerDisplay.textContent = "00:00:00";
+        });
+        
+        // 笔记保存功能
+        const gameNotes = document.getElementById('gameNotes');
+        const saveNotesBtn = document.getElementById('saveNotes');
+        
+        // 加载保存的笔记
+        const savedNotes = localStorage.getItem('kiometNotes');
+        if (savedNotes) {
+            gameNotes.value = savedNotes;
+        }
+        
+        saveNotesBtn.addEventListener('click', () => {
+            localStorage.setItem('kiometNotes', gameNotes.value);
+            saveNotesBtn.innerHTML = '<i class="fas fa-check"></i> 已保存!';
+            setTimeout(() => {
+                saveNotesBtn.innerHTML = '<i class="fas fa-save"></i> 保存内容';
+            }, 2000);
+        });
+        
+        // 联盟聊天室功能
+        function openChatroom() {
+            alert("即将打开Kiomet联盟聊天室...\n\n七大联盟公共交流区:\n- dictators\n- FSA\n- EVE\n- 天烬联盟\n- SBA\n- LOONG\n- 怪诞小镇");
+            window.open('https://nightly.paw.msgbyte.com/invite/ROHVvHVM', '_blank');
+        }
+        
+        // 快捷键支持
+        document.addEventListener('keydown', (e) => {
+            // T键 显示/隐藏工具
+            if (e.key === 't' || e.key === 'T') {
+                e.preventDefault();
+                tabs[0].click();
+                toggleSidebar();
+            }
+            
+            // G键 显示/隐藏翻译
+            if (e.key === 'g' || e.key === 'G') {
+                e.preventDefault();
+                tabs[1].click();
+                toggleSidebar();
+            }
+            
+            // H键打开聊天室
+            if (e.key === 'h' || e.key === 'H') {
+                openChatroom();
+            }
+            
+            // ESC键关闭侧边栏
+            if (e.key === 'Escape') {
+                leftSidebar.classList.remove('active');
+                floatTools.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
