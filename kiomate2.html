@@ -425,7 +425,7 @@
             <div class="chat-messages" id="chatMessages">
                 <div class="chat-message">
                     <div class="message-sender">系统</div>
-                    <div class="message-content">欢迎使用KioMate！聊天功能已修复。</div>
+                    <div class="message-content">欢迎来到KioMate2.0聊天私服！内测阶段暂不支持改名~如果觉得好用可以推广一下。</div>
                     <div class="message-time">刚刚</div>
                 </div>
             </div>
@@ -636,8 +636,8 @@
             )
             .subscribe();
         
-        // 定期刷新消息（每秒一次）
-        let refreshInterval = setInterval(loadMessages, 1000);
+        // 定期刷新消息（每3秒一次）
+        let refreshInterval = setInterval(loadMessages, 3000);
         
         // 加载历史消息
         async function loadMessages() {
@@ -664,7 +664,7 @@
                 data.reverse().forEach(addMessageToChat);
                 
                 // 滚动到底部
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                //chatMessages.scrollTop = chatMessages.scrollHeight;
             } catch (err) {
                 console.error('加载消息异常:', err);
             }
