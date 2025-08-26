@@ -445,7 +445,7 @@
     <script>
         // Supabase初始化
         const supabaseUrl = 'https://meeuseqgrbegaalrayeu.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lZXVzZXFncmJlZ2FhbHJheWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0MjUsImV4cCI6MjA3MTcwODQyNX0.DSLAtwP-vrFYyVeBH0l9_tyoQF2rHHW6jPcnsQ7dKEM';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhbmFzZSIsInJlZiI6Im1lZXVzZXFncmJlZ2FhbHJheWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0MjUsImV4cCI6MjA3MTcwODQyNX0.DSLAtwP-vrFYyVeBH0l9_tyoQF2rHHW6jPcnsQ7dKEM';
         
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
@@ -557,30 +557,39 @@
         }
         
         // 发送消息
-        // 发送消息
         async function sendMessage() {
-           const message = chatInput.value.trim();
-           if (!message) return;
+            const message = chatInput.value.trim();
+            if (!message) return;
     
-           // 先在本地显示消息（立即反馈）
-           const tempMessage = {
-               username: username,
-               message: message,
-               timestamp: new Date().toISOString()
-           };
-           addMessageToChat(tempMessage);
+            // 先在本地显示消息（立即反馈）
+            const tempMessage = {
+                username: username,
+                message: message,
+                timestamp: new Date().toISOString()
+            };
+            addMessageToChat(tempMessage);
     
-           const { error } = await supabase
-               .from('kiomet_chat')
-               .insert([tempMessage]);
+            const { error } = await supabase
+                .from('kiomet_chat')
+                .insert([tempMessage]);
     
-           if (error) {
-               console.error('发送消息错误:', error);
-               // 可选：从界面移除失败的消息
-           } else {
-               chatInput.value = '';
-           }
-       }
+            if (error) {
+                console.error('发送消息错误:', error);
+                // 可选：从界面移除失败的消息
+            } else {
+                chatInput.value = '';
+            }
+        }
+        
+        // 绑定发送按钮事件
+        chatSend.addEventListener('click', sendMessage);
+        
+        // 绑定回车键发送消息
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
         
         // 接收实时消息
         supabase
@@ -624,6 +633,20 @@
         
         // 添加消息到聊天窗口
         function addMessageToChat(messageData) {
+            // 检查是否已存在相同消息（避免重复显示）
+            const existingMessages = chatMessages.querySelectorAll('.chat-message');
+            for (let msg of existingMessages) {
+                const sender = msg.querySelector('.message-sender').textContent;
+                const content = msg.querySelector('.message-content').textContent;
+                const time = msg.querySelector('.message-time').textContent;
+                
+                if (sender === messageData.username && 
+                    content === messageData.message && 
+                    time === formatTime(messageData.timestamp)) {
+                    return; // 消息已存在，不重复添加
+                }
+            }
+            
             const messageElement = document.createElement('div');
             messageElement.className = 'chat-message';
             
@@ -668,6 +691,9 @@
         
         // 加载消息
         loadMessages();
+        
+        // 设置定时刷新消息（每秒一次）
+        setInterval(loadMessages, 1000);
         
         // 快捷键支持
         document.addEventListener('keydown', (e) => {
