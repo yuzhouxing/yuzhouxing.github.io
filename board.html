@@ -5,202 +5,179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kiomet 实时排行榜</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f8fb;
-            color: #333;
-        }
-        h1 {
-            text-align: center;
-            color: #2c5282;
-            margin-bottom: 20px;
-        }
-        #status {
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            min-height: 24px;
-        }
-        .connected {
-            color: #38a169;
-        }
-        .disconnected {
-            color: #e53e3e;
-        }
-        #leaderboard-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        #leaderboard-table th {
-            background-color: #2c5282;
-            color: white;
-            padding: 12px 15px;
-            text-align: left;
-        }
-        #leaderboard-table tr:nth-child(even) {
-            background-color: #f8fafc;
-        }
-        #leaderboard-table tr:hover {
-            background-color: #edf2f7;
-        }
-        #leaderboard-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .ranking {
-            font-weight: bold;
-            color: #4a5568;
-            width: 50px;
-            text-align: center;
-        }
-        .score {
-            font-weight: bold;
-            color: #2c5282;
-            text-align: right;
-        }
-        #refreshTip {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #718096;
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #2c5282; text-align: center; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; }
+        .connected { background: #c6f6d5; color: #22543d; }
+        .disconnected { background: #fed7d7; color: #742a2a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #2c5282; color: white; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .ranking { font-weight: bold; width: 60px; }
+        .score { font-weight: bold; color: #2c5282; width: 100px; text-align: right; }
+        .authentic { font-style: italic; color: #38a169; }
     </style>
 </head>
 <body>
-    <h1>Kiomet 实时排行榜</h1>
-    <div id="status" class="disconnected">状态: 正在连接...</div>
-    <table id="leaderboard-table">
-        <thead>
-            <tr>
-                <th>排名</th>
-                <th>玩家别名</th>
-                <th>分数</th>
-            </tr>
-        </thead>
-        <tbody id="leaderboard-body">
-            <!-- 数据将由 JavaScript 动态填充 -->
-        </tbody>
-    </table>
-    <div id="refreshTip">数据将自动更新</div>
+    <div class="container">
+        <h1>Kiomet 实时排行榜</h1>
+        <div id="status" class="status disconnected">正在连接...</div>
+        
+        <div id="stats">
+            <div>服务器玩家: <span id="players-shard">0</span></div>
+            <div>在线总数: <span id="players-online">0</span></div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="ranking">排名</th>
+                    <th>玩家</th>
+                    <th class="score">分数</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+                <!-- 数据将动态填充 -->
+            </tbody>
+        </table>
+    </div>
 
     <script>
-        // 重要提示：
-        // 以下 WebSocket URL 和消息格式是假设的。
-        // 实际的 kiomet.com WebSocket 连接细节（URL、协议、认证、消息格式）需要通过
-        // 浏览器开发者工具的“网络”(Network)标签页（筛选 WS）手动探查。
-        // 连接可能需要进行身份验证或使用特定的初始握手消息。
+        // 需要探查的实际WebSocket地址
+        const WS_URL = "wss://kiomet.com/ws"; // 或 wss://kiomet.com/api/ws
+        
+        let socket = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
 
-        // 假设的 WebSocket 端点 (你需要通过浏览器开发者工具找到真实的 URL 和协议)
-        const wsUrl = "wss://kiomet.com/ws"; // 或 "wss://kiomet.com/api/ws" 等
+        function connect() {
+            const status = document.getElementById('status');
+            status.textContent = '正在连接...';
+            status.className = 'status disconnected';
 
-        // 假设连接成功后需要发送的初始消息（如果有的话，也需要探查）
-        // const initialMessage = { type: "subscribe_leaderboard" };
+            try {
+                socket = new WebSocket(WS_URL);
+                
+                socket.onopen = function(event) {
+                    console.log('WebSocket连接已建立');
+                    status.textContent = '已连接 - 等待数据...';
+                    status.className = 'status connected';
+                    reconnectAttempts = 0;
+                    
+                    // 这里可能需要发送认证或订阅消息
+                    // 需要探查具体的握手协议
+                    // socket.send(JSON.stringify({ type: 'subscribe', channel: 'liveboard' }));
+                };
 
-        const statusElement = document.getElementById('status');
-        const leaderboardBody = document.getElementById('leaderboard-body');
-        let websocket;
-
-        function connectWebSocket() {
-            websocket = new WebSocket(wsUrl);
-
-            websocket.onopen = function(event) {
-                statusElement.textContent = "状态: 已连接";
-                statusElement.className = "connected";
-                console.log("WebSocket 连接已建立");
-                // 如果有初始消息，则发送
-                // if (initialMessage) {
-                //     websocket.send(JSON.stringify(initialMessage));
-                // }
-            };
-
-            websocket.onmessage = function(event) {
-                // 假设服务器发送的是 JSON 字符串，其中包含 liveboard 数组
-                // 实际的格式需要根据服务器发送的消息来确定
-                try {
-                    const data = JSON.parse(event.data);
-                    // 假设消息结构 { liveboard: [ { alias: "Player1", score: 100, ... }, ... ] }
-                    // 或者可能是 { type: "liveboard_update", data: { liveboard: [...] } }
-                    // 你需要根据实际接收到的消息结构调整下面的代码
-                    if (data.liveboard && Array.isArray(data.liveboard)) {
-                        updateLeaderboard(data.liveboard);
+                socket.onmessage = function(event) {
+                    try {
+                        // 注意：数据可能是bitcode编码的，需要相应的解码器
+                        // 这里假设已经是JSON格式，或者需要先解码
+                        const message = JSON.parse(event.data);
+                        processMessage(message);
+                    } catch (error) {
+                        console.log('收到非JSON消息，可能是bitcode编码');
+                        // 需要bitcode解码逻辑
                     }
-                    // 另一种可能的消息结构
-                    else if (data.type === "liveboard_update" && data.data && Array.isArray(data.data.liveboard)) {
-                        updateLeaderboard(data.data.liveboard);
-                    }
-                    else {
-                         console.warn("收到消息，但未找到预期的排行榜数据:", data);
-                    }
-                } catch (error) {
-                    console.error("解析消息数据时出错:", error, "原始数据:", event.data);
-                }
-            };
+                };
 
-            websocket.onerror = function(error) {
-                console.error("WebSocket 错误:", error);
-                statusElement.textContent = "状态: 连接错误";
-                statusElement.className = "disconnected";
-            };
+                socket.onerror = function(error) {
+                    console.error('WebSocket错误:', error);
+                    status.textContent = '连接错误';
+                    status.className = 'status disconnected';
+                };
 
-            websocket.onclose = function(event) {
-                statusElement.textContent = `状态: 连接关闭 (代码: ${event.code}, 原因: ${event.reason || '未知'})`;
-                statusElement.className = "disconnected";
-                console.log("WebSocket 连接已关闭");
-                // 可选：尝试重新连接
-                // setTimeout(connectWebSocket, 3000);
-            };
+                socket.onclose = function(event) {
+                    console.log('WebSocket连接关闭:', event.code, event.reason);
+                    status.textContent = `连接关闭 (${event.code})`;
+                    status.className = 'status disconnected';
+                    
+                    // 自动重连逻辑
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        setTimeout(connect, 3000 * reconnectAttempts);
+                    }
+                };
+
+            } catch (error) {
+                console.error('创建WebSocket失败:', error);
+                status.textContent = '连接失败';
+                status.className = 'status disconnected';
+            }
         }
 
-        function updateLeaderboard(liveboardData) {
-            // 清空现有的表格内容
-            leaderboardBody.innerHTML = '';
-
-            // 对接收到的数据按分数降序排序（通常服务器已经排序，但确保一下）
-            const sortedData = liveboardData.sort((a, b) => b.score - a.score);
-
-            // 遍历排行榜数据并创建表格行
-            sortedData.forEach((player, index) => {
-                const row = document.createElement('tr');
-
-                const rankCell = document.createElement('td');
-                rankCell.textContent = index + 1;
-                rankCell.className = 'ranking';
-
-                const nameCell = document.createElement('td');
-                nameCell.textContent = player.alias; // 显示玩家别名
-
-                const scoreCell = document.createElement('td');
-                scoreCell.textContent = player.score; // 显示玩家分数
-                scoreCell.className = 'score';
-
-                row.appendChild(rankCell);
-                row.appendChild(nameCell);
-                row.appendChild(scoreCell);
-
-                leaderboardBody.appendChild(row);
-            });
+        function processMessage(message) {
+            // 根据协议处理不同类型的消息
+            if (message.type === 'liveboard_update' || message.liveboard) {
+                updateLeaderboard(message);
+            }
+            // 处理其他类型的消息...
         }
 
-        // 页面加载时建立连接
-        window.addEventListener('load', connectWebSocket);
+        function updateLeaderboard(data) {
+            const tbody = document.getElementById('leaderboard-body');
+            const shardSpan = document.getElementById('players-shard');
+            const onlineSpan = document.getElementById('players-online');
+            
+            // 更新统计信息
+            if (data.players_on_shard !== undefined) {
+                shardSpan.textContent = data.players_on_shard;
+            }
+            if (data.players_online !== undefined) {
+                onlineSpan.textContent = data.players_online;
+            }
 
-        // 页面不可见时（如切换标签页）可以考虑暂停更新或降低更新频率以节省资源[citation:5]
-        // document.addEventListener('visibilitychange', function() {
-        //    if (document.hidden) {
-        //        // 页面隐藏，可以暂时关闭WS或不做任何操作
-        //        console.log("页面隐藏");
-        //    } else {
-        //        // 页面再次可见，如果需要可以重新建立连接或刷新数据
-        //        console.log("页面可见");
-        //    }
-        // });
+            // 清空现有数据
+            tbody.innerHTML = '';
+
+            // 更新排行榜数据
+            if (data.liveboard && Array.isArray(data.liveboard)) {
+                data.liveboard.forEach((player, index) => {
+                    const row = document.createElement('tr');
+                    
+                    // 排名
+                    const rankCell = document.createElement('td');
+                    rankCell.className = 'ranking';
+                    rankCell.textContent = index + 1;
+                    
+                    // 玩家名称
+                    const nameCell = document.createElement('td');
+                    let nameText = player.alias;
+                    if (player.team_name) {
+                        nameText = `${player.team_name} (${player.alias})`;
+                    }
+                    if (player.authentic) {
+                        nameCell.innerHTML = `<span class="authentic">${nameText} ✓</span>`;
+                    } else {
+                        nameCell.textContent = nameText;
+                    }
+                    
+                    // 分数
+                    const scoreCell = document.createElement('td');
+                    scoreCell.className = 'score';
+                    scoreCell.textContent = player.score.toLocaleString();
+                    
+                    row.appendChild(rankCell);
+                    row.appendChild(nameCell);
+                    row.appendChild(scoreCell);
+                    tbody.appendChild(row);
+                });
+                
+                document.getElementById('status').textContent = '数据已更新';
+            }
+        }
+
+        // 页面加载时连接
+        window.addEventListener('load', connect);
+        
+        // 页面关闭时断开连接
+        window.addEventListener('beforeunload', function() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        });
     </script>
 </body>
 </html>
