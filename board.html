@@ -5,179 +5,537 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kiomet 实时排行榜</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #2c5282; text-align: center; }
-        .status { padding: 10px; margin: 10px 0; border-radius: 4px; text-align: center; }
-        .connected { background: #c6f6d5; color: #22543d; }
-        .disconnected { background: #fed7d7; color: #742a2a; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #2c5282; color: white; }
-        tr:nth-child(even) { background: #f7fafc; }
-        .ranking { font-weight: bold; width: 60px; }
-        .score { font-weight: bold; color: #2c5282; width: 100px; text-align: right; }
-        .authentic { font-style: italic; color: #38a169; }
+        /* 样式保持不变 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #0d1117;
+            color: #e6edf3;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #161b22;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #58a6ff;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #30363d;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #238636;
+            color: white;
+        }
+        .disconnected {
+            background-color: #da3633;
+            color: white;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background-color: #21262d;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #8b949e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #161b22;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+        th {
+            background-color: #1f6feb;
+            color: white;
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #388bfd;
+        }
+        tr:hover {
+            background-color: #21262d;
+        }
+        .rank {
+            font-weight: bold;
+            text-align: center;
+            width: 60px;
+        }
+        .player {
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        .score {
+            font-weight: bold;
+            text-align: right;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        button#reconnectBtn {
+            background-color: #da3633;
+        }
+        button#reconnectBtn:hover {
+            background-color: #f85149;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #8b949e;
+        }
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Kiomet 实时排行榜</h1>
-        <div id="status" class="status disconnected">正在连接...</div>
+        <div id="status" class="status disconnected">正在连接到 wss://kiomet.com/ws...</div>
         
-        <div id="stats">
-            <div>服务器玩家: <span id="players-shard">0</span></div>
-            <div>在线总数: <span id="players-online">0</span></div>
+        <div class="controls">
+            <button id="reconnectBtn">重新连接</button>
+            <button id="toggleUpdateBtn">暂停更新</button>
+            <button id="authBtn" style="display:none">认证</button>
         </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th class="ranking">排名</th>
-                    <th>玩家</th>
-                    <th class="score">分数</th>
-                </tr>
-            </thead>
-            <tbody id="leaderboard-body">
-                <!-- 数据将动态填充 -->
-            </tbody>
-        </table>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-value" id="total-players">0</div>
+                <div class="stat-label">总玩家数</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="average-score">0</div>
+                <div class="stat-label">平均分数</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="top-score">0</div>
+                <div class="stat-label">最高分数</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="last-update">-</div>
+                <div class="stat-label">最后更新</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="rtt">-</div>
+                <div class="stat-label">网络延迟</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="leaderboard">
+                <thead>
+                    <tr>
+                        <th class="rank" onclick="sortTable(0)">排名 ↕</th>
+                        <th class="player" onclick="sortTable(1)">玩家名称 ↕</th>
+                        <th onclick="sortTable(2)">分数 ↕</th>
+                        <th onclick="sortTable(3)">击杀 ↕</th>
+                        <th onclick="sortTable(4)">存活时间 ↕</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr>
+                        <td colspan="5" class="loading">正在等待数据...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        // 需要探查的实际WebSocket地址
-        const WS_URL = "wss://kiomet.com/ws"; // 或 wss://kiomet.com/api/ws
+        // 配置
+        const WS_URL = "wss://kiomet.com/ws";
+        const RECONNECT_DELAY = 3000;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        const PING_INTERVAL = 10000; // 10秒心跳
         
         let socket = null;
         let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
+        let isConnected = false;
+        let lastUpdateTime = null;
+        let updatePaused = false;
+        let leaderboardData = [];
+        let sortColumn = 0;
+        let sortDirection = 'desc';
+        let pingIntervalId = null;
+        let lastPingTime = null;
+        let rtt = null;
 
+        // 初始化
+        function init() {
+            connect();
+            
+            document.getElementById('reconnectBtn').addEventListener('click', function() {
+                reconnectAttempts = 0;
+                connect();
+            });
+            
+            document.getElementById('toggleUpdateBtn').addEventListener('click', function() {
+                updatePaused = !updatePaused;
+                this.textContent = updatePaused ? '继续更新' : '暂停更新';
+                this.style.backgroundColor = updatePaused ? '#da3633' : '#238636';
+            });
+            
+            document.getElementById('authBtn').addEventListener('click', sendAuthMessage);
+        }
+
+        // 连接WebSocket
         function connect() {
-            const status = document.getElementById('status');
-            status.textContent = '正在连接...';
-            status.className = 'status disconnected';
-
+            if (socket) {
+                socket.close();
+                clearInterval(pingIntervalId);
+            }
+            
+            updateStatus(`正在连接到 ${WS_URL}...`, 'disconnected');
+            isConnected = false;
+            
             try {
-                socket = new WebSocket(WS_URL);
+                // 添加必要的查询参数
+                const url = new URL(WS_URL);
+                url.searchParams.append('t', Date.now().toString()); // 防止缓存
+                // 可能需要其他认证参数
+                
+                socket = new WebSocket(url.toString());
                 
                 socket.onopen = function(event) {
                     console.log('WebSocket连接已建立');
-                    status.textContent = '已连接 - 等待数据...';
-                    status.className = 'status connected';
+                    isConnected = true;
                     reconnectAttempts = 0;
+                    updateStatus('已连接到 kiomet.com - 等待认证...', 'connected');
                     
-                    // 这里可能需要发送认证或订阅消息
-                    // 需要探查具体的握手协议
-                    // socket.send(JSON.stringify({ type: 'subscribe', channel: 'liveboard' }));
+                    // 启动心跳
+                    startHeartbeat();
+                    
+                    // 显示认证按钮（可能需要用户交互）
+                    document.getElementById('authBtn').style.display = 'block';
                 };
 
                 socket.onmessage = function(event) {
+                    if (updatePaused) return;
+                    
                     try {
-                        // 注意：数据可能是bitcode编码的，需要相应的解码器
-                        // 这里假设已经是JSON格式，或者需要先解码
-                        const message = JSON.parse(event.data);
-                        processMessage(message);
+                        if (typeof event.data === 'string') {
+                            console.log('收到文本消息（不应该发生）:', event.data);
+                        } else {
+                            processBinaryData(event.data);
+                        }
                     } catch (error) {
-                        console.log('收到非JSON消息，可能是bitcode编码');
-                        // 需要bitcode解码逻辑
+                        console.error('处理消息时出错:', error);
                     }
                 };
 
                 socket.onerror = function(error) {
                     console.error('WebSocket错误:', error);
-                    status.textContent = '连接错误';
-                    status.className = 'status disconnected';
+                    updateStatus('连接错误', 'disconnected');
                 };
 
                 socket.onclose = function(event) {
                     console.log('WebSocket连接关闭:', event.code, event.reason);
-                    status.textContent = `连接关闭 (${event.code})`;
-                    status.className = 'status disconnected';
+                    isConnected = false;
+                    clearInterval(pingIntervalId);
+                    document.getElementById('authBtn').style.display = 'none';
                     
-                    // 自动重连逻辑
-                    if (reconnectAttempts < maxReconnectAttempts) {
-                        reconnectAttempts++;
-                        setTimeout(connect, 3000 * reconnectAttempts);
+                    if (event.code !== 1000) {
+                        updateStatus(`连接关闭，尝试重连... (代码: ${event.code})`, 'disconnected');
+                        
+                        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                            setTimeout(() => {
+                                reconnectAttempts++;
+                                connect();
+                            }, RECONNECT_DELAY);
+                        } else {
+                            updateStatus('连接失败，请手动重试', 'disconnected');
+                        }
+                    } else {
+                        updateStatus('连接已正常关闭', 'disconnected');
                     }
                 };
 
             } catch (error) {
                 console.error('创建WebSocket失败:', error);
-                status.textContent = '连接失败';
-                status.className = 'status disconnected';
+                updateStatus('连接失败: ' + error.message, 'disconnected');
             }
         }
 
-        function processMessage(message) {
-            // 根据协议处理不同类型的消息
-            if (message.type === 'liveboard_update' || message.liveboard) {
-                updateLeaderboard(message);
-            }
-            // 处理其他类型的消息...
+        // 启动心跳机制
+        function startHeartbeat() {
+            clearInterval(pingIntervalId);
+            pingIntervalId = setInterval(() => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    lastPingTime = Date.now();
+                    // 发送ping（使用二进制数据）
+                    const pingData = new ArrayBuffer(8);
+                    const view = new DataView(pingData);
+                    view.setBigInt64(0, BigInt(Date.now()), true); // 小端字节序
+                    socket.send(pingData);
+                }
+            }, PING_INTERVAL);
         }
 
-        function updateLeaderboard(data) {
-            const tbody = document.getElementById('leaderboard-body');
-            const shardSpan = document.getElementById('players-shard');
-            const onlineSpan = document.getElementById('players-online');
+        // 发送认证消息
+        function sendAuthMessage() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                updateStatus('请先建立连接', 'disconnected');
+                return;
+            }
             
-            // 更新统计信息
-            if (data.players_on_shard !== undefined) {
-                shardSpan.textContent = data.players_on_shard;
-            }
-            if (data.players_online !== undefined) {
-                onlineSpan.textContent = data.players_online;
-            }
-
-            // 清空现有数据
-            tbody.innerHTML = '';
-
-            // 更新排行榜数据
-            if (data.liveboard && Array.isArray(data.liveboard)) {
-                data.liveboard.forEach((player, index) => {
-                    const row = document.createElement('tr');
-                    
-                    // 排名
-                    const rankCell = document.createElement('td');
-                    rankCell.className = 'ranking';
-                    rankCell.textContent = index + 1;
-                    
-                    // 玩家名称
-                    const nameCell = document.createElement('td');
-                    let nameText = player.alias;
-                    if (player.team_name) {
-                        nameText = `${player.team_name} (${player.alias})`;
-                    }
-                    if (player.authentic) {
-                        nameCell.innerHTML = `<span class="authentic">${nameText} ✓</span>`;
-                    } else {
-                        nameCell.textContent = nameText;
-                    }
-                    
-                    // 分数
-                    const scoreCell = document.createElement('td');
-                    scoreCell.className = 'score';
-                    scoreCell.textContent = player.score.toLocaleString();
-                    
-                    row.appendChild(rankCell);
-                    row.appendChild(nameCell);
-                    row.appendChild(scoreCell);
-                    tbody.appendChild(row);
-                });
+            try {
+                // 构建认证消息（需要根据服务器协议调整）
+                const authMessage = {
+                    type: 'subscribe',
+                    channel: 'leaderboard',
+                    timestamp: Date.now()
+                };
                 
-                document.getElementById('status').textContent = '数据已更新';
+                // 转换为二进制（示例，实际格式需要调整）
+                const encoder = new TextEncoder();
+                const data = encoder.encode(JSON.stringify(authMessage));
+                socket.send(data);
+                
+                updateStatus('已发送认证请求 - 等待数据...', 'connected');
+                document.getElementById('authBtn').style.display = 'none';
+                
+            } catch (error) {
+                console.error('发送认证消息失败:', error);
+                updateStatus('认证失败: ' + error.message, 'disconnected');
             }
         }
 
-        // 页面加载时连接
-        window.addEventListener('load', connect);
-        
-        // 页面关闭时断开连接
-        window.addEventListener('beforeunload', function() {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.close();
+        // 处理二进制数据
+        function processBinaryData(data) {
+            // 检查是否是pong响应
+            if (data.byteLength === 8 && lastPingTime) {
+                try {
+                    const view = new DataView(data);
+                    const pingTime = Number(view.getBigInt64(0, true));
+                    rtt = Date.now() - pingTime;
+                    document.getElementById('rtt').textContent = `${rtt}ms`;
+                    return;
+                } catch (e) {
+                    // 不是pong消息，继续处理
+                }
             }
-        });
+            
+            // 尝试解码为文本（可能是JSON）
+            try {
+                const decoder = new TextDecoder('utf-8');
+                const text = decoder.decode(data);
+                
+                try {
+                    const message = JSON.parse(text);
+                    processMessage(message);
+                } catch (e) {
+                    console.log('二进制数据转换为文本:', text);
+                    // 可能是其他格式的数据
+                    processRawData(data);
+                }
+            } catch (error) {
+                console.error('处理二进制数据时出错:', error);
+                processRawData(data);
+            }
+        }
+
+        // 处理消息
+        function processMessage(message) {
+            if (message.type === 'liveboard_update' || message.leaderboard) {
+                updateLeaderboard(message);
+            } else if (message.type === 'error') {
+                console.error('服务器返回错误:', message);
+                updateStatus('服务器错误: ' + (message.reason || '未知错误'), 'disconnected');
+            } else {
+                console.log('收到消息:', message);
+            }
+        }
+
+        // 处理原始二进制数据
+        function processRawData(data) {
+            console.log('收到二进制数据，长度:', data.byteLength);
+            // 这里可以添加特定的二进制数据解析逻辑
+        }
+
+        // 更新排行榜
+        function updateLeaderboard(data) {
+            lastUpdateTime = new Date();
+            document.getElementById('last-update').textContent = lastUpdateTime.toLocaleTimeString();
+            
+            if (data.leaderboard && Array.isArray(data.leaderboard)) {
+                leaderboardData = data.leaderboard;
+                updateStatistics(leaderboardData);
+                renderLeaderboard(leaderboardData);
+            } else if (data.players && Array.isArray(data.players)) {
+                leaderboardData = data.players;
+                updateStatistics(leaderboardData);
+                renderLeaderboard(leaderboardData);
+            } else {
+                console.log('未知数据格式:', data);
+            }
+        }
+
+        // 更新统计信息
+        function updateStatistics(data) {
+            if (!data || data.length === 0) return;
+            
+            document.getElementById('total-players').textContent = data.length;
+            
+            const totalScore = data.reduce((sum, player) => sum + (player.score || 0), 0);
+            const avgScore = Math.round(totalScore / data.length);
+            document.getElementById('average-score').textContent = avgScore.toLocaleString();
+            
+            const topScore = Math.max(...data.map(player => player.score || 0));
+            document.getElementById('top-score').textContent = topScore.toLocaleString();
+        }
+
+        // 渲染排行榜
+        function renderLeaderboard(data) {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="loading">暂无数据</td></tr>';
+                return;
+            }
+            
+            const sortedData = sortData(data, sortColumn, sortDirection);
+            
+            sortedData.forEach((player, index) => {
+                const row = document.createElement('tr');
+                
+                const rankCell = document.createElement('td');
+                rankCell.className = 'rank';
+                rankCell.textContent = index + 1;
+                row.appendChild(rankCell);
+                
+                const nameCell = document.createElement('td');
+                nameCell.className = 'player';
+                nameCell.textContent = player.name || `玩家 ${player.id || '未知'}`;
+                row.appendChild(nameCell);
+                
+                const scoreCell = document.createElement('td');
+                scoreCell.textContent = (player.score || 0).toLocaleString();
+                row.appendChild(scoreCell);
+                
+                const killsCell = document.createElement('td');
+                killsCell.textContent = (player.kills || 0).toLocaleString();
+                row.appendChild(killsCell);
+                
+                const timeCell = document.createElement('td');
+                const time = player.survivalTime || 0;
+                const minutes = Math.floor(time / 60);
+                const seconds = time % 60;
+                timeCell.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                row.appendChild(timeCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // 排序数据
+        function sortData(data, columnIndex, direction) {
+            return [...data].sort((a, b) => {
+                let valueA, valueB;
+                
+                switch(columnIndex) {
+                    case 0: valueA = data.indexOf(a); valueB = data.indexOf(b); break;
+                    case 1: valueA = a.name || ''; valueB = b.name || ''; break;
+                    case 2: valueA = a.score || 0; valueB = b.score || 0; break;
+                    case 3: valueA = a.kills || 0; valueB = b.kills || 0; break;
+                    case 4: valueA = a.survivalTime || 0; valueB = b.survivalTime || 0; break;
+                    default: valueA = a.score || 0; valueB = b.score || 0;
+                }
+                
+                if (typeof valueA === 'string') {
+                    return direction === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                } else {
+                    return direction === 'asc' ? valueA - valueB : valueB - valueA;
+                }
+            });
+        }
+
+        // 表格排序
+        function sortTable(columnIndex) {
+            const headers = document.querySelectorAll('th');
+            headers.forEach(header => {
+                header.textContent = header.textContent.replace(' ↑', '').replace(' ↓', '');
+            });
+            
+            if (sortColumn === columnIndex) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = columnIndex;
+                sortDirection = 'desc';
+            }
+            
+            const currentHeader = headers[columnIndex];
+            currentHeader.textContent = currentHeader.textContent.replace(' ↕', '') + 
+                                        (sortDirection === 'asc' ? ' ↑' : ' ↓');
+            
+            if (leaderboardData.length > 0) {
+                renderLeaderboard(leaderboardData);
+            }
+        }
+
+        // 更新状态显示
+        function updateStatus(message, status) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${status}`;
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
