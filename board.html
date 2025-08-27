@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kiomet 实时排行榜</title>
     <style>
-        /* 样式保持不变 */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -41,6 +40,10 @@
         }
         .disconnected {
             background-color: #da3633;
+            color: white;
+        }
+        .warning {
+            background-color: #9e6a03;
             color: white;
         }
         .stats {
@@ -106,6 +109,7 @@
             gap: 10px;
             margin-bottom: 20px;
             justify-content: center;
+            flex-wrap: wrap;
         }
         button {
             background-color: #238636;
@@ -126,10 +130,35 @@
         button#reconnectBtn:hover {
             background-color: #f85149;
         }
+        .protocol-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .protocol-btn {
+            padding: 8px 12px;
+            border: 1px solid #30363d;
+            background-color: #21262d;
+            color: #e6edf3;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .protocol-btn.active {
+            background-color: #1f6feb;
+            border-color: #1f6feb;
+        }
         .loading {
             text-align: center;
             padding: 20px;
             color: #8b949e;
+        }
+        .browser-support {
+            background-color: #21262d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #9e6a03;
         }
         @media (max-width: 768px) {
             .stats {
@@ -138,18 +167,35 @@
             th, td {
                 padding: 8px 10px;
             }
+            .controls {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Kiomet 实时排行榜</h1>
-        <div id="status" class="status disconnected">正在连接到 wss://kiomet.com/ws...</div>
+        
+        <div id="browser-support" class="browser-support" style="display: none;">
+            <h3>浏览器兼容性提示</h3>
+            <p>您的浏览器可能不支持WebTransport协议。排行榜数据可能无法实时更新。</p>
+            <p>建议使用最新版本的Chrome、Edge或Firefox以获得最佳体验。</p>
+        </div>
+        
+        <div class="protocol-selector">
+            <span>连接协议:</span>
+            <button id="wtProtocolBtn" class="protocol-btn active">WebTransport</button>
+            <button id="wsProtocolBtn" class="protocol-btn">WebSocket</button>
+            <button id="httpProtocolBtn" class="protocol-btn">HTTP轮询</button>
+        </div>
+        
+        <div id="status" class="status disconnected">选择协议并连接...</div>
         
         <div class="controls">
-            <button id="reconnectBtn">重新连接</button>
+            <button id="connectBtn">连接</button>
+            <button id="disconnectBtn" disabled>断开</button>
             <button id="toggleUpdateBtn">暂停更新</button>
-            <button id="authBtn" style="display:none">认证</button>
         </div>
         
         <div class="stats">
@@ -173,6 +219,10 @@
                 <div class="stat-value" id="rtt">-</div>
                 <div class="stat-label">网络延迟</div>
             </div>
+            <div class="stat-box">
+                <div class="stat-value" id="protocol">-</div>
+                <div class="stat-label">当前协议</div>
+            </div>
         </div>
         
         <div class="table-container">
@@ -188,7 +238,7 @@
                 </thead>
                 <tbody id="leaderboard-body">
                     <tr>
-                        <td colspan="5" class="loading">正在等待数据...</td>
+                        <td colspan="5" class="loading">等待连接...</td>
                     </tr>
                 </tbody>
             </table>
@@ -197,78 +247,217 @@
 
     <script>
         // 配置
+        const WT_URL = "https://kiomet.com:443"; // WebTransport使用HTTPS端口
         const WS_URL = "wss://kiomet.com/ws";
+        const HTTP_URL = "https://kiomet.com/api/leaderboard";
         const RECONNECT_DELAY = 3000;
-        const MAX_RECONNECT_ATTEMPTS = 5;
-        const PING_INTERVAL = 10000; // 10秒心跳
+        const HTTP_POLL_INTERVAL = 5000; // 5秒轮询
         
-        let socket = null;
-        let reconnectAttempts = 0;
+        let currentProtocol = 'webtransport';
+        let connection = null;
         let isConnected = false;
-        let lastUpdateTime = null;
         let updatePaused = false;
         let leaderboardData = [];
         let sortColumn = 0;
         let sortDirection = 'desc';
-        let pingIntervalId = null;
-        let lastPingTime = null;
+        let pollIntervalId = null;
         let rtt = null;
+
+        // 检测浏览器支持
+        function checkBrowserSupport() {
+            const supportsWT = !!window.WebTransport;
+            const supportsWS = !!window.WebSocket;
+            
+            if (!supportsWT) {
+                document.getElementById('browser-support').style.display = 'block';
+                document.getElementById('wtProtocolBtn').disabled = true;
+                
+                // 自动切换到支持的协议
+                if (supportsWS) {
+                    currentProtocol = 'websocket';
+                    document.getElementById('wsProtocolBtn').classList.add('active');
+                } else {
+                    currentProtocol = 'http';
+                    document.getElementById('httpProtocolBtn').classList.add('active');
+                }
+            }
+            
+            updateProtocolDisplay();
+        }
 
         // 初始化
         function init() {
-            connect();
+            checkBrowserSupport();
             
-            document.getElementById('reconnectBtn').addEventListener('click', function() {
-                reconnectAttempts = 0;
-                connect();
-            });
+            // 协议选择
+            document.getElementById('wtProtocolBtn').addEventListener('click', () => setProtocol('webtransport'));
+            document.getElementById('wsProtocolBtn').addEventListener('click', () => setProtocol('websocket'));
+            document.getElementById('httpProtocolBtn').addEventListener('click', () => setProtocol('http'));
             
-            document.getElementById('toggleUpdateBtn').addEventListener('click', function() {
-                updatePaused = !updatePaused;
-                this.textContent = updatePaused ? '继续更新' : '暂停更新';
-                this.style.backgroundColor = updatePaused ? '#da3633' : '#238636';
-            });
+            // 控制按钮
+            document.getElementById('connectBtn').addEventListener('click', connect);
+            document.getElementById('disconnectBtn').addEventListener('click', disconnect);
+            document.getElementById('toggleUpdateBtn').addEventListener('click', toggleUpdates);
             
-            document.getElementById('authBtn').addEventListener('click', sendAuthMessage);
+            updateProtocolDisplay();
+        }
+
+        // 设置协议
+        function setProtocol(protocol) {
+            if (isConnected) {
+                alert('请先断开当前连接');
+                return;
+            }
+            
+            currentProtocol = protocol;
+            document.querySelectorAll('.protocol-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(protocol + 'ProtocolBtn').classList.add('active');
+            
+            updateProtocolDisplay();
+            updateStatus('协议已切换到: ' + getProtocolName(protocol), 'disconnected');
+        }
+
+        // 获取协议名称
+        function getProtocolName(protocol) {
+            const names = {
+                'webtransport': 'WebTransport',
+                'websocket': 'WebSocket', 
+                'http': 'HTTP轮询'
+            };
+            return names[protocol] || protocol;
+        }
+
+        // 更新协议显示
+        function updateProtocolDisplay() {
+            document.getElementById('protocol').textContent = getProtocolName(currentProtocol);
+        }
+
+        // 连接
+        function connect() {
+            disconnect(); // 确保先断开现有连接
+            
+            switch(currentProtocol) {
+                case 'webtransport':
+                    connectWebTransport();
+                    break;
+                case 'websocket':
+                    connectWebSocket();
+                    break;
+                case 'http':
+                    connectHttpPolling();
+                    break;
+            }
+        }
+
+        // 断开连接
+        function disconnect() {
+            if (connection) {
+                try {
+                    if (currentProtocol === 'webtransport' && connection.close) {
+                        connection.close({ closeCode: 1000, reason: '用户请求' });
+                    } else if (currentProtocol === 'websocket') {
+                        connection.close(1000, '用户请求');
+                    }
+                } catch (e) {
+                    console.log('关闭连接时出错:', e);
+                }
+                connection = null;
+            }
+            
+            if (pollIntervalId) {
+                clearInterval(pollIntervalId);
+                pollIntervalId = null;
+            }
+            
+            isConnected = false;
+            updateStatus('已断开连接', 'disconnected');
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+        }
+
+        // 切换更新暂停
+        function toggleUpdates() {
+            updatePaused = !updatePaused;
+            const btn = document.getElementById('toggleUpdateBtn');
+            btn.textContent = updatePaused ? '继续更新' : '暂停更新';
+            btn.style.backgroundColor = updatePaused ? '#da3633' : '#238636';
+        }
+
+        // 连接WebTransport
+        async function connectWebTransport() {
+            if (!window.WebTransport) {
+                updateStatus('浏览器不支持WebTransport', 'disconnected');
+                return;
+            }
+            
+            updateStatus('正在连接WebTransport...', 'disconnected');
+            document.getElementById('connectBtn').disabled = true;
+            
+            try {
+                // 创建WebTransport连接
+                connection = new WebTransport(WT_URL);
+                
+                connection.closed.then(() => {
+                    console.log('WebTransport连接关闭');
+                    isConnected = false;
+                    updateStatus('WebTransport连接已关闭', 'disconnected');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                }).catch(error => {
+                    console.error('WebTransport连接错误:', error);
+                    updateStatus('连接错误: ' + error.message, 'disconnected');
+                    document.getElementById('connectBtn').disabled = false;
+                });
+                
+                // 等待连接就绪
+                await connection.ready;
+                isConnected = true;
+                updateStatus('WebTransport已连接 - 等待数据...', 'connected');
+                document.getElementById('disconnectBtn').disabled = false;
+                
+                // 创建双向流
+                const streams = await connection.createBidirectionalStream();
+                const writer = streams.writable.getWriter();
+                const reader = streams.readable.getReader();
+                
+                // 发送认证消息
+                await sendAuthMessage(writer);
+                
+                // 监听消息
+                listenForMessages(reader);
+                
+                // 启动心跳
+                startHeartbeat(writer);
+                
+            } catch (error) {
+                console.error('WebTransport连接失败:', error);
+                updateStatus('连接失败: ' + error.message, 'disconnected');
+                document.getElementById('connectBtn').disabled = false;
+            }
         }
 
         // 连接WebSocket
-        function connect() {
-            if (socket) {
-                socket.close();
-                clearInterval(pingIntervalId);
-            }
-            
-            updateStatus(`正在连接到 ${WS_URL}...`, 'disconnected');
-            isConnected = false;
+        function connectWebSocket() {
+            updateStatus('正在连接WebSocket...', 'disconnected');
+            document.getElementById('connectBtn').disabled = true;
             
             try {
-                // 添加必要的查询参数
-                const url = new URL(WS_URL);
-                url.searchParams.append('t', Date.now().toString()); // 防止缓存
-                // 可能需要其他认证参数
+                connection = new WebSocket(WS_URL);
                 
-                socket = new WebSocket(url.toString());
-                
-                socket.onopen = function(event) {
-                    console.log('WebSocket连接已建立');
+                connection.onopen = function() {
                     isConnected = true;
-                    reconnectAttempts = 0;
-                    updateStatus('已连接到 kiomet.com - 等待认证...', 'connected');
-                    
-                    // 启动心跳
-                    startHeartbeat();
-                    
-                    // 显示认证按钮（可能需要用户交互）
-                    document.getElementById('authBtn').style.display = 'block';
+                    updateStatus('WebSocket已连接 - 等待数据...', 'connected');
+                    document.getElementById('disconnectBtn').disabled = false;
+                    sendAuthMessage();
                 };
-
-                socket.onmessage = function(event) {
+                
+                connection.onmessage = function(event) {
                     if (updatePaused) return;
                     
                     try {
                         if (typeof event.data === 'string') {
-                            console.log('收到文本消息（不应该发生）:', event.data);
+                            const message = JSON.parse(event.data);
+                            processMessage(message);
                         } else {
                             processBinaryData(event.data);
                         }
@@ -276,100 +465,119 @@
                         console.error('处理消息时出错:', error);
                     }
                 };
-
-                socket.onerror = function(error) {
+                
+                connection.onerror = function(error) {
                     console.error('WebSocket错误:', error);
                     updateStatus('连接错误', 'disconnected');
                 };
-
-                socket.onclose = function(event) {
+                
+                connection.onclose = function(event) {
                     console.log('WebSocket连接关闭:', event.code, event.reason);
                     isConnected = false;
-                    clearInterval(pingIntervalId);
-                    document.getElementById('authBtn').style.display = 'none';
-                    
-                    if (event.code !== 1000) {
-                        updateStatus(`连接关闭，尝试重连... (代码: ${event.code})`, 'disconnected');
-                        
-                        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                            setTimeout(() => {
-                                reconnectAttempts++;
-                                connect();
-                            }, RECONNECT_DELAY);
-                        } else {
-                            updateStatus('连接失败，请手动重试', 'disconnected');
-                        }
-                    } else {
-                        updateStatus('连接已正常关闭', 'disconnected');
-                    }
+                    updateStatus('WebSocket连接已关闭', 'disconnected');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
                 };
-
+                
             } catch (error) {
                 console.error('创建WebSocket失败:', error);
                 updateStatus('连接失败: ' + error.message, 'disconnected');
+                document.getElementById('connectBtn').disabled = false;
             }
         }
 
-        // 启动心跳机制
-        function startHeartbeat() {
-            clearInterval(pingIntervalId);
-            pingIntervalId = setInterval(() => {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    lastPingTime = Date.now();
-                    // 发送ping（使用二进制数据）
-                    const pingData = new ArrayBuffer(8);
-                    const view = new DataView(pingData);
-                    view.setBigInt64(0, BigInt(Date.now()), true); // 小端字节序
-                    socket.send(pingData);
-                }
-            }, PING_INTERVAL);
+        // 连接HTTP轮询
+        function connectHttpPolling() {
+            updateStatus('开始HTTP轮询...', 'disconnected');
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            isConnected = true;
+            
+            // 立即请求一次
+            fetchLeaderboardData();
+            
+            // 设置轮询间隔
+            pollIntervalId = setInterval(fetchLeaderboardData, HTTP_POLL_INTERVAL);
+        }
+
+        // 获取排行榜数据
+        async function fetchLeaderboardData() {
+            if (updatePaused) return;
+            
+            try {
+                const response = await fetch(HTTP_URL);
+                if (!response.ok) throw new Error('HTTP错误: ' + response.status);
+                
+                const data = await response.json();
+                processMessage(data);
+                updateStatus('数据已更新 (' + new Date().toLocaleTimeString() + ')', 'connected');
+            } catch (error) {
+                console.error('获取数据失败:', error);
+                updateStatus('获取数据失败: ' + error.message, 'disconnected');
+            }
         }
 
         // 发送认证消息
-        function sendAuthMessage() {
-            if (!socket || socket.readyState !== WebSocket.OPEN) {
-                updateStatus('请先建立连接', 'disconnected');
-                return;
-            }
+        async function sendAuthMessage(writer) {
+            if (!isConnected) return;
             
             try {
-                // 构建认证消息（需要根据服务器协议调整）
                 const authMessage = {
                     type: 'subscribe',
                     channel: 'leaderboard',
                     timestamp: Date.now()
                 };
                 
-                // 转换为二进制（示例，实际格式需要调整）
                 const encoder = new TextEncoder();
                 const data = encoder.encode(JSON.stringify(authMessage));
-                socket.send(data);
                 
-                updateStatus('已发送认证请求 - 等待数据...', 'connected');
-                document.getElementById('authBtn').style.display = 'none';
+                if (currentProtocol === 'webtransport' && writer) {
+                    await writer.write(data);
+                } else if (currentProtocol === 'websocket' && connection) {
+                    connection.send(JSON.stringify(authMessage));
+                }
                 
+                console.log('认证消息已发送');
             } catch (error) {
                 console.error('发送认证消息失败:', error);
-                updateStatus('认证失败: ' + error.message, 'disconnected');
             }
+        }
+
+        // 监听消息
+        async function listenForMessages(reader) {
+            try {
+                while (isConnected) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    if (value) {
+                        processBinaryData(value);
+                    }
+                }
+            } catch (error) {
+                console.error('读取消息时出错:', error);
+            }
+        }
+
+        // 启动心跳
+        function startHeartbeat(writer) {
+            setInterval(async () => {
+                if (isConnected && writer) {
+                    try {
+                        const pingData = new ArrayBuffer(8);
+                        const view = new DataView(pingData);
+                        view.setBigInt64(0, BigInt(Date.now()), true);
+                        await writer.write(new Uint8Array(pingData));
+                    } catch (error) {
+                        console.error('发送心跳失败:', error);
+                    }
+                }
+            }, 10000);
         }
 
         // 处理二进制数据
         function processBinaryData(data) {
-            // 检查是否是pong响应
-            if (data.byteLength === 8 && lastPingTime) {
-                try {
-                    const view = new DataView(data);
-                    const pingTime = Number(view.getBigInt64(0, true));
-                    rtt = Date.now() - pingTime;
-                    document.getElementById('rtt').textContent = `${rtt}ms`;
-                    return;
-                } catch (e) {
-                    // 不是pong消息，继续处理
-                }
-            }
-            
-            // 尝试解码为文本（可能是JSON）
+            // 尝试解码为文本
             try {
                 const decoder = new TextDecoder('utf-8');
                 const text = decoder.decode(data);
@@ -378,13 +586,10 @@
                     const message = JSON.parse(text);
                     processMessage(message);
                 } catch (e) {
-                    console.log('二进制数据转换为文本:', text);
-                    // 可能是其他格式的数据
-                    processRawData(data);
+                    console.log('二进制数据转换为文本:', text.substring(0, 100));
                 }
             } catch (error) {
                 console.error('处理二进制数据时出错:', error);
-                processRawData(data);
             }
         }
 
@@ -398,12 +603,6 @@
             } else {
                 console.log('收到消息:', message);
             }
-        }
-
-        // 处理原始二进制数据
-        function processRawData(data) {
-            console.log('收到二进制数据，长度:', data.byteLength);
-            // 这里可以添加特定的二进制数据解析逻辑
         }
 
         // 更新排行榜
