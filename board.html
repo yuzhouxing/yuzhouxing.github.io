@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiomet Live Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #8ce8fd;
+            margin-bottom: 20px;
+        }
+        .leaderboard {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .leaderboard th {
+            background-color: #3a3a3a;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #8ce8fd;
+        }
+        .leaderboard td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #444;
+        }
+        .leaderboard tr:nth-child(even) {
+            background-color: #333;
+        }
+        .leaderboard tr:hover {
+            background-color: #3a3a3a;
+        }
+        .rank {
+            text-align: center;
+            width: 60px;
+            font-weight: bold;
+        }
+        .score {
+            text-align: right;
+            width: 100px;
+            font-family: monospace;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+        }
+        .refresh-btn {
+            background-color: #8ce8fd;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+        }
+        .refresh-btn:hover {
+            background-color: #6cd8ed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kiomet Live Leaderboard</h1>
+        <div id="leaderboard-container">
+            <div class="loading" id="loading">Loading live leaderboard data...</div>
+            <div class="error" id="error" style="display: none;"></div>
+            <table class="leaderboard" id="leaderboard-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th class="rank">Rank</th>
+                        <th>Player Name</th>
+                        <th class="score">Score</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+        <button class="refresh-btn" onclick="fetchLiveboardData()">Refresh Data</button>
+    </div>
+
+    <script>
+        // 模拟从服务器获取实时排行榜数据
+        async function fetchLiveboardData() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const table = document.getElementById('leaderboard-table');
+            const tbody = document.getElementById('leaderboard-body');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            table.style.display = 'none';
+            
+            try {
+                // 这里应该是实际的API调用
+                // const response = await fetch('https://kiomet.com/api/liveboard');
+                // const data = await response.json();
+                
+                // 模拟数据 - 替换为实际的API调用
+                const mockData = [
+                    { alias: "Player1", score: 12500, ranking: 1 },
+                    { alias: "GamerPro", score: 9800, ranking: 2 },
+                    { alias: "KiometMaster", score: 8750, ranking: 3 },
+                    { alias: "TowerBuilder", score: 7200, ranking: 4 },
+                    { alias: "StrategyKing", score: 6500, ranking: 5 },
+                    { alias: "BlueTeam", score: 5800, ranking: 6, team_name: "BlueSquad" },
+                    { alias: "RedWarrior", score: 5200, ranking: 7 },
+                    { alias: "QuickHands", score: 4800, ranking: 8 },
+                    { alias: "DefenseExpert", score: 4200, ranking: 9 },
+                    { alias: "NewPlayer", score: 3500, ranking: 10 }
+                ];
+                
+                displayLeaderboard(mockData);
+                
+            } catch (err) {
+                error.textContent = 'Error fetching leaderboard data: ' + err.message;
+                error.style.display = 'block';
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayLeaderboard(data) {
+            const tbody = document.getElementById('leaderboard-body');
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('leaderboard-table');
+            
+            tbody.innerHTML = '';
+            
+            data.forEach(player => {
+                const row = document.createElement('tr');
+                
+                const rankCell = document.createElement('td');
+                rankCell.className = 'rank';
+                rankCell.textContent = player.ranking + '.';
+                
+                const nameCell = document.createElement('td');
+                // 如果有队伍名称，显示队伍格式
+                if (player.team_name) {
+                    nameCell.innerHTML = `<span style="font-style: italic;">${player.alias}</span> <small>(${player.team_name})</small>`;
+                } else {
+                    nameCell.textContent = player.alias;
+                }
+                
+                const scoreCell = document.createElement('td');
+                scoreCell.className = 'score';
+                scoreCell.textContent = player.score.toLocaleString();
+                
+                row.appendChild(rankCell);
+                row.appendChild(nameCell);
+                row.appendChild(scoreCell);
+                
+                tbody.appendChild(row);
+            });
+            
+            loading.style.display = 'none';
+            table.style.display = 'table';
+        }
+        
+        // 页面加载时自动获取数据
+        document.addEventListener('DOMContentLoaded', fetchLiveboardData);
+        
+        // 每30秒自动刷新数据
+        setInterval(fetchLiveboardData, 30000);
+    </script>
+</body>
+</html>
