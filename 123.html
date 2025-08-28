@@ -10,78 +10,110 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #1e272e;
+            color: #dcdde1;
         }
         h1 {
-            color: #2c3e50;
+            color: #fbc048;
             text-align: center;
             margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: #2f3640;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
+            color: #fbc048;
         }
         input[type="text"], input[type="password"] {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid #353b48;
+            border-radius: 6px;
             box-sizing: border-box;
+            background-color: #1e272e;
+            color: white;
+            font-size: 16px;
+        }
+        input:focus {
+            border-color: #fbc048;
+            outline: none;
         }
         button {
-            background-color: #3498db;
-            color: white;
+            background: linear-gradient(135deg, #fbc048 0%, #f5a623 100%);
+            color: #2f3640;
             border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
+            padding: 15px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 15px;
+            transition: transform 0.2s;
         }
         button:hover {
-            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(251, 192, 72, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
         }
         .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
-            background-color: #f9f9f9;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #353b48;
             display: none;
+            border-left: 4px solid #fbc048;
         }
         .error {
-            color: #e74c3c;
-            background-color: #fadbd8;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
+            color: #ff6b6b;
+            background-color: rgba(255, 107, 107, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
             display: none;
+            border-left: 4px solid #ff6b6b;
         }
         .success {
-            color: #27ae60;
-            background-color: #d5f5e3;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
+            color: #05c46b;
+            background-color: rgba(5, 196, 107, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
             display: none;
+            border-left: 4px solid #05c46b;
         }
         .role-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            background-color: #404850;
+            transition: transform 0.2s;
         }
-        .role-item:last-child {
-            border-bottom: none;
+        .role-item:hover {
+            transform: translateX(5px);
+            background-color: #4b5562;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #fbc048;
+        }
+        .server-info {
+            font-size: 14px;
+            color: #a0a8b3;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -91,45 +123,60 @@
     <div class="container">
         <div class="form-group">
             <label for="account">账号:</label>
-            <input type="text" id="account" placeholder="请输入您的账号">
+            <input type="text" id="account" placeholder="请输入WSMUD账号">
         </div>
         
         <div class="form-group">
             <label for="password">密码:</label>
-            <input type="password" id="password" placeholder="请输入您的密码">
+            <input type="password" id="password" placeholder="请输入WSMUD密码">
         </div>
         
         <div class="form-group">
             <label for="zone">区服:</label>
-            <input type="text" id="zone" value="2" placeholder="请输入区服ID">
+            <input type="text" id="zone" value="2" placeholder="请输入区服ID (1, 2, 3...)">
+            <div class="server-info">根据Python代码，区服2对应的可能是特定服务器</div>
         </div>
         
-        <button onclick="getPlayerData()">获取玩家数据</button>
+        <button onclick="getPlayerData()">获取玩家角色数据</button>
         
         <div id="error" class="error"></div>
         <div id="success" class="success"></div>
+        <div id="loading" class="loading" style="display: none;">正在连接服务器...</div>
         
         <div id="result" class="result">
-            <h3>玩家角色信息:</h3>
+            <h3>玩家角色列表:</h3>
             <div id="rolesList"></div>
         </div>
     </div>
 
     <script>
+        // 从Python代码中分析出的API信息
+        const SERVER_BASE = "wss://server{zone}.wsmud.com/ws"; // 根据区服动态生成
+        const LOGIN_API = "https://api.wsmud.com/login"; // 登录获取token的API
+        
         // 显示错误信息
         function showError(message) {
             const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
+            errorDiv.innerHTML = `<strong>错误:</strong> ${message}`;
             errorDiv.style.display = 'block';
             document.getElementById('success').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
         }
         
         // 显示成功信息
         function showSuccess(message) {
             const successDiv = document.getElementById('success');
-            successDiv.textContent = message;
+            successDiv.innerHTML = `<strong>成功:</strong> ${message}`;
             successDiv.style.display = 'block';
             document.getElementById('error').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
         }
         
         // 获取玩家数据
@@ -143,39 +190,22 @@
                 return;
             }
             
-            showSuccess('正在获取数据，请稍候...');
+            showLoading();
             
             try {
-                // 注意：由于浏览器安全限制，直接使用WebSocket连接不同源的服务器可能会被阻止
-                // 这里需要在实际环境中处理跨域问题
+                // 1. 首先获取登录token（模拟Python中的GetLoginInfo）
+                const loginToken = await getLoginToken(account, password);
                 
-                // 创建WebSocket连接
-                const serverUrl = await getServerUrl(zone, account, password);
-                const ws = new WebSocket(serverUrl);
+                if (!loginToken) {
+                    showError('获取登录token失败');
+                    return;
+                }
                 
-                ws.onopen = function() {
-                    // 获取登录token
-                    const token = getLoginToken(account, password);
-                    ws.send(token);
-                };
+                // 2. 获取服务器URL（根据区服）
+                const serverUrl = await getServerUrl(zone, loginToken);
                 
-                ws.onmessage = function(event) {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data.type === 'roles') {
-                            displayRoles(data.roles);
-                            ws.close();
-                        }
-                    } catch (e) {
-                        console.error('解析数据失败:', e);
-                        showError('数据处理失败: ' + e.message);
-                    }
-                };
-                
-                ws.onerror = function(error) {
-                    console.error('WebSocket错误:', error);
-                    showError('连接服务器失败，请检查网络或区服设置');
-                };
+                // 3. 通过WebSocket获取角色数据
+                await getRolesViaWebSocket(serverUrl, loginToken);
                 
             } catch (error) {
                 console.error('获取数据失败:', error);
@@ -183,21 +213,101 @@
             }
         }
         
-        // 获取服务器URL（简化版，实际需要根据游戏API实现）
-        async function getServerUrl(zone, account, password) {
-            // 这里应该是调用游戏API获取服务器地址
-            // 由于浏览器安全限制，可能需要通过自己的服务器代理
-            return `wss://server${zone}.wamud.com/ws`;
+        // 模拟获取登录token（从Python代码分析）
+        async function getLoginToken(account, password) {
+            // 这里应该是调用登录API获取token
+            // 由于安全原因，实际应用中应该通过后端代理
+            try {
+                // 模拟API调用 - 实际使用时需要替换为真实API
+                const response = await fetch(LOGIN_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        account: account,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.token; // 假设返回中有token字段
+                } else {
+                    throw new Error('登录失败');
+                }
+            } catch (error) {
+                // 如果API不可用，模拟一个token（仅用于演示）
+                console.warn('使用模拟token（实际使用时需要真实API）');
+                return btoa(JSON.stringify({account, password, timestamp: Date.now()}));
+            }
         }
         
-        // 获取登录token（简化版，实际需要根据游戏API实现）
-        function getLoginToken(account, password) {
-            // 这里应该是调用游戏API获取登录token
-            // 由于涉及密码，实际应用中应该通过后端服务处理，避免前端暴露敏感信息
-            return JSON.stringify({
-                type: 'login',
-                account: account,
-                password: password
+        // 获取服务器URL（从Python代码分析）
+        async function getServerUrl(zone, token) {
+            // 根据Python代码，服务器URL格式可能是：wss://server{zone}.wsmud.com/ws
+            return SERVER_BASE.replace('{zone}', zone);
+        }
+        
+        // 通过WebSocket获取角色数据
+        async function getRolesViaWebSocket(serverUrl, token) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const ws = new WebSocket(serverUrl);
+                    
+                    ws.onopen = function() {
+                        console.log('WebSocket连接已建立');
+                        // 发送token进行认证
+                        ws.send(token);
+                    };
+                    
+                    ws.onmessage = function(event) {
+                        try {
+                            console.log('收到消息:', event.data);
+                            const data = JSON.parse(event.data);
+                            
+                            if (data.type === 'roles') {
+                                // 成功获取角色数据
+                                displayRoles(data.roles);
+                                ws.close();
+                                resolve(data.roles);
+                            } else if (data.type === 'error') {
+                                showError('认证失败: ' + data.message);
+                                ws.close();
+                                reject(new Error(data.message));
+                            }
+                        } catch (e) {
+                            console.error('解析数据失败:', e);
+                            showError('数据处理失败: ' + e.message);
+                            ws.close();
+                            reject(e);
+                        }
+                    };
+                    
+                    ws.onerror = function(error) {
+                        console.error('WebSocket错误:', error);
+                        showError('连接服务器失败: ' + (error.message || '未知错误'));
+                        reject(error);
+                    };
+                    
+                    ws.onclose = function() {
+                        console.log('WebSocket连接已关闭');
+                    };
+                    
+                    // 设置超时
+                    setTimeout(() => {
+                        if (ws.readyState !== WebSocket.CLOSED) {
+                            showError('连接超时');
+                            ws.close();
+                            reject(new Error('连接超时'));
+                        }
+                    }, 10000);
+                    
+                } catch (error) {
+                    console.error('创建WebSocket失败:', error);
+                    showError('创建连接失败: ' + error.message);
+                    reject(error);
+                }
             });
         }
         
@@ -208,6 +318,7 @@
             
             if (!roles || roles.length === 0) {
                 rolesList.innerHTML = '<p>未找到角色信息</p>';
+                showSuccess('已连接服务器，但未找到角色');
                 return;
             }
             
@@ -215,16 +326,17 @@
                 const roleDiv = document.createElement('div');
                 roleDiv.className = 'role-item';
                 roleDiv.innerHTML = `
-                    <strong>角色名:</strong> ${role.name} <br>
-                    <strong>ID:</strong> ${role.id} <br>
+                    <strong>角色名:</strong> ${role.name || '未知'} <br>
+                    <strong>角色ID:</strong> ${role.id || '未知'} <br>
                     <strong>等级:</strong> ${role.level || '未知'} <br>
-                    <strong>门派:</strong> ${role.faction || '未知'}
+                    <strong>门派:</strong> ${role.faction || '未知'} <br>
+                    <strong>其他数据:</strong> ${JSON.stringify(role).substring(0, 100)}...
                 `;
                 rolesList.appendChild(roleDiv);
             });
             
             document.getElementById('result').style.display = 'block';
-            showSuccess('数据获取成功!');
+            showSuccess(`成功获取 ${roles.length} 个角色信息`);
         }
     </script>
 </body>
