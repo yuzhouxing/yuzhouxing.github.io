@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSMUD玩家数据获取</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        .success {
+            color: #27ae60;
+            background-color: #d5f5e3;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        .role-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .role-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>WSMUD玩家数据获取工具</h1>
+    
+    <div class="container">
+        <div class="form-group">
+            <label for="account">账号:</label>
+            <input type="text" id="account" placeholder="请输入您的账号">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码:</label>
+            <input type="password" id="password" placeholder="请输入您的密码">
+        </div>
+        
+        <div class="form-group">
+            <label for="zone">区服:</label>
+            <input type="text" id="zone" value="2" placeholder="请输入区服ID">
+        </div>
+        
+        <button onclick="getPlayerData()">获取玩家数据</button>
+        
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+        
+        <div id="result" class="result">
+            <h3>玩家角色信息:</h3>
+            <div id="rolesList"></div>
+        </div>
+    </div>
+
+    <script>
+        // 显示错误信息
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+        }
+        
+        // 显示成功信息
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+        
+        // 获取玩家数据
+        async function getPlayerData() {
+            const account = document.getElementById('account').value;
+            const password = document.getElementById('password').value;
+            const zone = document.getElementById('zone').value;
+            
+            if (!account || !password) {
+                showError('请输入账号和密码');
+                return;
+            }
+            
+            showSuccess('正在获取数据，请稍候...');
+            
+            try {
+                // 注意：由于浏览器安全限制，直接使用WebSocket连接不同源的服务器可能会被阻止
+                // 这里需要在实际环境中处理跨域问题
+                
+                // 创建WebSocket连接
+                const serverUrl = await getServerUrl(zone, account, password);
+                const ws = new WebSocket(serverUrl);
+                
+                ws.onopen = function() {
+                    // 获取登录token
+                    const token = getLoginToken(account, password);
+                    ws.send(token);
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'roles') {
+                            displayRoles(data.roles);
+                            ws.close();
+                        }
+                    } catch (e) {
+                        console.error('解析数据失败:', e);
+                        showError('数据处理失败: ' + e.message);
+                    }
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket错误:', error);
+                    showError('连接服务器失败，请检查网络或区服设置');
+                };
+                
+            } catch (error) {
+                console.error('获取数据失败:', error);
+                showError('获取数据失败: ' + error.message);
+            }
+        }
+        
+        // 获取服务器URL（简化版，实际需要根据游戏API实现）
+        async function getServerUrl(zone, account, password) {
+            // 这里应该是调用游戏API获取服务器地址
+            // 由于浏览器安全限制，可能需要通过自己的服务器代理
+            return `wss://server${zone}.wamud.com/ws`;
+        }
+        
+        // 获取登录token（简化版，实际需要根据游戏API实现）
+        function getLoginToken(account, password) {
+            // 这里应该是调用游戏API获取登录token
+            // 由于涉及密码，实际应用中应该通过后端服务处理，避免前端暴露敏感信息
+            return JSON.stringify({
+                type: 'login',
+                account: account,
+                password: password
+            });
+        }
+        
+        // 显示角色信息
+        function displayRoles(roles) {
+            const rolesList = document.getElementById('rolesList');
+            rolesList.innerHTML = '';
+            
+            if (!roles || roles.length === 0) {
+                rolesList.innerHTML = '<p>未找到角色信息</p>';
+                return;
+            }
+            
+            roles.forEach(role => {
+                const roleDiv = document.createElement('div');
+                roleDiv.className = 'role-item';
+                roleDiv.innerHTML = `
+                    <strong>角色名:</strong> ${role.name} <br>
+                    <strong>ID:</strong> ${role.id} <br>
+                    <strong>等级:</strong> ${role.level || '未知'} <br>
+                    <strong>门派:</strong> ${role.faction || '未知'}
+                `;
+                rolesList.appendChild(roleDiv);
+            });
+            
+            document.getElementById('result').style.display = 'block';
+            showSuccess('数据获取成功!');
+        }
+    </script>
+</body>
+</html>
