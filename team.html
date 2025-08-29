@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiomet联盟介绍生成器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .input-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 30px;
+            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
+            color: white;
+        }
+        
+        .preview-section {
+            flex: 1.5;
+            min-width: 400px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #ff8c00, #ff6600);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, #ff6600, #ff4500);
+        }
+        
+        .poster {
+            width: 100%;
+            max-width: 500px;
+            background: linear-gradient(135deg, #2c3e50, #4ca1af);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .poster::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
+            transform: rotate(30deg);
+        }
+        
+        .poster-header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .poster-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+        }
+        
+        .poster-subtitle {
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        .poster-content {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(5px);
+            min-height: 150px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .poster-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .logo {
+            font-size: 14px;
+            font-weight: 300;
+        }
+        
+        .kiomet-logo {
+            font-weight: 700;
+            color: #ff9900;
+        }
+        
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            color: #333;
+            text-align: center;
+            padding: 5px;
+        }
+        
+        .download-btn {
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            max-width: 500px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .input-section, .preview-section {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="input-section">
+            <h1>Kiomet联盟介绍生成器</h1>
+            <div class="form-group">
+                <label for="alliance-name"><i class="fas fa-flag"></i> 联盟名称</label>
+                <input type="text" id="alliance-name" placeholder="输入您的联盟名称">
+            </div>
+            <div class="form-group">
+                <label for="alliance-description"><i class="fas fa-info-circle"></i> 联盟简介</label>
+                <textarea id="alliance-description" placeholder="输入联盟简介，包括目标、规则、成员要求等信息"></textarea>
+            </div>
+            <button class="generate-btn" id="generate-btn">
+                <i class="fas fa-magic"></i> 生成海报
+            </button>
+        </div>
+        
+        <div class="preview-section">
+            <div class="poster">
+                <div class="poster-header">
+                    <div class="poster-title" id="poster-title">联盟名称</div>
+                    <div class="poster-subtitle">荣耀与力量的象征</div>
+                </div>
+                <div class="poster-content" id="poster-content">
+                    在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
+                </div>
+                <div class="poster-footer">
+                    <div class="logo">
+                        加入我们: <span class="kiomet-logo">Kiomet</span> 游戏联盟
+                    </div>
+                    <div class="qr-code">
+                        <div>扫描加入聊天室<br>nightly.paw.msgbyte.com</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="download-btn" id="download-btn">
+                <i class="fas fa-download"></i> 下载海报
+            </button>
+            
+            <div class="instructions">
+                <p><i class="fas fa-lightbulb"></i> 提示：生成海报后，您可以下载并分享到联盟聊天室或社交媒体</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const generateBtn = document.getElementById('generate-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const allianceNameInput = document.getElementById('alliance-name');
+            const allianceDescInput = document.getElementById('alliance-description');
+            const posterTitle = document.getElementById('poster-title');
+            const posterContent = document.getElementById('poster-content');
+            
+            // 生成海报
+            generateBtn.addEventListener('click', function() {
+                const name = allianceNameInput.value.trim() || '联盟名称';
+                const description = allianceDescInput.value.trim() || '在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。';
+                
+                posterTitle.textContent = name;
+                posterContent.textContent = description;
+                
+                // 添加动画效果
+                posterTitle.style.transform = 'scale(1.05)';
+                posterContent.style.transform = 'scale(1.02)';
+                
+                setTimeout(() => {
+                    posterTitle.style.transform = 'scale(1)';
+                    posterContent.style.transform = 'scale(1)';
+                }, 300);
+            });
+            
+            // 下载海报功能
+            downloadBtn.addEventListener('click', function() {
+                // 在实际应用中，这里需要使用html2canvas或类似库
+                // 这里仅提供一个模拟实现
+                
+                const btn = downloadBtn;
+                const originalText = btn.innerHTML;
+                
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在生成...';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    alert('海报下载功能需要引入html2canvas库。在实际部署时，请添加该库以实现完整功能。');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 1500);
+            });
+            
+            // 示例数据
+            allianceNameInput.value = "龙之荣耀";
+            allianceDescInput.value = "我们是一个强大的联盟，致力于在Kiomet世界中建立最强大的社区。欢迎活跃玩家加入，共同探索游戏世界，分享资源，参与联盟战争！";
+            
+            // 初始生成一次海报
+            generateBtn.click();
+        });
+    </script>
+</body>
+</html>
