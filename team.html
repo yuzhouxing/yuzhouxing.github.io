@@ -25,7 +25,7 @@
         
         .container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             overflow: hidden;
@@ -74,22 +74,22 @@
         }
         
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #8E54E9;
         }
         
-        input, textarea {
+        input, textarea, select {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             background: rgba(255, 255, 255, 0.15);
             font-size: 16px;
             color: white;
@@ -98,11 +98,11 @@
         }
         
         textarea {
-            min-height: 150px;
+            min-height: 120px;
             resize: vertical;
         }
         
-        input:focus, textarea:focus {
+        input:focus, textarea:focus, select:focus {
             outline: none;
             background: rgba(255, 255, 255, 0.2);
             box-shadow: 0 0 0 3px rgba(142, 84, 233, 0.5);
@@ -112,14 +112,23 @@
             color: rgba(255, 255, 255, 0.6);
         }
         
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
         .generate-btn {
             width: 100%;
-            padding: 18px;
+            padding: 16px;
             background: linear-gradient(to right, #4776E6, #8E54E9);
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -139,10 +148,10 @@
         
         .poster {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             background: linear-gradient(135deg, #4776E6, #8E54E9);
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             color: white;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             position: relative;
@@ -162,22 +171,22 @@
         
         .poster-header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             position: relative;
             z-index: 2;
         }
         
         .poster-title {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 800;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 2px;
             text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
         }
         
         .poster-subtitle {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 300;
             letter-spacing: 1px;
             opacity: 0.9;
@@ -185,14 +194,42 @@
         
         .poster-content {
             background: rgba(255, 255, 255, 0.15);
-            padding: 20px;
+            padding: 18px;
             border-radius: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             backdrop-filter: blur(5px);
-            min-height: 180px;
+            min-height: 150px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             position: relative;
             z-index: 2;
+            font-size: 0.95rem;
+        }
+        
+        .poster-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
         }
         
         .poster-footer {
@@ -203,12 +240,13 @@
             z-index: 2;
             font-size: 0.9rem;
             opacity: 0.8;
+            margin-top: 10px;
         }
         
         .instructions {
-            margin-top: 30px;
+            margin-top: 25px;
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: rgba(255, 255, 255, 0.8);
             max-width: 400px;
         }
@@ -234,6 +272,11 @@
             
             h1 {
                 font-size: 2.2rem;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
             }
         }
         
@@ -353,15 +396,15 @@
         }
         
         .alliance-badge {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             background: linear-gradient(135deg, #ff9a9e, #fad0c4);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
             margin: 0 auto 15px;
-            font-size: 2rem;
+            font-size: 1.8rem;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             border: 3px solid white;
         }
@@ -369,7 +412,7 @@
         .stats-container {
             display: flex;
             justify-content: space-around;
-            margin: 20px 0;
+            margin: 15px 0;
         }
         
         .stat-item {
@@ -377,33 +420,33 @@
         }
         
         .stat-value {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
             margin-bottom: 5px;
         }
         
         .stat-label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.8;
         }
         
         .members-list {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 15px;
             flex-wrap: wrap;
         }
         
         .member {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             background: linear-gradient(135deg, #a18cd1, #fbc2eb);
-            margin: 0 5px;
+            margin: 0 4px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             border: 2px solid white;
         }
@@ -418,6 +461,34 @@
             opacity: 0.1;
             background-image: radial-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px);
             background-size: 20px 20px;
+        }
+        
+        .leader-info {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+        
+        .leader-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            flex: 1;
+            margin: 0 5px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .leader-role {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .leader-name {
+            font-size: 1rem;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -436,10 +507,36 @@
                     <label for="alliance-name"><i class="fas fa-flag"></i> 联盟名称</label>
                     <input type="text" id="alliance-name" placeholder="输入您的联盟名称">
                 </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="members-count"><i class="fas fa-users"></i> 联盟人数</label>
+                        <input type="number" id="members-count" placeholder="人数" min="1" max="1000" value="25">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alliance-rank"><i class="fas fa-trophy"></i> 联盟排名</label>
+                        <input type="number" id="alliance-rank" placeholder="排名" min="1" value="7">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="leader-name"><i class="fas fa-crown"></i> 盟主名称</label>
+                        <input type="text" id="leader-name" placeholder="输入盟主名称">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vice-leader-name"><i class="fas fa-star"></i> 副盟主名称</label>
+                        <input type="text" id="vice-leader-name" placeholder="输入副盟主名称">
+                    </div>
+                </div>
+                
                 <div class="form-group">
                     <label for="alliance-description"><i class="fas fa-info-circle"></i> 联盟简介</label>
                     <textarea id="alliance-description" placeholder="输入联盟简介，包括目标、规则、成员要求等信息"></textarea>
                 </div>
+                
                 <button class="generate-btn" id="generate-btn">
                     <i class="fas fa-magic"></i> 生成炫酷海报
                 </button>
@@ -460,23 +557,39 @@
                         <div class="poster-title" id="poster-title">联盟名称</div>
                         <div class="poster-subtitle">荣耀与力量的象征</div>
                     </div>
-                    <div class="poster-content" id="poster-content">
-                        在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
+                    
+                    <div class="poster-info">
+                        <div class="info-item">
+                            <div class="info-label">成员</div>
+                            <div class="info-value" id="poster-members">25</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">排名</div>
+                            <div class="info-value" id="poster-rank">7</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">胜利</div>
+                            <div class="info-value">12</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">活跃度</div>
+                            <div class="info-value">高</div>
+                        </div>
                     </div>
                     
-                    <div class="stats-container">
-                        <div class="stat-item">
-                            <div class="stat-value">25</div>
-                            <div class="stat-label">成员</div>
+                    <div class="leader-info">
+                        <div class="leader-item">
+                            <div class="leader-role">盟主</div>
+                            <div class="leader-name" id="poster-leader">待输入</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value">12</div>
-                            <div class="stat-label">胜利</div>
+                        <div class="leader-item">
+                            <div class="leader-role">副盟主</div>
+                            <div class="leader-name" id="poster-vice-leader">待输入</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value">7</div>
-                            <div class="stat-label">排名</div>
-                        </div>
+                    </div>
+                    
+                    <div class="poster-content" id="poster-content">
+                        在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
                     </div>
                     
                     <div class="poster-footer">
@@ -515,23 +628,39 @@
                 <div class="poster-title" id="final-title">联盟名称</div>
                 <div class="poster-subtitle">荣耀与力量的象征</div>
             </div>
-            <div class="poster-content" id="final-content">
-                在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
+            
+            <div class="poster-info">
+                <div class="info-item">
+                    <div class="info-label">成员</div>
+                    <div class="info-value" id="final-members">25</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">排名</div>
+                    <div class="info-value" id="final-rank">7</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">胜利</div>
+                    <div class="info-value">12</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">活跃度</div>
+                    <div class="info-value">高</div>
+                </div>
             </div>
             
-            <div class="stats-container">
-                <div class="stat-item">
-                    <div class="stat-value">25</div>
-                    <div class="stat-label">成员</div>
+            <div class="leader-info">
+                <div class="leader-item">
+                    <div class="leader-role">盟主</div>
+                    <div class="leader-name" id="final-leader">待输入</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value">12</div>
-                    <div class="stat-label">胜利</div>
+                <div class="leader-item">
+                    <div class="leader-role">副盟主</div>
+                    <div class="leader-name" id="final-vice-leader">待输入</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value">7</div>
-                    <div class="stat-label">排名</div>
-                </div>
+            </div>
+            
+            <div class="poster-content" id="final-content">
+                在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
             </div>
             
             <div class="members-list">
@@ -559,10 +688,25 @@
             const downloadBtn = document.getElementById('download-btn');
             const allianceNameInput = document.getElementById('alliance-name');
             const allianceDescInput = document.getElementById('alliance-description');
+            const membersCountInput = document.getElementById('members-count');
+            const allianceRankInput = document.getElementById('alliance-rank');
+            const leaderNameInput = document.getElementById('leader-name');
+            const viceLeaderNameInput = document.getElementById('vice-leader-name');
+            
             const posterTitle = document.getElementById('poster-title');
             const posterContent = document.getElementById('poster-content');
+            const posterMembers = document.getElementById('poster-members');
+            const posterRank = document.getElementById('poster-rank');
+            const posterLeader = document.getElementById('poster-leader');
+            const posterViceLeader = document.getElementById('poster-vice-leader');
+            
             const finalTitle = document.getElementById('final-title');
             const finalContent = document.getElementById('final-content');
+            const finalMembers = document.getElementById('final-members');
+            const finalRank = document.getElementById('final-rank');
+            const finalLeader = document.getElementById('final-leader');
+            const finalViceLeader = document.getElementById('final-vice-leader');
+            
             const inputContainer = document.getElementById('input-container');
             const posterPage = document.getElementById('poster-page');
             
@@ -574,14 +718,26 @@
             generateBtn.addEventListener('click', function() {
                 const name = allianceNameInput.value.trim() || '联盟名称';
                 const description = allianceDescInput.value.trim() || '在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。';
+                const members = membersCountInput.value || '25';
+                const rank = allianceRankInput.value || '7';
+                const leader = leaderNameInput.value.trim() || '待输入';
+                const viceLeader = viceLeaderNameInput.value.trim() || '待输入';
                 
                 // 更新预览
                 posterTitle.textContent = name;
                 posterContent.textContent = description;
+                posterMembers.textContent = members;
+                posterRank.textContent = rank;
+                posterLeader.textContent = leader;
+                posterViceLeader.textContent = viceLeader;
                 
                 // 更新最终海报
                 finalTitle.textContent = name;
                 finalContent.textContent = description;
+                finalMembers.textContent = members;
+                finalRank.textContent = rank;
+                finalLeader.textContent = leader;
+                finalViceLeader.textContent = viceLeader;
                 
                 // 添加动画效果
                 generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
@@ -616,8 +772,17 @@
             // 初始生成一次预览
             posterTitle.textContent = "联盟名称";
             posterContent.textContent = "在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。";
+            posterMembers.textContent = "25";
+            posterRank.textContent = "7";
+            posterLeader.textContent = "待输入";
+            posterViceLeader.textContent = "待输入";
+            
             finalTitle.textContent = "联盟名称";
             finalContent.textContent = "在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。";
+            finalMembers.textContent = "25";
+            finalRank.textContent = "7";
+            finalLeader.textContent = "待输入";
+            finalViceLeader.textContent = "待输入";
         });
     </script>
 </body>
