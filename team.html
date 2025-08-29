@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiomet联盟介绍生成器</title>
+    <title>Kiomet联盟海报生成器</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -14,112 +14,137 @@
         }
         
         body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            color: #333;
+            color: #fff;
         }
         
         .container {
-            display: flex;
-            flex-wrap: wrap;
-            max-width: 1200px;
-            background: rgba(255, 255, 255, 0.9);
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
         }
         
         .input-section {
             flex: 1;
             min-width: 300px;
             padding: 30px;
-            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
-            color: white;
         }
         
         .preview-section {
-            flex: 1.5;
-            min-width: 400px;
+            flex: 1;
+            min-width: 300px;
             padding: 30px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: #f9f9f9;
-        }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 28px;
-            color: #fff;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-weight: 600;
+            font-size: 1.1rem;
+            color: #8E54E9;
         }
         
         input, textarea {
             width: 100%;
-            padding: 12px 15px;
+            padding: 15px;
             border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
             font-size: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white;
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         textarea {
-            min-height: 120px;
+            min-height: 150px;
             resize: vertical;
         }
         
         input:focus, textarea:focus {
             outline: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 3px rgba(142, 84, 233, 0.5);
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
         }
         
         .generate-btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(to right, #ff8c00, #ff6600);
+            padding: 18px;
+            background: linear-gradient(to right, #4776E6, #8E54E9);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 18px;
+            border-radius: 12px;
+            font-size: 1.2rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            margin-top: 10px;
         }
         
         .generate-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(to right, #ff6600, #ff4500);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to right, #3c6cd5, #8048d1);
+        }
+        
+        .generate-btn:active {
+            transform: translateY(0);
         }
         
         .poster {
             width: 100%;
-            max-width: 500px;
-            background: linear-gradient(135deg, #2c3e50, #4ca1af);
-            border-radius: 15px;
+            max-width: 400px;
+            background: linear-gradient(135deg, #4776E6, #8E54E9);
+            border-radius: 20px;
             padding: 30px;
             color: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             position: relative;
             overflow: hidden;
         }
@@ -139,10 +164,11 @@
             text-align: center;
             margin-bottom: 25px;
             position: relative;
+            z-index: 2;
         }
         
         .poster-title {
-            font-size: 32px;
+            font-size: 2.2rem;
             font-weight: 800;
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -151,135 +177,174 @@
         }
         
         .poster-subtitle {
-            font-size: 18px;
+            font-size: 1.1rem;
             font-weight: 300;
             letter-spacing: 1px;
+            opacity: 0.9;
         }
         
         .poster-content {
             background: rgba(255, 255, 255, 0.15);
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 15px;
             margin-bottom: 25px;
             backdrop-filter: blur(5px);
-            min-height: 150px;
+            min-height: 180px;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 2;
         }
         
         .poster-footer {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-        }
-        
-        .logo {
-            font-size: 14px;
-            font-weight: 300;
-        }
-        
-        .kiomet-logo {
-            font-weight: 700;
-            color: #ff9900;
-        }
-        
-        .qr-code {
-            width: 80px;
-            height: 80px;
-            background: #fff;
-            border-radius: 8px;
-            display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 10px;
-            color: #333;
-            text-align: center;
-            padding: 5px;
-        }
-        
-        .download-btn {
-            margin-top: 30px;
-            padding: 12px 25px;
-            background: linear-gradient(to right, #00b09b, #96c93d);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-        }
-        
-        .download-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+            font-size: 0.9rem;
+            opacity: 0.8;
         }
         
         .instructions {
-            margin-top: 20px;
+            margin-top: 30px;
             text-align: center;
-            font-size: 14px;
-            color: #666;
-            max-width: 500px;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 400px;
+        }
+        
+        .logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8E54E9;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         @media (max-width: 768px) {
-            .container {
+            .content {
                 flex-direction: column;
             }
             
             .input-section, .preview-section {
                 width: 100%;
             }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animated {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        /* 海报页面样式 */
+        .poster-container {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .large-poster {
+            max-width: 600px;
+            margin: 0 auto;
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="input-section">
-            <h1>Kiomet联盟介绍生成器</h1>
-            <div class="form-group">
-                <label for="alliance-name"><i class="fas fa-flag"></i> 联盟名称</label>
-                <input type="text" id="alliance-name" placeholder="输入您的联盟名称">
-            </div>
-            <div class="form-group">
-                <label for="alliance-description"><i class="fas fa-info-circle"></i> 联盟简介</label>
-                <textarea id="alliance-description" placeholder="输入联盟简介，包括目标、规则、成员要求等信息"></textarea>
-            </div>
-            <button class="generate-btn" id="generate-btn">
-                <i class="fas fa-magic"></i> 生成海报
-            </button>
-        </div>
+    <div class="logo">Kiomet</div>
+    
+    <div class="container animated" id="input-container">
+        <header>
+            <h1>联盟海报生成器</h1>
+            <p class="subtitle">创建您的专属联盟炫酷介绍海报</p>
+        </header>
         
-        <div class="preview-section">
-            <div class="poster">
+        <div class="content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="alliance-name"><i class="fas fa-flag"></i> 联盟名称</label>
+                    <input type="text" id="alliance-name" placeholder="输入您的联盟名称">
+                </div>
+                <div class="form-group">
+                    <label for="alliance-description"><i class="fas fa-info-circle"></i> 联盟简介</label>
+                    <textarea id="alliance-description" placeholder="输入联盟简介，包括目标、规则、成员要求等信息"></textarea>
+                </div>
+                <button class="generate-btn" id="generate-btn">
+                    <i class="fas fa-magic"></i> 生成炫酷海报
+                </button>
+            </div>
+            
+            <div class="preview-section">
+                <div class="poster">
+                    <div class="poster-header">
+                        <div class="poster-title" id="poster-title">联盟名称</div>
+                        <div class="poster-subtitle">荣耀与力量的象征</div>
+                    </div>
+                    <div class="poster-content" id="poster-content">
+                        在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
+                    </div>
+                    <div class="poster-footer">
+                        强大 · 团结 · 荣耀
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <p><i class="fas fa-lightbulb"></i> 输入联盟信息后点击生成按钮，将跳转到专属海报页面</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container animated" id="poster-container">
+        <button class="back-btn" id="back-btn">
+            <i class="fas fa-arrow-left"></i> 返回编辑
+        </button>
+        <div class="poster-container">
+            <div class="poster large-poster">
                 <div class="poster-header">
-                    <div class="poster-title" id="poster-title">联盟名称</div>
+                    <div class="poster-title" id="final-title">联盟名称</div>
                     <div class="poster-subtitle">荣耀与力量的象征</div>
                 </div>
-                <div class="poster-content" id="poster-content">
+                <div class="poster-content" id="final-content">
                     在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
                 </div>
                 <div class="poster-footer">
-                    <div class="logo">
-                        加入我们: <span class="kiomet-logo">Kiomet</span> 游戏联盟
-                    </div>
-                    <div class="qr-code">
-                        <div>扫描加入聊天室<br>nightly.paw.msgbyte.com</div>
-                    </div>
+                    强大 · 团结 · 荣耀
                 </div>
             </div>
             
-            <button class="download-btn" id="download-btn">
-                <i class="fas fa-download"></i> 下载海报
-            </button>
-            
-            <div class="instructions">
-                <p><i class="fas fa-lightbulb"></i> 提示：生成海报后，您可以下载并分享到联盟聊天室或社交媒体</p>
+            <div class="instructions" style="margin-top: 40px;">
+                <p><i class="fas fa-share-alt"></i> 保存并分享此海报，吸引更多玩家加入您的联盟！</p>
             </div>
         </div>
     </div>
@@ -287,54 +352,57 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const generateBtn = document.getElementById('generate-btn');
-            const downloadBtn = document.getElementById('download-btn');
+            const backBtn = document.getElementById('back-btn');
             const allianceNameInput = document.getElementById('alliance-name');
             const allianceDescInput = document.getElementById('alliance-description');
             const posterTitle = document.getElementById('poster-title');
             const posterContent = document.getElementById('poster-content');
+            const finalTitle = document.getElementById('final-title');
+            const finalContent = document.getElementById('final-content');
+            const inputContainer = document.getElementById('input-container');
+            const posterContainer = document.getElementById('poster-container');
+            
+            // 初始显示输入界面，隐藏海报界面
+            inputContainer.style.display = 'block';
+            posterContainer.style.display = 'none';
             
             // 生成海报
             generateBtn.addEventListener('click', function() {
                 const name = allianceNameInput.value.trim() || '联盟名称';
                 const description = allianceDescInput.value.trim() || '在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。';
                 
+                // 更新预览
                 posterTitle.textContent = name;
                 posterContent.textContent = description;
                 
+                // 更新最终海报
+                finalTitle.textContent = name;
+                finalContent.textContent = description;
+                
                 // 添加动画效果
-                posterTitle.style.transform = 'scale(1.05)';
-                posterContent.style.transform = 'scale(1.02)';
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
                 
                 setTimeout(() => {
-                    posterTitle.style.transform = 'scale(1)';
-                    posterContent.style.transform = 'scale(1)';
-                }, 300);
+                    // 切换到海报页面
+                    inputContainer.style.display = 'none';
+                    posterContainer.style.display = 'block';
+                    generateBtn.innerHTML = '<i class="fas fa-magic"></i> 生成炫酷海报';
+                }, 800);
             });
             
-            // 下载海报功能
-            downloadBtn.addEventListener('click', function() {
-                // 在实际应用中，这里需要使用html2canvas或类似库
-                // 这里仅提供一个模拟实现
-                
-                const btn = downloadBtn;
-                const originalText = btn.innerHTML;
-                
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在生成...';
-                btn.disabled = true;
-                
-                setTimeout(() => {
-                    alert('海报下载功能需要引入html2canvas库。在实际部署时，请添加该库以实现完整功能。');
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }, 1500);
+            // 返回编辑
+            backBtn.addEventListener('click', function() {
+                posterContainer.style.display = 'none';
+                inputContainer.style.display = 'block';
             });
             
             // 示例数据
             allianceNameInput.value = "龙之荣耀";
             allianceDescInput.value = "我们是一个强大的联盟，致力于在Kiomet世界中建立最强大的社区。欢迎活跃玩家加入，共同探索游戏世界，分享资源，参与联盟战争！";
             
-            // 初始生成一次海报
-            generateBtn.click();
+            // 初始生成一次预览
+            posterTitle.textContent = allianceNameInput.value;
+            posterContent.textContent = allianceDescInput.value;
         });
     </script>
 </body>
