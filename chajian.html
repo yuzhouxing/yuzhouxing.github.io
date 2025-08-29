@@ -281,32 +281,10 @@
             color: #95a5a6;
         }
         
-        /* 登录区域 */
-        .auth-container {
-            padding: 15px;
-            background: rgba(39, 55, 70, 0.8);
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        
-        .auth-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .auth-buttons button {
-            margin-top: 0;
-            flex: 1;
-        }
-        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .sidebar {
                 width: 90%;
-            }
-            
-            .auth-buttons {
-                flex-direction: column;
             }
         }
         
@@ -400,29 +378,12 @@
     <!-- 侧边栏 -->
     <div class="sidebar left-sidebar" id="leftSidebar">
         <!-- 用户信息区域 -->
-        <div id="userInfoContainer" style="display: none;">
-            <div class="user-info">
-                <div class="user-avatar" id="userAvatar">U</div>
-                <div class="user-details">
-                    <div class="user-name" id="userName">用户</div>
-                    <div class="user-email" id="userEmail">user@example.com</div>
-                </div>
-                <button class="secondary" id="logoutBtn" style="width: auto; padding: 5px 10px;">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+        <div class="user-info">
+            <div class="user-avatar" id="userAvatar">K</div>
+            <div class="user-details">
+                <div class="user-name">Kiomet玩家</div>
+                <div class="user-email">无需登录即可使用</div>
             </div>
-        </div>
-        
-        <!-- 登录区域 -->
-        <div id="authContainer" class="auth-container">
-            <h3 class="widget-title"><i class="fas fa-user"></i> 用户登录</h3>
-            <input type="text" id="usernameInput" placeholder="用户名" />
-            <input type="password" id="passwordInput" placeholder="密码" />
-            <div class="auth-buttons">
-                <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> 登录</button>
-                <button class="secondary" id="registerBtn"><i class="fas fa-user-plus"></i> 注册</button>
-            </div>
-            <div class="status info" id="authStatus">请输入用户名和密码登录或注册</div>
         </div>
         
         <div class="tab-container">
@@ -443,6 +404,11 @@
                 </div>
                 
                 <div class="data-item">
+                    <span class="data-key">玩家名称</span>
+                    <input type="text" id="playerName" placeholder="输入您的玩家名" style="width: auto; margin: 0;" />
+                </div>
+                
+                <div class="data-item">
                     <span class="data-key">数据大小</span>
                     <span class="data-value" id="dataSize">0 KB</span>
                 </div>
@@ -454,7 +420,7 @@
                 <textarea id="saveDescription" placeholder="添加进度描述（可选）..."></textarea>
                 
                 <button id="uploadBtn"><i class="fas fa-cloud-upload-alt"></i> 上传进度</button>
-                <div class="status info" id="uploadStatus">请先登录</div>
+                <div class="status info" id="uploadStatus">准备上传</div>
             </div>
         </div>
         
@@ -465,12 +431,12 @@
                 <p style="margin-bottom: 15px; font-size: 14px;">从云端下载其他玩家共享的Kiomet游戏进度。</p>
                 
                 <div class="upload-list" id="savesList">
-                    <div class="status info">请先登录以查看存档</div>
+                    <div class="status info">加载中...</div>
                 </div>
                 
                 <button id="refreshBtn" class="secondary"><i class="fas fa-sync"></i> 刷新列表</button>
                 <button id="downloadBtn"><i class="fas fa-download"></i> 下载选中进度</button>
-                <div class="status info" id="downloadStatus">请先登录</div>
+                <div class="status info" id="downloadStatus">选择要下载的进度</div>
             </div>
         </div>
         
@@ -515,66 +481,20 @@
         
         // 全局变量
         let selectedSaveId = null;
-        let currentUser = null;
         
         // DOM元素
         const leftSidebar = document.getElementById('leftSidebar');
         const floatToggle = document.getElementById('floatToggle');
         const toggleIcon = document.getElementById('toggleIcon');
-        const authContainer = document.getElementById('authContainer');
-        const userInfoContainer = document.getElementById('userInfoContainer');
-        const userAvatar = document.getElementById('userAvatar');
-        const userName = document.getElementById('userName');
-        const userEmail = document.getElementById('userEmail');
         
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
             updateLocalStorageInfo();
+            loadCloudSaves();
             
             // 设置事件监听器
             setupEventListeners();
         });
-        
-        // 检查认证状态
-        async function checkAuthStatus() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                currentUser = user;
-                updateUserInterface(true);
-            } else {
-                updateUserInterface(false);
-            }
-        }
-        
-        // 更新用户界面
-        function updateUserInterface(isLoggedIn) {
-            if (isLoggedIn && currentUser) {
-                authContainer.style.display = 'none';
-                userInfoContainer.style.display = 'block';
-                
-                // 更新用户信息
-                const email = currentUser.email || "用户";
-                userName.textContent = email.split('@')[0];
-                userEmail.textContent = email;
-                userAvatar.textContent = email[0].toUpperCase();
-                
-                // 更新状态信息
-                document.getElementById('uploadStatus').textContent = '准备上传';
-                document.getElementById('downloadStatus').textContent = '选择要下载的进度';
-                
-                // 加载存档列表
-                loadCloudSaves();
-            } else {
-                authContainer.style.display = 'block';
-                userInfoContainer.style.display = 'none';
-                
-                // 更新状态信息
-                document.getElementById('uploadStatus').textContent = '请先登录';
-                document.getElementById('downloadStatus').textContent = '请先登录';
-                document.getElementById('savesList').innerHTML = '<div class="status info">请先登录以查看存档</div>';
-            }
-        }
         
         // 设置事件监听器
         function setupEventListeners() {
@@ -606,7 +526,7 @@
                     toggleIcon.className = 'fas fa-times';
                     
                     // 更新相关信息
-                    if (tabId === 'download' && currentUser) {
+                    if (tabId === 'download') {
                         loadCloudSaves();
                     } else if (tabId === 'manage') {
                         updateLocalStorageInfo();
@@ -614,19 +534,12 @@
                 });
             });
             
-            // 认证按钮
-            document.getElementById('loginBtn').addEventListener('click', login);
-            document.getElementById('registerBtn').addEventListener('click', register);
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            
             // 上传按钮
             document.getElementById('uploadBtn').addEventListener('click', uploadSave);
             
             // 下载按钮
             document.getElementById('downloadBtn').addEventListener('click', downloadSave);
-            document.getElementById('refreshBtn').addEventListener('click', () => {
-                if (currentUser) loadCloudSaves();
-            });
+            document.getElementById('refreshBtn').addEventListener('click', loadCloudSaves);
             
             // 数据管理按钮
             document.getElementById('exportBtn').addEventListener('click', exportData);
@@ -654,106 +567,6 @@
                 leftSidebar.classList.add('active');
                 toggleIcon.className = 'fas fa-times';
                 updateLocalStorageInfo();
-            }
-        }
-        
-        // 登录功能
-        async function login() {
-            const username = document.getElementById('usernameInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const authStatus = document.getElementById('authStatus');
-            
-            if (!username || !password) {
-                authStatus.className = 'status error';
-                authStatus.textContent = '请输入用户名和密码';
-                return;
-            }
-            
-            authStatus.className = 'status info';
-            authStatus.textContent = '登录中...';
-            
-            // 使用用户名作为邮箱（简化流程）
-            const email = `${username}@kiomet.local`;
-            
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-            
-            if (error) {
-                authStatus.className = 'status error';
-                authStatus.textContent = `登录失败: ${error.message}`;
-            } else {
-                currentUser = data.user;
-                authStatus.className = 'status success';
-                authStatus.textContent = '登录成功！';
-                updateUserInterface(true);
-            }
-        }
-        
-        // 注册功能
-        async function register() {
-            const username = document.getElementById('usernameInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const authStatus = document.getElementById('authStatus');
-            
-            if (!username || !password) {
-                authStatus.className = 'status error';
-                authStatus.textContent = '请输入用户名和密码';
-                return;
-            }
-            
-            if (password.length < 6) {
-                authStatus.className = 'status error';
-                authStatus.textContent = '密码长度至少6位';
-                return;
-            }
-            
-            authStatus.className = 'status info';
-            authStatus.textContent = '注册中...';
-            
-            // 使用用户名作为邮箱（简化流程）
-            const email = `${username}@kiomet.local`;
-            
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        username: username
-                    },
-                    emailRedirectTo: window.location.origin
-                }
-            });
-            
-            if (error) {
-                authStatus.className = 'status error';
-                authStatus.textContent = `注册失败: ${error.message}`;
-            } else {
-                authStatus.className = 'status success';
-                authStatus.textContent = '注册成功！已自动登录';
-                
-                // 自动登录
-                const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
-                
-                if (!loginError) {
-                    currentUser = loginData.user;
-                    updateUserInterface(true);
-                }
-            }
-        }
-        
-        // 登出功能
-        async function logout() {
-            const { error } = await supabase.auth.signOut();
-            if (!error) {
-                currentUser = null;
-                updateUserInterface(false);
-                document.getElementById('authStatus').className = 'status info';
-                document.getElementById('authStatus').textContent = '已登出';
             }
         }
         
@@ -791,20 +604,21 @@
         
         // 上传存档到Supabase
         async function uploadSave() {
-            if (!currentUser) {
-                document.getElementById('uploadStatus').className = 'status error';
-                document.getElementById('uploadStatus').textContent = '请先登录';
-                return;
-            }
-            
             const uploadStatus = document.getElementById('uploadStatus');
             const uploadProgress = document.getElementById('uploadProgress');
             const saveDescription = document.getElementById('saveDescription').value;
             const saveName = document.getElementById('saveName').value;
+            const playerName = document.getElementById('playerName').value;
             
             if (!saveName) {
                 uploadStatus.className = 'status error';
                 uploadStatus.textContent = '请输入存档名称';
+                return;
+            }
+            
+            if (!playerName) {
+                uploadStatus.className = 'status error';
+                uploadStatus.textContent = '请输入玩家名称';
                 return;
             }
             
@@ -842,8 +656,7 @@
                             name: saveName,
                             description: saveDescription,
                             data: kiometData,
-                            user_id: currentUser.id,
-                            user_email: currentUser.email || `${currentUser.user_metadata.username}@kiomet.local`,
+                            player_name: playerName,
                             data_size: dataSize
                         }
                     ])
@@ -876,8 +689,6 @@
         
         // 从Supabase加载存档列表
         async function loadCloudSaves() {
-            if (!currentUser) return;
-            
             const savesList = document.getElementById('savesList');
             const downloadStatus = document.getElementById('downloadStatus');
             
@@ -913,7 +724,7 @@
                         <div class="upload-name">${save.name}</div>
                         <div class="upload-description">${save.description || '暂无描述'}</div>
                         <div class="upload-meta">
-                            <span>玩家: ${save.user_email?.split('@')[0] || '未知'}</span>
+                            <span>玩家: ${save.player_name || '未知'}</span>
                             <span>${new Date(save.created_at).toLocaleDateString()}</span>
                             <span>${(save.data_size / 1024).toFixed(1)} KB</span>
                         </div>
@@ -943,12 +754,6 @@
         
         // 从Supabase下载存档
         async function downloadSave() {
-            if (!currentUser) {
-                document.getElementById('downloadStatus').className = 'status error';
-                document.getElementById('downloadStatus').textContent = '请先登录';
-                return;
-            }
-            
             if (!selectedSaveId) {
                 document.getElementById('downloadStatus').className = 'status error';
                 document.getElementById('downloadStatus').textContent = '请先选择一个存档';
