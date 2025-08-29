@@ -248,7 +248,7 @@
         }
         
         /* 海报页面样式 */
-        .poster-container {
+        .poster-page {
             display: none;
             text-align: center;
             padding: 40px;
@@ -275,8 +275,27 @@
         
         .large-poster {
             max-width: 600px;
-            margin: 0 auto;
+            margin: 40px auto;
             transform: scale(1.05);
+        }
+        
+        .download-btn {
+            margin-top: 30px;
+            padding: 15px 30px;
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         }
     </style>
 </head>
@@ -325,34 +344,39 @@
         </div>
     </div>
     
-    <div class="container animated" id="poster-container">
+    <div class="container animated poster-page" id="poster-page">
         <button class="back-btn" id="back-btn">
             <i class="fas fa-arrow-left"></i> 返回编辑
         </button>
-        <div class="poster-container">
-            <div class="poster large-poster">
-                <div class="poster-header">
-                    <div class="poster-title" id="final-title">联盟名称</div>
-                    <div class="poster-subtitle">荣耀与力量的象征</div>
-                </div>
-                <div class="poster-content" id="final-content">
-                    在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
-                </div>
-                <div class="poster-footer">
-                    强大 · 团结 · 荣耀
-                </div>
+        
+        <header>
+            <h1>您的联盟海报</h1>
+            <p class="subtitle">保存并分享此海报，吸引更多玩家加入</p>
+        </header>
+        
+        <div class="poster large-poster">
+            <div class="poster-header">
+                <div class="poster-title" id="final-title">联盟名称</div>
+                <div class="poster-subtitle">荣耀与力量的象征</div>
             </div>
-            
-            <div class="instructions" style="margin-top: 40px;">
-                <p><i class="fas fa-share-alt"></i> 保存并分享此海报，吸引更多玩家加入您的联盟！</p>
+            <div class="poster-content" id="final-content">
+                在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
+            </div>
+            <div class="poster-footer">
+                强大 · 团结 · 荣耀
             </div>
         </div>
+        
+        <button class="download-btn" id="download-btn">
+            <i class="fas fa-download"></i> 下载海报
+        </button>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const generateBtn = document.getElementById('generate-btn');
             const backBtn = document.getElementById('back-btn');
+            const downloadBtn = document.getElementById('download-btn');
             const allianceNameInput = document.getElementById('alliance-name');
             const allianceDescInput = document.getElementById('alliance-description');
             const posterTitle = document.getElementById('poster-title');
@@ -360,11 +384,11 @@
             const finalTitle = document.getElementById('final-title');
             const finalContent = document.getElementById('final-content');
             const inputContainer = document.getElementById('input-container');
-            const posterContainer = document.getElementById('poster-container');
+            const posterPage = document.getElementById('poster-page');
             
             // 初始显示输入界面，隐藏海报界面
             inputContainer.style.display = 'block';
-            posterContainer.style.display = 'none';
+            posterPage.style.display = 'none';
             
             // 生成海报
             generateBtn.addEventListener('click', function() {
@@ -385,15 +409,28 @@
                 setTimeout(() => {
                     // 切换到海报页面
                     inputContainer.style.display = 'none';
-                    posterContainer.style.display = 'block';
+                    posterPage.style.display = 'block';
                     generateBtn.innerHTML = '<i class="fas fa-magic"></i> 生成炫酷海报';
                 }, 800);
             });
             
             // 返回编辑
             backBtn.addEventListener('click', function() {
-                posterContainer.style.display = 'none';
+                posterPage.style.display = 'none';
                 inputContainer.style.display = 'block';
+            });
+            
+            // 下载海报功能
+            downloadBtn.addEventListener('click', function() {
+                const btn = downloadBtn;
+                const originalText = btn.innerHTML;
+                
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 准备下载...';
+                
+                setTimeout(() => {
+                    alert('海报下载功能需要引入html2canvas库。在实际部署时，请添加该库以实现完整功能。');
+                    btn.innerHTML = originalText;
+                }, 1500);
             });
             
             // 示例数据
@@ -403,6 +440,8 @@
             // 初始生成一次预览
             posterTitle.textContent = allianceNameInput.value;
             posterContent.textContent = allianceDescInput.value;
+            finalTitle.textContent = allianceNameInput.value;
+            finalContent.textContent = allianceDescInput.value;
         });
     </script>
 </body>
