@@ -297,6 +297,128 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         }
+        
+        /* 新增海报装饰元素 */
+        .decorative-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            z-index: 1;
+        }
+        
+        .circle-1 {
+            width: 100px;
+            height: 100px;
+            top: -30px;
+            right: -30px;
+        }
+        
+        .circle-2 {
+            width: 60px;
+            height: 60px;
+            bottom: -20px;
+            left: -20px;
+        }
+        
+        .circle-3 {
+            width: 80px;
+            height: 80px;
+            bottom: 40px;
+            right: 30px;
+        }
+        
+        .shine-effect {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.03) 20%,
+                rgba(255, 255, 255, 0.6) 50%,
+                rgba(255, 255, 255, 0.03) 80%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            z-index: 3;
+            animation: shine 8s infinite linear;
+        }
+        
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 100%; }
+            100% { left: 100%; }
+        }
+        
+        .alliance-badge {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 15px;
+            font-size: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 3px solid white;
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .members-list {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .member {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            margin: 0 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+        
+        .pattern-dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            opacity: 0.1;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
     </style>
 </head>
 <body>
@@ -325,13 +447,38 @@
             
             <div class="preview-section">
                 <div class="poster">
+                    <div class="decorative-circle circle-1"></div>
+                    <div class="decorative-circle circle-2"></div>
+                    <div class="decorative-circle circle-3"></div>
+                    <div class="shine-effect"></div>
+                    <div class="pattern-dots"></div>
+                    
                     <div class="poster-header">
+                        <div class="alliance-badge">
+                            <i class="fas fa-crown"></i>
+                        </div>
                         <div class="poster-title" id="poster-title">联盟名称</div>
                         <div class="poster-subtitle">荣耀与力量的象征</div>
                     </div>
                     <div class="poster-content" id="poster-content">
                         在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
                     </div>
+                    
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <div class="stat-value">25</div>
+                            <div class="stat-label">成员</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">胜利</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">7</div>
+                            <div class="stat-label">排名</div>
+                        </div>
+                    </div>
+                    
                     <div class="poster-footer">
                         强大 · 团结 · 荣耀
                     </div>
@@ -355,13 +502,46 @@
         </header>
         
         <div class="poster large-poster">
+            <div class="decorative-circle circle-1"></div>
+            <div class="decorative-circle circle-2"></div>
+            <div class="decorative-circle circle-3"></div>
+            <div class="shine-effect"></div>
+            <div class="pattern-dots"></div>
+            
             <div class="poster-header">
+                <div class="alliance-badge">
+                    <i class="fas fa-crown"></i>
+                </div>
                 <div class="poster-title" id="final-title">联盟名称</div>
                 <div class="poster-subtitle">荣耀与力量的象征</div>
             </div>
             <div class="poster-content" id="final-content">
                 在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
             </div>
+            
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-value">25</div>
+                    <div class="stat-label">成员</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">胜利</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">排名</div>
+                </div>
+            </div>
+            
+            <div class="members-list">
+                <div class="member">K</div>
+                <div class="member">A</div>
+                <div class="member">L</div>
+                <div class="member">M</div>
+                <div class="member">S</div>
+            </div>
+            
             <div class="poster-footer">
                 强大 · 团结 · 荣耀
             </div>
@@ -433,15 +613,11 @@
                 }, 1500);
             });
             
-            // 示例数据
-            allianceNameInput.value = "龙之荣耀";
-            allianceDescInput.value = "我们是一个强大的联盟，致力于在Kiomet世界中建立最强大的社区。欢迎活跃玩家加入，共同探索游戏世界，分享资源，参与联盟战争！";
-            
             // 初始生成一次预览
-            posterTitle.textContent = allianceNameInput.value;
-            posterContent.textContent = allianceDescInput.value;
-            finalTitle.textContent = allianceNameInput.value;
-            finalContent.textContent = allianceDescInput.value;
+            posterTitle.textContent = "联盟名称";
+            posterContent.textContent = "在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。";
+            finalTitle.textContent = "联盟名称";
+            finalContent.textContent = "在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。";
         });
     </script>
 </body>
