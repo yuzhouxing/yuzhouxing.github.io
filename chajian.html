@@ -416,13 +416,13 @@
         <!-- 登录区域 -->
         <div id="authContainer" class="auth-container">
             <h3 class="widget-title"><i class="fas fa-user"></i> 用户登录</h3>
-            <input type="email" id="emailInput" placeholder="邮箱地址" />
+            <input type="text" id="usernameInput" placeholder="用户名" />
             <input type="password" id="passwordInput" placeholder="密码" />
             <div class="auth-buttons">
                 <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> 登录</button>
                 <button class="secondary" id="registerBtn"><i class="fas fa-user-plus"></i> 注册</button>
             </div>
-            <div class="status info" id="authStatus">请输入邮箱和密码登录或注册</div>
+            <div class="status info" id="authStatus">请输入用户名和密码登录或注册</div>
         </div>
         
         <div class="tab-container">
@@ -538,9 +538,9 @@
         
         // 检查认证状态
         async function checkAuthStatus() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                currentUser = session.user;
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                currentUser = user;
                 updateUserInterface(true);
             } else {
                 updateUserInterface(false);
@@ -554,7 +554,7 @@
                 userInfoContainer.style.display = 'block';
                 
                 // 更新用户信息
-                const email = currentUser.email;
+                const email = currentUser.email || "用户";
                 userName.textContent = email.split('@')[0];
                 userEmail.textContent = email;
                 userAvatar.textContent = email[0].toUpperCase();
@@ -659,18 +659,21 @@
         
         // 登录功能
         async function login() {
-            const email = document.getElementById('emailInput').value;
+            const username = document.getElementById('usernameInput').value;
             const password = document.getElementById('passwordInput').value;
             const authStatus = document.getElementById('authStatus');
             
-            if (!email || !password) {
+            if (!username || !password) {
                 authStatus.className = 'status error';
-                authStatus.textContent = '请输入邮箱和密码';
+                authStatus.textContent = '请输入用户名和密码';
                 return;
             }
             
             authStatus.className = 'status info';
             authStatus.textContent = '登录中...';
+            
+            // 使用用户名作为邮箱（简化流程）
+            const email = `${username}@kiomet.local`;
             
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
@@ -690,13 +693,13 @@
         
         // 注册功能
         async function register() {
-            const email = document.getElementById('emailInput').value;
+            const username = document.getElementById('usernameInput').value;
             const password = document.getElementById('passwordInput').value;
             const authStatus = document.getElementById('authStatus');
             
-            if (!email || !password) {
+            if (!username || !password) {
                 authStatus.className = 'status error';
-                authStatus.textContent = '请输入邮箱和密码';
+                authStatus.textContent = '请输入用户名和密码';
                 return;
             }
             
@@ -709,9 +712,18 @@
             authStatus.className = 'status info';
             authStatus.textContent = '注册中...';
             
+            // 使用用户名作为邮箱（简化流程）
+            const email = `${username}@kiomet.local`;
+            
             const { data, error } = await supabase.auth.signUp({
                 email,
-                password
+                password,
+                options: {
+                    data: {
+                        username: username
+                    },
+                    emailRedirectTo: window.location.origin
+                }
             });
             
             if (error) {
@@ -719,7 +731,18 @@
                 authStatus.textContent = `注册失败: ${error.message}`;
             } else {
                 authStatus.className = 'status success';
-                authStatus.textContent = '注册成功！请检查邮箱验证';
+                authStatus.textContent = '注册成功！已自动登录';
+                
+                // 自动登录
+                const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (!loginError) {
+                    currentUser = loginData.user;
+                    updateUserInterface(true);
+                }
             }
         }
         
@@ -820,7 +843,7 @@
                             description: saveDescription,
                             data: kiometData,
                             user_id: currentUser.id,
-                            user_email: currentUser.email,
+                            user_email: currentUser.email || `${currentUser.user_metadata.username}@kiomet.local`,
                             data_size: dataSize
                         }
                     ])
