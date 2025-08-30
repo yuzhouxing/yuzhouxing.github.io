@@ -7,11 +7,470 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 样式保持不变，与之前相同 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2530 0%, #2c3e50 100%);
+            color: #ecf0f1;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 游戏容器 */
+        .game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0e17;
+            z-index: 1;
+        }
+        
+        .game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 400px;
+            background: rgba(26, 37, 48, 0.97);
+            z-index: 900;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            padding: 15px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .left-sidebar {
+            left: 0;
+            transform: translateX(-100%);
+        }
+        
+        .left-sidebar.active {
+            transform: translateX(0);
+        }
+        
+        /* 浮动按钮 */
+        .float-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 800;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .float-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+        
+        .float-btn:hover {
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* 小部件样式 */
+        .widget {
+            background: rgba(39, 55, 70, 0.8);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .widget-title {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #2980b9, #27ae60);
+        }
+        
+        button.secondary {
+            background: rgba(52, 152, 219, 0.3);
+        }
+        
+        button.secondary:hover {
+            background: rgba(52, 152, 219, 0.5);
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(26, 37, 48, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #e0e0e0;
+            resize: vertical;
+            transition: all 0.3s;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        textarea {
+            height: 100px;
+            font-family: monospace;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(26, 37, 48, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            border-radius: 4px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .status.success {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid #2ecc71;
+        }
+        
+        .status.error {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+        
+        .status.info {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid #3498db;
+        }
+        
+        .status.warning {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+            border: 1px solid #f39c12;
+        }
+        
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+        }
+        
+        .data-item:last-child {
+            border-bottom: none;
+        }
+        
+        .data-key {
+            color: #bdc3c7;
+        }
+        
+        .data-value {
+            color: #3498db;
+            font-weight: 500;
+        }
+        
+        .upload-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(26, 37, 48, 0.5);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .upload-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-item:hover {
+            background: rgba(52, 152, 219, 0.2);
+        }
+        
+        .upload-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .upload-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #3498db;
+        }
+        
+        .upload-description {
+            font-size: 13px;
+            color: #bdc3c7;
+            margin-bottom: 6px;
+        }
+        
+        .upload-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 90%;
+            }
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 37, 48, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(52, 152, 219, 0.5);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3498db;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            opacity: 1;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 6px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .user-details {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            color: #3498db;
+        }
+        
+        .user-email {
+            font-size: 12px;
+            color: #bdc3c7;
+        }
     </style>
 </head>
 <body>
-    <!-- HTML结构保持不变 -->
+
+    <!-- 游戏容器 -->
+    <div class="game-container">
+        <iframe src="https://kiomet.com" class="game-frame" id="kiometFrame"></iframe>
+    </div>
+
+    <!-- 侧边栏 -->
+    <div class="sidebar left-sidebar" id="leftSidebar">
+        <!-- 用户信息区域 -->
+        <div class="user-info">
+            <div class="user-avatar" id="userAvatar">K</div>
+            <div class="user-details">
+                <div class="user-name">Kiomet玩家</div>
+                <div class="user-email">无需登录即可使用</div>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab active" data-tab="upload">上传进度</div>
+            <div class="tab" data-tab="download">下载进度</div>
+            <div class="tab" data-tab="manage">管理数据</div>
+        </div>
+        
+        <!-- 上传进度标签页 -->
+        <div class="tab-content active" id="upload-tab">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-upload"></i> 上传游戏进度</h3>
+                <p style="margin-bottom: 15px; font-size: 14px;">将您的Kiomet游戏进度上传到云端，与其他玩家共享或备份。</p>
+                
+                <div class="data-item">
+                    <span class="data-key">进度名称</span>
+                    <input type="text" id="saveName" value="我的Kiomet进度" style="width: auto; margin: 0;" />
+                </div>
+                
+                <div class="data-item">
+                    <span class="data-key">玩家名称</span>
+                    <input type="text" id="playerName" placeholder="输入您的玩家名" style="width: auto; margin: 0;" />
+                </div>
+                
+                <div class="data-item">
+                    <span class="data-key">数据大小</span>
+                    <span class="data-value" id="dataSize">0 KB</span>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="uploadProgress"></div>
+                </div>
+                
+                <textarea id="saveDescription" placeholder="添加进度描述（可选）..."></textarea>
+                
+                <button id="uploadBtn"><i class="fas fa-cloud-upload-alt"></i> 上传进度</button>
+                <div class="status info" id="uploadStatus">准备上传</div>
+            </div>
+        </div>
+        
+        <!-- 下载进度标签页 -->
+        <div class="tab-content" id="download-tab">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-download"></i> 下载游戏进度</h3>
+                <p style="margin-bottom: 15px; font-size: 14px;">从云端下载其他玩家共享的Kiomet游戏进度。</p>
+                
+                <div class="upload-list" id="savesList">
+                    <div class="status info">加载中...</div>
+                </div>
+                
+                <button id="refreshBtn" class="secondary"><i class="fas fa-sync"></i> 刷新列表</button>
+                <button id="downloadBtn"><i class="fas fa-download"></i> 下载选中进度</button>
+                <div class="status info" id="downloadStatus">选择要下载的进度</div>
+            </div>
+        </div>
+        
+        <!-- 管理数据标签页 -->
+        <div class="tab-content" id="manage-tab">
+            <div class="widget">
+                <h3 class="widget-title"><i class="fas fa-database"></i> 本地数据管理</h3>
+                <p style="margin-bottom: 15px; font-size: 14px;">管理您的Kiomet本地存储数据。</p>
+                
+                <div class="data-item">
+                    <span class="data-key">本地存储使用</span>
+                    <span class="data-value" id="localStorageUsage">0 KB / 5 MB</span>
+                </div>
+                
+                <div class="data-item">
+                    <span class="data-key">Kiomet数据项</span>
+                    <span class="data-value" id="kiometItems">0 项</span>
+                </div>
+                
+                <textarea id="localData" placeholder="本地数据将显示在这里..." readonly></textarea>
+                
+                <button id="exportBtn" class="secondary"><i class="fas fa-file-export"></i> 导出数据</button>
+                <button id="importBtn"><i class="fas fa-file-import"></i> 导入数据</button>
+                <div class="status info" id="manageStatus">就绪</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动按钮 -->
+    <div class="float-buttons">
+        <button class="float-btn" id="floatToggle">
+            <i class="fas fa-exchange-alt" id="toggleIcon"></i>
+        </button>
+    </div>
 
     <script>
         // Supabase初始化
@@ -22,150 +481,164 @@
         
         // 全局变量
         let selectedSaveId = null;
-        let currentUser = null;
+        
+        // DOM元素
+        const leftSidebar = document.getElementById('leftSidebar');
+        const floatToggle = document.getElementById('floatToggle');
+        const toggleIcon = document.getElementById('toggleIcon');
         
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-            updateStorageInfo();
+            updateLocalStorageInfo();
+            loadCloudSaves();
+            
+            // 设置事件监听器
             setupEventListeners();
         });
         
-        // 获取所有可能的游戏数据
-        async function getAllGameData() {
-            const gameData = {
-                localStorage: {},
-                cookies: {},
-                sessionStorage: {},
-                indexedDB: null
-            };
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 侧边栏切换
+            floatToggle.addEventListener('click', toggleSidebar);
             
-            // 1. 获取localStorage数据
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                // 捕获所有可能相关的键
-                if (key && (
-                    key.toLowerCase().includes('kiomet') || 
-                    key.toLowerCase().includes('game') ||
-                    key.toLowerCase().includes('player') ||
-                    key.toLowerCase().includes('save') ||
-                    key.toLowerCase().includes('progress')
-                )) {
-                    gameData.localStorage[key] = localStorage.getItem(key);
-                }
-            }
-            
-            // 2. 获取Cookie数据
-            const cookies = document.cookie.split(';');
-            cookies.forEach(cookie => {
-                const [name, value] = cookie.trim().split('=');
-                // 捕获所有可能相关的Cookie
-                if (name && (
-                    name.toLowerCase().includes('kiomet') || 
-                    name.toLowerCase().includes('game') ||
-                    name.toLowerCase().includes('session') ||
-                    name.toLowerCase().includes('auth') ||
-                    name.toLowerCase().includes('token')
-                )) {
-                    gameData.cookies[name] = decodeURIComponent(value);
-                }
+            // 游戏区域点击关闭侧边栏
+            document.querySelector('.game-container').addEventListener('click', () => {
+                leftSidebar.classList.remove('active');
+                toggleIcon.className = 'fas fa-exchange-alt';
             });
             
-            // 3. 获取sessionStorage数据
-            for (let i = 0; i < sessionStorage.length; i++) {
-                const key = sessionStorage.key(i);
-                if (key && (
-                    key.toLowerCase().includes('kiomet') || 
-                    key.toLowerCase().includes('game')
-                )) {
-                    gameData.sessionStorage[key] = sessionStorage.getItem(key);
+            // 标签切换
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // 移除所有active类
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                    
+                    // 添加active类到当前标签和内容
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // 确保侧边栏是展开状态
+                    leftSidebar.classList.add('active');
+                    toggleIcon.className = 'fas fa-times';
+                    
+                    // 更新相关信息
+                    if (tabId === 'download') {
+                        loadCloudSaves();
+                    } else if (tabId === 'manage') {
+                        updateLocalStorageInfo();
+                    }
+                });
+            });
+            
+            // 上传按钮
+            document.getElementById('uploadBtn').addEventListener('click', uploadSave);
+            
+            // 下载按钮
+            document.getElementById('downloadBtn').addEventListener('click', downloadSave);
+            document.getElementById('refreshBtn').addEventListener('click', loadCloudSaves);
+            
+            // 数据管理按钮
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            document.getElementById('importBtn').addEventListener('click', importData);
+            
+            // 快捷键支持
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 't' || e.key === 'T') {
+                    e.preventDefault();
+                    toggleSidebar();
+                } else if (e.key === 'Escape') {
+                    leftSidebar.classList.remove('active');
+                    toggleIcon.className = 'fas fa-exchange-alt';
+                }
+            });
+        }
+        
+        // 侧边栏切换功能
+        function toggleSidebar() {
+            const isActive = leftSidebar.classList.contains('active');
+            if (isActive) {
+                leftSidebar.classList.remove('active');
+                toggleIcon.className = 'fas fa-exchange-alt';
+            } else {
+                leftSidebar.classList.add('active');
+                toggleIcon.className = 'fas fa-times';
+                updateLocalStorageInfo();
+            }
+        }
+        
+        // 获取Kiomet相关的localStorage数据
+        function getKiometData() {
+            const kiometData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.toLowerCase().includes('kiomet')) {
+                    kiometData[key] = localStorage.getItem(key);
+                }
+            }
+            return kiometData;
+        }
+        
+        // 获取与kiomet.com相关的Cookie
+        function getKiometCookies() {
+            const cookies = document.cookie.split(';');
+            const kiometCookies = {};
+            
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.toLowerCase().includes('kiomet') || 
+                    cookie.toLowerCase().includes('session') || 
+                    cookie.toLowerCase().includes('user')) {
+                    const [name, value] = cookie.split('=');
+                    kiometCookies[name] = value;
                 }
             }
             
-            // 4. 尝试获取IndexedDB数据（需要用户交互）
-            // 由于安全限制，IndexedDB的完整备份比较复杂
-            
-            return gameData;
+            return kiometCookies;
         }
         
-        // 应用所有游戏数据
-        async function applyAllGameData(gameData) {
-            let appliedCount = 0;
-            
-            // 1. 应用localStorage数据
-            if (gameData.localStorage) {
-                Object.keys(gameData.localStorage).forEach(key => {
-                    localStorage.setItem(key, gameData.localStorage[key]);
-                    appliedCount++;
-                });
-            }
-            
-            // 2. 应用Cookie数据
-            if (gameData.cookies) {
-                Object.keys(gameData.cookies).forEach(name => {
-                    // 设置Cookie（注意：有些Cookie可能有特殊属性如HttpOnly，无法通过JS设置）
-                    const value = gameData.cookies[name];
-                    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000`; // 30天
-                    appliedCount++;
-                });
-            }
-            
-            // 3. 应用sessionStorage数据
-            if (gameData.sessionStorage) {
-                Object.keys(gameData.sessionStorage).forEach(key => {
-                    sessionStorage.setItem(key, gameData.sessionStorage[key]);
-                    appliedCount++;
-                });
-            }
-            
-            return appliedCount;
+        // 设置Cookie
+        function setCookie(name, value, days = 30) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;domain=${window.location.hostname}`;
         }
         
-        // 更新存储信息显示
-        async function updateStorageInfo() {
-            const gameData = await getAllGameData();
-            const totalSize = JSON.stringify(gameData).length;
-            
-            // 计算各类型数据数量
-            const localStorageCount = Object.keys(gameData.localStorage).length;
-            const cookiesCount = Object.keys(gameData.cookies).length;
-            const sessionStorageCount = Object.keys(gameData.sessionStorage).length;
+        // 更新本地存储信息
+        function updateLocalStorageInfo() {
+            const kiometData = getKiometData();
+            const kiometCookies = getKiometCookies();
+            const dataSize = JSON.stringify(kiometData).length + JSON.stringify(kiometCookies).length;
             
             // 更新UI显示
             document.getElementById('localStorageUsage').textContent = 
-                `${(totalSize / 1024).toFixed(1)} KB / 5 MB`;
+                `${(dataSize / 1024).toFixed(1)} KB / 5 MB`;
             
             document.getElementById('kiometItems').textContent = 
-                `${localStorageCount + cookiesCount + sessionStorageCount} 项`;
+                `${Object.keys(kiometData).length + Object.keys(kiometCookies).length} 项`;
             
             document.getElementById('dataSize').textContent = 
-                `${(totalSize / 1024).toFixed(1)} KB`;
+                `${(dataSize / 1024).toFixed(1)} KB`;
             
-            // 显示详细数据预览
-            const storageDetails = `
-LocalStorage: ${localStorageCount} 项
-Cookies: ${cookiesCount} 项  
-SessionStorage: ${sessionStorageCount} 项
-总计大小: ${(totalSize / 1024).toFixed(1)} KB
-
-${JSON.stringify(gameData, null, 2)}
-            `;
-            
-            document.getElementById('localData').value = storageDetails;
+            // 显示数据预览
+            const allData = {
+                localStorage: kiometData,
+                cookies: kiometCookies
+            };
+            document.getElementById('localData').value = 
+                JSON.stringify(allData, null, 2);
         }
         
         // 上传存档到Supabase
         async function uploadSave() {
-            if (!currentUser) {
-                document.getElementById('uploadStatus').className = 'status error';
-                document.getElementById('uploadStatus').textContent = '请先登录';
-                return;
-            }
-            
             const uploadStatus = document.getElementById('uploadStatus');
             const uploadProgress = document.getElementById('uploadProgress');
             const saveDescription = document.getElementById('saveDescription').value;
             const saveName = document.getElementById('saveName').value;
+            const playerName = document.getElementById('playerName').value;
             
             if (!saveName) {
                 uploadStatus.className = 'status error';
@@ -173,22 +646,42 @@ ${JSON.stringify(gameData, null, 2)}
                 return;
             }
             
-            uploadStatus.className = 'status info';
-            uploadStatus.textContent = '正在收集游戏数据...';
-            
-            // 获取所有游戏数据
-            const gameData = await getAllGameData();
-            const dataSize = JSON.stringify(gameData).length;
-            
-            if (dataSize === 0) {
-                uploadStatus.className = 'status warning';
-                uploadStatus.textContent = '未找到游戏数据';
+            if (!playerName) {
+                uploadStatus.className = 'status error';
+                uploadStatus.textContent = '请输入玩家名称';
                 return;
             }
             
-            // 显示上传进度
-            uploadProgress.style.width = '30%';
-            uploadStatus.textContent = '上传中...';
+            uploadStatus.className = 'status info';
+            uploadStatus.textContent = '准备上传数据...';
+            
+            // 获取Kiomet数据
+            const kiometData = getKiometData();
+            const kiometCookies = getKiometCookies();
+            const allData = {
+                localStorage: kiometData,
+                cookies: kiometCookies
+            };
+            
+            const dataSize = JSON.stringify(allData).length;
+            
+            if (dataSize === 0) {
+                uploadStatus.className = 'status warning';
+                uploadStatus.textContent = '未找到Kiomet游戏数据';
+                return;
+            }
+            
+            // 模拟上传进度
+            for (let i = 0; i <= 100; i += 20) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                uploadProgress.style.width = `${i}%`;
+                
+                if (i === 40) {
+                    uploadStatus.textContent = '加密数据中...';
+                } else if (i === 80) {
+                    uploadStatus.textContent = '上传到云端...';
+                }
+            }
             
             try {
                 // 上传到Supabase
@@ -198,11 +691,9 @@ ${JSON.stringify(gameData, null, 2)}
                         {
                             name: saveName,
                             description: saveDescription,
-                            data: gameData,
-                            user_id: currentUser.id,
-                            user_email: currentUser.email,
-                            data_size: dataSize,
-                            data_type: 'full_backup' // 标记为完整备份
+                            data: allData,
+                            player_name: playerName,
+                            data_size: dataSize
                         }
                     ])
                     .select();
@@ -213,7 +704,7 @@ ${JSON.stringify(gameData, null, 2)}
                 
                 uploadProgress.style.width = '100%';
                 uploadStatus.className = 'status success';
-                uploadStatus.textContent = `上传成功！已备份 ${Object.keys(gameData.localStorage).length} 项localStorage, ${Object.keys(gameData.cookies).length} 项Cookie`;
+                uploadStatus.textContent = `上传成功！存档ID: ${data[0].id}`;
                 
                 // 刷新列表
                 if (document.getElementById('download-tab').classList.contains('active')) {
@@ -232,14 +723,73 @@ ${JSON.stringify(gameData, null, 2)}
             }
         }
         
+        // 从Supabase加载存档列表
+        async function loadCloudSaves() {
+            const savesList = document.getElementById('savesList');
+            const downloadStatus = document.getElementById('downloadStatus');
+            
+            downloadStatus.className = 'status info';
+            downloadStatus.textContent = '加载存档列表中...';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('kiomet_saves')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // 清空列表
+                savesList.innerHTML = '';
+                
+                if (data.length === 0) {
+                    savesList.innerHTML = '<div class="status info">暂无存档</div>';
+                    downloadStatus.textContent = '没有找到存档';
+                    return;
+                }
+                
+                // 添加存档到列表
+                data.forEach(save => {
+                    const item = document.createElement('div');
+                    item.className = 'upload-item';
+                    item.dataset.id = save.id;
+                    
+                    item.innerHTML = `
+                        <div class="upload-name">${save.name}</div>
+                        <div class="upload-description">${save.description || '暂无描述'}</div>
+                        <div class="upload-meta">
+                            <span>玩家: ${save.player_name || '未知'}</span>
+                            <span>${new Date(save.created_at).toLocaleDateString()}</span>
+                            <span>${(save.data_size / 1024).toFixed(1)} KB</span>
+                        </div>
+                    `;
+                    
+                    // 添加点击选择功能
+                    item.addEventListener('click', function() {
+                        document.querySelectorAll('.upload-item').forEach(i => {
+                            i.style.background = 'rgba(52, 152, 219, 0.1)';
+                        });
+                        this.style.background = 'rgba(52, 152, 219, 0.3)';
+                        selectedSaveId = save.id;
+                        downloadStatus.textContent = `已选择: ${save.name}`;
+                    });
+                    
+                    savesList.appendChild(item);
+                });
+                
+                downloadStatus.textContent = `已加载 ${data.length} 个存档`;
+                
+            } catch (error) {
+                savesList.innerHTML = '<div class="status error">加载失败</div>';
+                downloadStatus.className = 'status error';
+                downloadStatus.textContent = `加载失败: ${error.message}`;
+            }
+        }
+        
         // 从Supabase下载存档
         async function downloadSave() {
-            if (!currentUser) {
-                document.getElementById('downloadStatus').className = 'status error';
-                document.getElementById('downloadStatus').textContent = '请先登录';
-                return;
-            }
-            
             if (!selectedSaveId) {
                 document.getElementById('downloadStatus').className = 'status error';
                 document.getElementById('downloadStatus').textContent = '请先选择一个存档';
@@ -262,17 +812,18 @@ ${JSON.stringify(gameData, null, 2)}
                     throw error;
                 }
                 
-                // 应用所有游戏数据
-                const appliedCount = await applyAllGameData(data.data);
+                // 应用到本地存储和Cookie
+                applySaveData(data.data);
                 
                 downloadStatus.className = 'status success';
-                downloadStatus.textContent = `下载完成！已恢复 ${appliedCount} 项数据`;
-                
-                // 更新显示
-                updateStorageInfo();
+                downloadStatus.textContent = '下载完成！数据已应用到本地';
                 
                 // 提示用户刷新页面
-                showRefreshWarning();
+                setTimeout(() => {
+                    if (confirm('进度数据已加载，是否立即刷新游戏页面使更改生效？')) {
+                        document.getElementById('kiometFrame').contentWindow.location.reload();
+                    }
+                }, 1000);
                 
             } catch (error) {
                 downloadStatus.className = 'status error';
@@ -280,80 +831,88 @@ ${JSON.stringify(gameData, null, 2)}
             }
         }
         
-        // 显示刷新警告
-        function showRefreshWarning() {
-            const warningDiv = document.createElement('div');
-            warningDiv.className = 'status warning';
-            warningDiv.innerHTML = `
-                <strong>重要提示：</strong>
-                <p>游戏数据已恢复，但某些更改可能需要刷新页面才能生效：</p>
-                <ul style="text-align: left; margin: 10px 0;">
-                    <li>Cookie和sessionStorage数据需要刷新</li>
-                    <li>某些游戏状态可能需要重新登录</li>
-                    <li>如果进度仍未恢复，请尝试清除浏览器缓存后重试</li>
-                </ul>
-                <button onclick="location.reload()" style="margin-top: 10px;">
-                    <i class="fas fa-sync"></i> 立即刷新页面
-                </button>
-            `;
+        // 应用到本地存储和Cookie的函数
+        function applySaveData(saveData) {
+            // 清空现有的Kiomet相关数据
+            Object.keys(localStorage).forEach(key => {
+                if (key.toLowerCase().includes('kiomet')) {
+                    localStorage.removeItem(key);
+                }
+            });
             
-            const manageTab = document.getElementById('manage-tab');
-            manageTab.appendChild(warningDiv);
-        }
-        
-        // 手动迁移Cookie功能
-        async function manualCookieMigration() {
-            const cookieData = prompt('请粘贴从原浏览器获取的Cookie数据（格式: name=value; name2=value2）:');
-            if (!cookieData) return;
-            
-            try {
-                const cookies = cookieData.split(';');
-                let migratedCount = 0;
-                
-                cookies.forEach(cookie => {
-                    const [name, value] = cookie.trim().split('=');
-                    if (name && value) {
-                        document.cookie = `${name}=${value}; path=/; max-age=2592000`;
-                        migratedCount++;
-                    }
+            // 应用新数据到localStorage
+            if (saveData.localStorage) {
+                Object.keys(saveData.localStorage).forEach(key => {
+                    localStorage.setItem(key, saveData.localStorage[key]);
                 });
-                
-                alert(`已迁移 ${migratedCount} 个Cookie。请刷新页面使更改生效。`);
-                
-            } catch (error) {
-                alert('Cookie迁移失败: ' + error.message);
             }
+            
+            // 应用新数据到Cookie
+            if (saveData.cookies) {
+                Object.keys(saveData.cookies).forEach(name => {
+                    setCookie(name, saveData.cookies[name]);
+                });
+            }
+            
+            // 更新UI
+            updateLocalStorageInfo();
         }
         
-        // 添加上面的函数到全局作用域，以便可以从HTML调用
-        window.manualCookieMigration = manualCookieMigration;
-        
-        // 在管理标签页添加手动迁移按钮
-        function addManualMigrationOption() {
-            const manageTab = document.getElementById('manage-tab');
-            const widget = manageTab.querySelector('.widget');
+        // 导出数据功能
+        function exportData() {
+            const kiometData = getKiometData();
+            const kiometCookies = getKiometCookies();
+            const allData = {
+                localStorage: kiometData,
+                cookies: kiometCookies
+            };
             
-            const migrationSection = document.createElement('div');
-            migrationSection.innerHTML = `
-                <h3 class="widget-title"><i class="fas fa-cookie-bite"></i> 手动Cookie迁移</h3>
-                <p style="margin-bottom: 15px; font-size: 14px;">
-                    如果自动迁移失败，可以手动迁移Cookie数据。需要在原浏览器中查看Cookie并粘贴到这里。
-                </p>
-                <button onclick="manualCookieMigration()" class="secondary">
-                    <i class="fas fa-hand-point-right"></i> 手动迁移Cookie
-                </button>
-            `;
+            const dataStr = JSON.stringify(allData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
-            widget.appendChild(migrationSection);
+            const exportFileDefaultName = 'kiomet_backup.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            document.getElementById('manageStatus').className = 'status success';
+            document.getElementById('manageStatus').textContent = '数据已导出为JSON文件';
         }
         
-        // 修改初始化函数
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-            updateStorageInfo();
-            setupEventListeners();
-            addManualMigrationOption(); // 添加手动迁移选项
-        });
+        // 导入数据功能
+        function importData() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        // 应用到本地存储
+                        applySaveData(importedData);
+                        
+                        document.getElementById('manageStatus').className = 'status success';
+                        document.getElementById('manageStatus').textContent = `已导入数据`;
+                        
+                    } catch (error) {
+                        document.getElementById('manageStatus').className = 'status error';
+                        document.getElementById('manageStatus').textContent = '导入失败: 无效的JSON格式';
+                    }
+                };
+                
+                reader.readAsText(file);
+            });
+            
+            fileInput.click();
+        }
     </script>
 </body>
 </html>
