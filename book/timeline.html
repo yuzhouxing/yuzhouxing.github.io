@@ -2,100 +2,305 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KIOMET 编年史 | 正文</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 内联样式确保加载 */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            font-style: italic;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        .error-card {
+            background: #ffebee;
+            border-left: 5px solid #f44336;
+            padding: 2rem;
+            margin: 2rem 0;
+            color: #c62828;
+            border-radius: 4px;
+        }
+        .debug-info {
+            background: #e3f2fd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: none; /* 默认隐藏调试信息 */
+        }
+    </style>
 </head>
 <body>
     <div class="book-container">
         <header class="book-header">
             <h1>KIOMET 编年史</h1>
-            <a href="index.html">返回封面</a>
+            <div class="header-links">
+                <a href="index.html">📖 返回封面</a>
+                <a href="submit.html">✍️ 贡献史料</a>
+            </div>
         </header>
 
+        <div class="debug-info" id="debugInfo"></div>
+
         <main class="timeline-container" id="timeline">
-            <!-- 事件卡片将通过JS动态加载到这里 -->
-            <div class="loading">史书正在加载中...</div>
+            <div class="loading" id="loading">🕒 史书正在加载中...</div>
         </main>
 
         <div class="pagination">
-            <button id="prevPage">上一页</button>
-            <span id="currentPage">1</span>
-            <button id="nextPage">下一页</button>
+            <button id="prevPage" disabled>◀ 上一页</button>
+            <span id="pageInfo">第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">1</span> 页</span>
+            <button id="nextPage" disabled>下一页 ▶</button>
+        </div>
+
+        <div class="stats-bar">
+            <span id="totalEvents">0</span> 个历史事件已被记录
         </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
-    <script src="script.js"></script>
+    <!-- 先加载Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // 专门用于timeline.html的代码
+        // 初始化Supabase客户端 - 使用正确的anon key
+        const SUPABASE_URL = 'https://exvsmuoyxmpnnaocoxie.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4dnNtdW95eG1wbm5hb2NveGllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTY5MTQsImV4cCI6MjA3MjEzMjkxNH0.0tcoiCMaIMI7tdu_Zajg0Dq4kp_qnG-K4r1Ak89g6JM';
+        
+        // 创建全局supabase对象
+        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase客户端已初始化', window.supabase);
+    </script>
+    <script>
+        // 专门用于timeline.html的代码 - 完整改进版本
         let currentPage = 1;
-        const eventsPerPage = 5; // 每页显示5个事件
+        const eventsPerPage = 5;
+        let allEvents = [];
+        let totalEvents = 0;
 
-        async function fetchEvents() {
-            // 只获取已审核通过的事件，按时间倒序排列（最新最近）
-            const { data, error } = await supabase
-                .from('events')
-                .select('*')
-                .eq('approved', true)
-                .order('created_at', { ascending: false }); 
-
-            if (error) {
-                console.error('读取历史失败:', error);
-                return [];
+        // 调试函数
+        function debugLog(message, data = null) {
+            console.log(`[KIOMET Debug] ${message}`, data || '');
+            // 可选：在页面上显示调试信息
+            const debugEl = document.getElementById('debugInfo');
+            if (debugEl) {
+                debugEl.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
             }
-            return data;
         }
 
+        // 显示错误信息
+        function showError(message, details = '') {
+            const container = document.getElementById('timeline');
+            container.innerHTML = `
+                <div class="error-card">
+                    <h3>📜 读取史书时遇到问题</h3>
+                    <p><strong>${message}</strong></p>
+                    ${details ? `<p><small>详细信息: ${details}</small></p>` : ''}
+                    <p>请检查：</p>
+                    <ul>
+                        <li>网络连接是否正常</li>
+                        <li>Supabase数据库是否包含已审核的事件</li>
+                        <li>浏览器控制台是否有错误信息（按F12查看）</li>
+                    </ul>
+                    <button onclick="location.reload()">🔄 重新加载</button>
+                </div>
+            `;
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            const container = document.getElementById('timeline');
+            container.innerHTML = '<div class="loading">📖 正在从历史长河中检索记载...</div>';
+        }
+
+        // 获取事件数据
+        async function fetchEvents() {
+            showLoading();
+            debugLog('开始从Supabase获取事件数据...');
+
+            try {
+                const { data, error, count } = await window.supabase
+                    .from('events')
+                    .select('*', { count: 'exact' })
+                    .eq('approved', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    debugLog('Supabase查询错误:', error);
+                    throw new Error(`数据库查询失败: ${error.message}`);
+                }
+
+                debugLog(`成功获取 ${data?.length || 0} 条已审核事件`, data);
+                return {
+                    events: data || [],
+                    totalCount: count || 0
+                };
+                
+            } catch (error) {
+                debugLog('获取事件失败:', error);
+                showError('连接历史数据库失败', error.message);
+                return {
+                    events: [],
+                    totalCount: 0
+                };
+            }
+        }
+
+        // 渲染事件列表
         function renderEvents(events, page) {
             const container = document.getElementById('timeline');
-            container.innerHTML = ''; // 清空加载提示
+            const loadingEl = document.getElementById('loading');
+            
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
+
+            if (!events || events.length === 0) {
+                container.innerHTML = `
+                    <div class="event-card">
+                        <h3>📜 史书尚为空卷</h3>
+                        <p>目前还没有通过审核的历史事件记录。</p>
+                        <p>这可能是由于：</p>
+                        <ul>
+                            <li>尚无用户提交事件</li>
+                            <li>提交的事件正在等待审核</li>
+                            <li>你是历史的见证者，<a href="submit.html">成为第一个书写历史的人</a></li>
+                        </ul>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
 
             const start = (page - 1) * eventsPerPage;
             const end = start + eventsPerPage;
             const paginatedEvents = events.slice(start, end);
 
             if (paginatedEvents.length === 0) {
-                container.innerHTML = '<div class="event-card">这一页是空白的，等待书写...</div>';
+                container.innerHTML = `
+                    <div class="event-card">
+                        <h3>📄 这一页是空白的</h3>
+                        <p>当前页码没有内容，请返回前面的页面。</p>
+                    </div>
+                `;
                 return;
             }
 
-            paginatedEvents.forEach(event => {
+            paginatedEvents.forEach((event, index) => {
                 const eventEl = document.createElement('div');
                 eventEl.className = 'event-card';
                 eventEl.innerHTML = `
-                    <h3>${event.date}</h3>
-                    <h2>${event.title}</h2>
-                    <p><strong>涉及势力：</strong>${event.faction}</p>
-                    <p>${event.content}</p>
-                    ${event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">查看证据</a>` : ''}
+                    <div class="event-header">
+                        <span class="event-date">🗓️ ${event.date}</span>
+                        <span class="event-faction">🏛️ ${event.faction}</span>
+                    </div>
+                    <h2 class="event-title">${event.title}</h2>
+                    <div class="event-content">
+                        <p>${event.content}</p>
+                    </div>
+                    ${event.evidence_url ? `
+                    <div class="event-evidence">
+                        <a href="${event.evidence_url}" target="_blank" rel="noopener">
+                            📜 查看历史证据
+                        </a>
+                    </div>` : ''}
+                    <div class="event-footer">
+                        <span class="event-id">记录ID: ${event.id}</span>
+                        <span class="event-created">📝 ${new Date(event.created_at).toLocaleDateString('zh-CN')}</span>
+                    </div>
                 `;
                 container.appendChild(eventEl);
             });
         }
 
+        // 更新分页控件
+        function updatePagination(totalEvents) {
+            const totalPages = Math.ceil(totalEvents / eventsPerPage);
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            const currentPageEl = document.getElementById('currentPage');
+            const totalPagesEl = document.getElementById('totalPages');
+            const totalEventsEl = document.getElementById('totalEvents');
+
+            if (currentPageEl) currentPageEl.textContent = currentPage;
+            if (totalPagesEl) totalPagesEl.textContent = totalPages || 1;
+            if (totalEventsEl) totalEventsEl.textContent = totalEvents;
+
+            // 更新按钮状态
+            if (prevBtn) prevBtn.disabled = currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+
+            debugLog(`分页更新: 第 ${currentPage} 页/共 ${totalPages} 页, 总计 ${totalEvents} 事件`);
+        }
+
+        // 加载特定页面
         async function loadPage() {
-            const allEvents = await fetchEvents();
-            const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+            debugLog(`加载第 ${currentPage} 页...`);
+
+            // 如果是第一次加载，先获取数据
+            if (allEvents.length === 0) {
+                const result = await fetchEvents();
+                allEvents = result.events;
+                totalEvents = result.totalCount;
+            }
+
+            const totalPages = Math.ceil(totalEvents / eventsPerPage);
             
-            // 简单分页控制
-            if (currentPage > totalPages) currentPage = totalPages;
+            // 边界检查
+            if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
             if (currentPage < 1) currentPage = 1;
 
-            document.getElementById('currentPage').textContent = `${currentPage} / ${totalPages || 1}`;
+            updatePagination(totalEvents);
             renderEvents(allEvents, currentPage);
         }
 
-        // 初始化
-        document.getElementById('prevPage').addEventListener('click', () => {
-            currentPage--;
-            loadPage();
-        });
-        document.getElementById('nextPage').addEventListener('click', () => {
-            currentPage++;
-            loadPage();
+        // 初始化页面
+        async function initPage() {
+            debugLog('页面初始化开始...');
+
+            // 检查supabase对象
+            if (!window.supabase) {
+                showError('Supabase客户端初始化失败', '请检查script.js中的配置');
+                return;
+            }
+
+            debugLog('Supabase客户端检查通过');
+
+            // 绑定事件监听器
+            document.getElementById('prevPage')?.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadPage();
+                }
+            });
+
+            document.getElementById('nextPage')?.addEventListener('click', () => {
+                const totalPages = Math.ceil(totalEvents / eventsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadPage();
+                }
+            });
+
+            // 首次加载
+            await loadPage();
+
+            debugLog('页面初始化完成');
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('DOM内容加载完成');
+            // 稍等片刻确保所有资源加载完成
+            setTimeout(initPage, 100);
         });
 
-        loadPage(); // 加载第一页
+        // 全局错误处理
+        window.addEventListener('error', function(e) {
+            debugLog('全局错误捕获:', e.error);
+            showError('发生意外错误', e.message);
+        });
     </script>
 </body>
 </html>
