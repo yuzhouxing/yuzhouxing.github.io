@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>贡献史料</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="submit-body">
+    <div class="submit-container">
+        <h1>为编年史贡献史料</h1>
+        <form id="eventForm">
+            <label for="date">历史日期：</label>
+            <input type="text" id="date" name="date" required placeholder="例如：2025年夏 或 2025-08-22">
+
+            <label for="title">事件标题：</label>
+            <input type="text" id="title" name="title" required placeholder="例如：天烬联盟成立">
+
+            <label for="faction">涉及联盟/势力：</label>
+            <input type="text" id="faction" name="faction" required placeholder="例如：天烬联盟、dictators、多方">
+
+            <label for="content">事件详情：</label>
+            <textarea id="content" name="content" rows="5" required></textarea>
+
+            <label for="evidence_url">证据链接（可选）：</label>
+            <input type="url" id="evidence_url" name="evidence_url" placeholder="截图或视频链接">
+
+            <button type="submit">提交审核</button>
+        </form>
+        <p id="formMessage"></p>
+        <a href="index.html">返回首页</a>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="script.js"></script>
+    <script>
+        // 专门用于submit.html的代码
+        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = e.target.querySelector('button');
+            const messageEl = document.getElementById('formMessage');
+
+            submitButton.disabled = true;
+            messageEl.textContent = '提交中...';
+
+            const formData = new FormData(e.target);
+            const eventData = Object.fromEntries(formData.entries());
+            // 默认提交的状态是待审核
+            eventData.approved = false; 
+
+            // 直接插入Supabase。注意：这需要RLS关闭。更安全的方式是使用Edge Function。
+            const { data, error } = await supabase
+                .from('events')
+                .insert([eventData])
+                .select();
+
+            if (error) {
+                messageEl.textContent = `提交失败: ${error.message}`;
+                console.error(error);
+            } else {
+                messageEl.textContent = '成功提交！等待管理员审核后将会出现在史书中。';
+                e.target.reset();
+            }
+            submitButton.disabled = false;
+        });
+    </script>
+</body>
+</html>
