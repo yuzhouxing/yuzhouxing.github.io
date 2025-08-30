@@ -2,65 +2,284 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>贡献史料</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贡献史料 - KIOMET 编年史</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .debug-info {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .debug-toggle {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 1rem 0;
+            font-size: 0.8rem;
+        }
+        .connection-status {
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
 </head>
 <body class="submit-body">
     <div class="submit-container">
-        <h1>为编年史贡献史料</h1>
+        <h1>📜 为编年史贡献史料</h1>
+        <p class="description">在此提交KIOMET世界中的重大事件，审核通过后将载入史册</p>
+
+        <!-- 连接状态显示 -->
+        <div id="connectionStatus" class="connection-status status-disconnected">
+            正在检查数据库连接...
+        </div>
+
         <form id="eventForm">
-            <label for="date">历史日期：</label>
-            <input type="text" id="date" name="date" required placeholder="例如：2025年夏 或 2025-08-22">
+            <div class="form-group">
+                <label for="date">🗓️ 历史日期：</label>
+                <input type="text" id="date" name="date" required 
+                       placeholder="例如：2025年夏 或 2025-08-22"
+                       onfocus="this.placeholder='推荐格式：2025-08-23'"
+                       onblur="this.placeholder='例如：2025年夏 或 2025-08-22'">
+                <small>请尽量使用标准日期格式</small>
+            </div>
 
-            <label for="title">事件标题：</label>
-            <input type="text" id="title" name="title" required placeholder="无">
+            <div class="form-group">
+                <label for="title">🏷️ 事件标题：</label>
+                <input type="text" id="title" name="title" required 
+                       placeholder="例如：天烬联盟成立宣言">
+            </div>
 
-            <label for="faction">涉及联盟/势力：</label>
-            <input type="text" id="faction" name="faction" required placeholder="例如：XX联盟、多方">
+            <div class="form-group">
+                <label for="faction">⚔️ 涉及联盟/势力：</label>
+                <input type="text" id="faction" name="faction" required 
+                       placeholder="例如：天烬联盟、dictators、多方势力">
+            </div>
 
-            <label for="content">事件详情：</label>
-            <textarea id="content" name="content" rows="5" required></textarea>
+            <div class="form-group">
+                <label for="content">📖 事件详情：</label>
+                <textarea id="content" name="content" rows="6" required 
+                          placeholder="请详细描述事件的经过、影响和意义..."></textarea>
+            </div>
 
-            <label for="evidence_url">证据链接（可选）：</label>
-            <input type="url" id="evidence_url" name="evidence_url" placeholder="截图或视频链接">
+            <div class="form-group">
+                <label for="evidence_url">🔗 证据链接（可选）：</label>
+                <input type="url" id="evidence_url" name="evidence_url" 
+                       placeholder="https://...（截图、战报视频链接等）">
+                <small>请提供可靠的证据来源</small>
+            </div>
 
-            <button type="submit">提交审核</button>
+            <div class="form-actions">
+                <button type="submit" id="submitButton" class="submit-btn">
+                    🚀 提交审核
+                </button>
+                <button type="button" onclick="testConnection()" class="test-btn">
+                    🔧 测试连接
+                </button>
+                <button type="button" onclick="toggleDebug()" class="debug-toggle">
+                    📊 调试信息
+                </button>
+            </div>
         </form>
-        <p id="formMessage"></p>
-        <a href="index.html">返回首页</a>
+
+        <div id="formMessage" class="message"></div>
+
+        <!-- 调试信息区域 -->
+        <div id="debugInfo" class="debug-info">
+            <h4>调试信息：</h4>
+            <div id="debugContent"></div>
+        </div>
+
+        <div class="navigation">
+            <a href="index.html">🏠 返回首页</a>
+            <a href="timeline.html">📖 查看史书</a>
+        </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
-    <script src="script.js"></script>
+    <!-- 引入Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // 专门用于submit.html的代码
+        // 初始化Supabase客户端
+        const SUPABASE_URL = 'https://exvsmuoyxmpnnaocoxie.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4dnNtdW95eG1wbm5hb2NveGllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTY5MTQsImV4cCI6MjA3MjEzMjkxNH0.0tcoiCMaIMI7tdu_Zajg0Dq4kp_qnG-K4r1Ak89g6JM';
+        
+        // 创建Supabase客户端实例
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase客户端已初始化');
+
+        // 调试函数
+        function debugLog(message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            console.log(logMessage, data || '');
+            
+            // 显示在调试信息区域
+            const debugContent = document.getElementById('debugContent');
+            if (debugContent) {
+                debugContent.innerHTML += `<div>${logMessage} ${data ? JSON.stringify(data) : ''}</div>`;
+            }
+        }
+
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateConnectionStatus(connected, message = '') {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.className = 'connection-status status-connected';
+                statusEl.innerHTML = '✅ 数据库连接正常';
+            } else {
+                statusEl.className = 'connection-status status-disconnected';
+                statusEl.innerHTML = `❌ 连接问题: ${message}`;
+            }
+        }
+
+        // 测试数据库连接
+        async function testConnection() {
+            debugLog('开始测试数据库连接...');
+            updateConnectionStatus(false, '测试中...');
+
+            try {
+                const { data, error } = await supabase
+                    .from('events')
+                    .select('count')
+                    .limit(1);
+
+                if (error) {
+                    throw error;
+                }
+
+                debugLog('数据库连接测试成功', data);
+                updateConnectionStatus(true, '连接正常');
+                showMessage('✅ 数据库连接正常！', 'success');
+                
+            } catch (error) {
+                debugLog('数据库连接测试失败', error);
+                updateConnectionStatus(false, error.message);
+                showMessage(`❌ 连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        function showMessage(message, type = 'info') {
+            const messageEl = document.getElementById('formMessage');
+            messageEl.textContent = message;
+            messageEl.className = `message ${type}`;
+            
+            // 3秒后自动清除成功消息
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (messageEl.textContent === message) {
+                        messageEl.textContent = '';
+                        messageEl.className = 'message';
+                    }
+                }, 5000);
+            }
+        }
+
+        // 表单提交处理
         document.getElementById('eventForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitButton = e.target.querySelector('button');
-            const messageEl = document.getElementById('formMessage');
-
-            submitButton.disabled = true;
-            messageEl.textContent = '提交中...';
-
+            
+            const submitButton = document.getElementById('submitButton');
             const formData = new FormData(e.target);
             const eventData = Object.fromEntries(formData.entries());
-            // 默认提交的状态是待审核
-            eventData.approved = false; 
 
-            // 直接插入Supabase。注意：这需要RLS关闭。更安全的方式是使用Edge Function。
-            const { data, error } = await supabase
-                .from('events')
-                .insert([eventData])
-                .select();
-
-            if (error) {
-                messageEl.textContent = `提交失败: ${error.message}`;
-                console.error(error);
-            } else {
-                messageEl.textContent = '成功提交！等待管理员审核后将会出现在史书中。';
-                e.target.reset();
+            // 验证必填字段
+            if (!eventData.date || !eventData.title || !eventData.faction || !eventData.content) {
+                showMessage('❌ 请填写所有必填字段', 'error');
+                return;
             }
-            submitButton.disabled = false;
+
+            submitButton.disabled = true;
+            submitButton.textContent = '提交中...';
+            showMessage('🔄 正在提交，请稍候...', 'info');
+
+            debugLog('开始提交数据', eventData);
+
+            try {
+                // 添加审核状态
+                eventData.approved = false;
+
+                // 插入数据到Supabase
+                const { data, error } = await supabase
+                    .from('events')
+                    .insert([eventData])
+                    .select();
+
+                debugLog('Supabase响应', { data, error });
+
+                if (error) {
+                    throw new Error(`数据库错误: ${error.message} (代码: ${error.code})`);
+                }
+
+                if (data && data.length > 0) {
+                    debugLog('提交成功', data[0]);
+                    showMessage('✅ 成功提交！等待管理员审核后将会出现在史书中。', 'success');
+                    e.target.reset();
+                } else {
+                    throw new Error('服务器返回空数据，可能插入失败');
+                }
+
+            } catch (error) {
+                console.error('提交错误:', error);
+                debugLog('提交失败', error);
+                
+                let errorMessage = `提交失败: ${error.message}`;
+                
+                // 特定错误处理
+                if (error.message.includes('JWT')) {
+                    errorMessage += '<br>❌ API密钥配置错误，请检查Supabase设置';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage += '<br>❌ 跨域问题，请配置CORS设置';
+                } else if (error.message.includes('network')) {
+                    errorMessage += '<br>❌ 网络连接问题';
+                } else if (error.message.includes('violates')) {
+                    errorMessage += '<br>❌ 数据格式错误，请检查字段内容';
+                }
+                
+                showMessage(errorMessage, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = '🚀 提交审核';
+            }
+        });
+
+        // 页面加载时自动测试连接
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('页面加载完成');
+            console.log('Supabase客户端:', supabase ? '已初始化' : '未初始化');
+            
+            if (window.supabase && supabase) {
+                debugLog('Supabase客户端初始化成功');
+                // 延迟一点测试连接，避免页面加载时同时发起多个请求
+                setTimeout(testConnection, 1000);
+            } else {
+                debugLog('Supabase客户端初始化失败');
+                updateConnectionStatus(false, 'Supabase客户端未正确初始化');
+                showMessage('❌ Supabase客户端初始化失败，请检查控制台错误', 'error');
+            }
         });
     </script>
 </body>
