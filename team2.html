@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>联盟海报工作台 - 高度自定义海报生成器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4776E6;
+            --secondary-color: #8E54E9;
+            --background-color: #0f2027;
+            --text-color: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --border-radius: 12px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: var(--background-color);
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 编辑面板样式 */
+        .editor-panel {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .panel-section {
+            margin-bottom: 25px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .panel-title i {
+            margin-right: 10px;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        .option-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active {
+            border-color: white;
+            transform: scale(1.1);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .checkbox-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .checkbox-option.active {
+            background: var(--primary-color);
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        /* 预览区域样式 */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .preview-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .poster-container {
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .poster {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        /* 海报元素样式 */
+        .poster-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .poster-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .poster-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .alliance-badge {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 15px;
+            font-size: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 3px solid white;
+        }
+        
+        .poster-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+        }
+        
+        .poster-subtitle {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        
+        .poster-body {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+            min-height: 150px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .poster-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .leader-info {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+        
+        .leader-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            flex: 1;
+            margin: 0 5px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .leader-role {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .leader-name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .poster-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        /* 装饰元素 */
+        .decoration-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            z-index: 1;
+        }
+        
+        .decoration-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .decoration-shape {
+            position: absolute;
+            opacity: 0.1;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            z-index: 1;
+        }
+        
+        /* 布局选项 */
+        .layout-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .layout-option {
+            aspect-ratio: 1/1.4;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.2s;
+        }
+        
+        .layout-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .layout-option.active {
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+        
+        .layout-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+        
+        .layout-header {
+            height: 20%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .layout-body {
+            flex: 1;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .layout-sidebar {
+            width: 30%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        
+        .layout-main {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        
+        .layout-footer {
+            height: 15%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .editor-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                max-height: 400px;
+            }
+            
+            .preview-panel {
+                padding: 20px;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animated {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 编辑面板 -->
+        <div class="editor-panel">
+            <div class="panel-section">
+                <h3 class="panel-title"><i class="fas fa-edit"></i> 基本信息</h3>
+                <div class="option-group">
+                    <label class="option-label">联盟名称</label>
+                    <input type="text" id="alliance-name" placeholder="输入联盟名称">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">联盟标语</label>
+                    <input type="text" id="alliance-tagline" placeholder="输入联盟标语">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">联盟描述</label>
+                    <textarea id="alliance-description" placeholder="输入联盟描述"></textarea>
+                </div>
+                <div class="option-group">
+                    <label class="option-label">成员数量</label>
+                    <input type="number" id="members-count" placeholder="输入成员数量" value="50">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">胜利次数</label>
+                    <input type="number" id="victories-count" placeholder="输入胜利次数" value="25">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">盟主名称</label>
+                    <input type="text" id="leader-name" placeholder="输入盟主名称">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">副盟主名称</label>
+                    <input type="text" id="vice-leader-name" placeholder="输入副盟主名称">
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3 class="panel-title"><i class="fas fa-palette"></i> 颜色主题</h3>
+                <div class="option-group">
+                    <label class="option-label">预设配色</label>
+                    <div class="color-picker">
+                        <div class="color-option active" style="background: linear-gradient(135deg, #4776E6, #8E54E9);" data-primary="#4776E6" data-secondary="#8E54E9"></div>
+                        <div class="color-option" style="background: linear-gradient(135deg, #FF512F, #DD2476);" data-primary="#FF512F" data-secondary="#DD2476"></div>
+                        <div class="color-option" style="background: linear-gradient(135deg, #00b09b, #96c93d);" data-primary="#00b09b" data-secondary="#96c93d"></div>
+                        <div class="color-option" style="background: linear-gradient(135deg, #FF416C, #FF4B2B);" data-primary="#FF416C" data-secondary="#FF4B2B"></div>
+                    </div>
+                </div>
+                <div class="option-group">
+                    <label class="option-label">主色调</label>
+                    <input type="color" id="primary-color" value="#4776E6">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">辅助色</label>
+                    <input type="color" id="secondary-color" value="#8E54E9">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">背景色</label>
+                    <input type="color" id="background-color" value="#0f2027">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">文字颜色</label>
+                    <input type="color" id="text-color" value="#ffffff">
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3 class="panel-title"><i class="fas fa-th-large"></i> 布局选择</h3>
+                <div class="layout-options">
+                    <div class="layout-option active" data-layout="standard">
+                        <div class="layout-preview">
+                            <div class="layout-header"></div>
+                            <div class="layout-body">
+                                <div class="layout-sidebar"></div>
+                                <div class="layout-main"></div>
+                            </div>
+                            <div class="layout-footer"></div>
+                        </div>
+                    </div>
+                    <div class="layout-option" data-layout="centered">
+                        <div class="layout-preview">
+                            <div class="layout-header"></div>
+                            <div class="layout-body">
+                                <div class="layout-main"></div>
+                            </div>
+                            <div class="layout-footer"></div>
+                        </div>
+                    </div>
+                    <div class="layout-option" data-layout="minimal">
+                        <div class="layout-preview">
+                            <div class="layout-header"></div>
+                            <div class="layout-main"></div>
+                        </div>
+                    </div>
+                    <div class="layout-option" data-layout="detailed">
+                        <div class="layout-preview">
+                            <div class="layout-header"></div>
+                            <div class="layout-body">
+                                <div class="layout-sidebar"></div>
+                                <div class="layout-main"></div>
+                                <div class="layout-sidebar"></div>
+                            </div>
+                            <div class="layout-footer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3 class="panel-title"><i class="fas fa-star"></i> 装饰元素</h3>
+                <div class="option-group">
+                    <label class="option-label">装饰类型</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-option active" data-decoration="circles">圆形</div>
+                        <div class="checkbox-option" data-decoration="particles">粒子</div>
+                        <div class="checkbox-option" data-decoration="shapes">几何形状</div>
+                    </div>
+                </div>
+                <div class="option-group">
+                    <label class="option-label">装饰密度</label>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="decoration-density">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">装饰大小</label>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="decoration-size">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">动画效果</label>
+                    <select id="animation-type">
+                        <option value="none">无动画</option>
+                        <option value="float">浮动</option>
+                        <option value="rotate">旋转</option>
+                        <option value="pulse">脉动</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 预览面板 -->
+        <div class="preview-panel">
+            <div class="preview-controls">
+                <button class="control-btn" id="reset-btn"><i class="fas fa-redo"></i> 重置</button>
+                <button class="control-btn" id="download-btn"><i class="fas fa-download"></i> 下载海报</button>
+            </div>
+            
+            <div class="poster-container">
+                <div class="poster animated">
+                    <div class="poster-bg" id="poster-background">
+                        <!-- 动态生成的装饰元素 -->
+                    </div>
+                    
+                    <div class="poster-content">
+                        <div class="poster-header">
+                            <div class="alliance-badge">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <h1 class="poster-title" id="poster-title">联盟名称</h1>
+                            <p class="poster-subtitle" id="poster-tagline">荣耀与力量的象征</p>
+                        </div>
+                        
+                        <div class="poster-body" id="poster-description">
+                            在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
+                        </div>
+                        
+                        <div class="poster-info">
+                            <div class="info-item">
+                                <div class="info-label">成员</div>
+                                <div class="info-value" id="poster-members">50</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">胜利</div>
+                                <div class="info-value" id="poster-victories">25</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">活跃度</div>
+                                <div class="info-value">高</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">等级</div>
+                                <div class="info-value">5</div>
+                            </div>
+                        </div>
+                        
+                        <div class="leader-info">
+                            <div class="leader-item">
+                                <div class="leader-role">盟主</div>
+                                <div class="leader-name" id="poster-leader">待输入</div>
+                            </div>
+                            <div class="leader-item">
+                                <div class="leader-role">副盟主</div>
+                                <div class="leader-name" id="poster-vice-leader">待输入</div>
+                            </div>
+                        </div>
+                        
+                        <div class="poster-footer">
+                            强大 · 团结 · 荣耀
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const allianceNameInput = document.getElementById('alliance-name');
+            const allianceTaglineInput = document.getElementById('alliance-tagline');
+            const allianceDescInput = document.getElementById('alliance-description');
+            const membersCountInput = document.getElementById('members-count');
+            const victoriesCountInput = document.getElementById('victories-count');
+            const leaderNameInput = document.getElementById('leader-name');
+            const viceLeaderNameInput = document.getElementById('vice-leader-name');
+            
+            const primaryColorInput = document.getElementById('primary-color');
+            const secondaryColorInput = document.getElementById('secondary-color');
+            const backgroundColorInput = document.getElementById('background-color');
+            const textColorInput = document.getElementById('text-color');
+            
+            const colorOptions = document.querySelectorAll('.color-option');
+            const layoutOptions = document.querySelectorAll('.layout-option');
+            const decorationOptions = document.querySelectorAll('.checkbox-option');
+            const decorationDensityInput = document.getElementById('decoration-density');
+            const decorationSizeInput = document.getElementById('decoration-size');
+            const animationTypeInput = document.getElementById('animation-type');
+            
+            const posterTitle = document.getElementById('poster-title');
+            const posterTagline = document.getElementById('poster-tagline');
+            const posterDescription = document.getElementById('poster-description');
+            const posterMembers = document.getElementById('poster-members');
+            const posterVictories = document.getElementById('poster-victories');
+            const posterLeader = document.getElementById('poster-leader');
+            const posterViceLeader = document.getElementById('poster-vice-leader');
+            const posterBackground = document.getElementById('poster-background');
+            const posterElement = document.querySelector('.poster');
+            
+            const resetBtn = document.getElementById('reset-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            
+            // 当前设置
+            let currentSettings = {
+                colors: {
+                    primary: '#4776E6',
+                    secondary: '#8E54E9',
+                    background: '#0f2027',
+                    text: '#ffffff'
+                },
+                layout: 'standard',
+                decorations: ['circles'],
+                animation: 'none'
+            };
+            
+            // 初始化
+            function init() {
+                // 添加事件监听器
+                allianceNameInput.addEventListener('input', updatePosterText);
+                allianceTaglineInput.addEventListener('input', updatePosterText);
+                allianceDescInput.addEventListener('input', updatePosterText);
+                membersCountInput.addEventListener('input', updatePosterText);
+                victoriesCountInput.addEventListener('input', updatePosterText);
+                leaderNameInput.addEventListener('input', updatePosterText);
+                viceLeaderNameInput.addEventListener('input', updatePosterText);
+                
+                primaryColorInput.addEventListener('input', updateColors);
+                secondaryColorInput.addEventListener('input', updateColors);
+                backgroundColorInput.addEventListener('input', updateColors);
+                textColorInput.addEventListener('input', updateColors);
+                
+                colorOptions.forEach(option => {
+                    option.addEventListener('click', applyColorPreset);
+                });
+                
+                layoutOptions.forEach(option => {
+                    option.addEventListener('click', changeLayout);
+                });
+                
+                decorationOptions.forEach(option => {
+                    option.addEventListener('click', toggleDecoration);
+                });
+                
+                decorationDensityInput.addEventListener('input', updateDecorations);
+                decorationSizeInput.addEventListener('input', updateDecorations);
+                animationTypeInput.addEventListener('change', updateAnimation);
+                
+                resetBtn.addEventListener('click', resetSettings);
+                downloadBtn.addEventListener('click', downloadPoster);
+                
+                // 初始更新
+                updatePosterText();
+                updateDecorations();
+            }
+            
+            // 更新海报文本
+            function updatePosterText() {
+                posterTitle.textContent = allianceNameInput.value || '联盟名称';
+                posterTagline.textContent = allianceTaglineInput.value || '荣耀与力量的象征';
+                posterDescription.textContent = allianceDescInput.value || '在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。';
+                posterMembers.textContent = membersCountInput.value || '50';
+                posterVictories.textContent = victoriesCountInput.value || '25';
+                posterLeader.textContent = leaderNameInput.value || '待输入';
+                posterViceLeader.textContent = viceLeaderNameInput.value || '待输入';
+            }
+            
+            // 更新颜色
+            function updateColors() {
+                const primaryColor = primaryColorInput.value;
+                const secondaryColor = secondaryColorInput.value;
+                const backgroundColor = backgroundColorInput.value;
+                const textColor = textColorInput.value;
+                
+                // 更新CSS变量
+                document.documentElement.style.setProperty('--primary-color', primaryColor);
+                document.documentElement.style.setProperty('--secondary-color', secondaryColor);
+                document.documentElement.style.setProperty('--background-color', backgroundColor);
+                document.documentElement.style.setProperty('--text-color', textColor);
+                
+                // 更新海报背景
+                posterElement.style.background = `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`;
+                
+                // 保存当前颜色设置
+                currentSettings.colors = {
+                    primary: primaryColor,
+                    secondary: secondaryColor,
+                    background: backgroundColor,
+                    text: textColor
+                };
+            }
+            
+            // 应用颜色预设
+            function applyColorPreset(e) {
+                const option = e.target.closest('.color-option');
+                if (!option) return;
+                
+                // 移除其他选项的active类
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                // 添加active类到当前选项
+                option.classList.add('active');
+                
+                // 获取颜色值
+                const primaryColor = option.dataset.primary;
+                const secondaryColor = option.dataset.secondary;
+                
+                // 更新颜色输入
+                primaryColorInput.value = primaryColor;
+                secondaryColorInput.value = secondaryColor;
+                
+                // 更新颜色
+                updateColors();
+            }
+            
+            // 更改布局
+            function changeLayout(e) {
+                const option = e.target.closest('.layout-option');
+                if (!option) return;
+                
+                // 移除其他选项的active类
+                layoutOptions.forEach(opt => opt.classList.remove('active'));
+                // 添加active类到当前选项
+                option.classList.add('active');
+                
+                // 获取布局类型
+                const layout = option.dataset.layout;
+                
+                // 保存当前布局设置
+                currentSettings.layout = layout;
+                
+                // 根据布局类型调整海报样式
+                switch(layout) {
+                    case 'centered':
+                        posterElement.style.textAlign = 'center';
+                        break;
+                    case 'minimal':
+                        posterElement.style.padding = '20px';
+                        break;
+                    case 'detailed':
+                        posterElement.style.padding = '25px';
+                        break;
+                    default:
+                        posterElement.style.textAlign = 'left';
+                        posterElement.style.padding = '30px';
+                }
+            }
+            
+            // 切换装饰
+            function toggleDecoration(e) {
+                const option = e.target.closest('.checkbox-option');
+                if (!option) return;
+                
+                // 获取装饰类型
+                const decoration = option.dataset.decoration;
+                
+                // 切换active类
+                option.classList.toggle('active');
+                
+                // 更新装饰设置
+                if (option.classList.contains('active')) {
+                    if (!currentSettings.decorations.includes(decoration)) {
+                        currentSettings.decorations.push(decoration);
+                    }
+                } else {
+                    currentSettings.decorations = currentSettings.decorations.filter(d => d !== decoration);
+                }
+                
+                // 更新装饰
+                updateDecorations();
+            }
+            
+            // 更新装饰
+            function updateDecorations() {
+                // 清空现有装饰
+                posterBackground.innerHTML = '';
+                
+                // 获取密度和大小
+                const density = parseInt(decorationDensityInput.value);
+                const size = parseInt(decorationSizeInput.value);
+                
+                // 添加新装饰
+                if (currentSettings.decorations.includes('circles')) {
+                    addCircleDecorations(density, size);
+                }
+                
+                if (currentSettings.decorations.includes('particles')) {
+                    addParticleDecorations(density, size);
+                }
+                
+                if (currentSettings.decorations.includes('shapes')) {
+                    addShapeDecorations(density, size);
+                }
+                
+                // 更新动画
+                updateAnimation();
+            }
+            
+            // 添加圆形装饰
+            function addCircleDecorations(density, size) {
+                const count = density * 3;
+                const baseSize = size * 3;
+                
+                for (let i = 0; i < count; i++) {
+                    const circle = document.createElement('div');
+                    circle.className = 'decoration-circle';
+                    
+                    // 随机位置和大小
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    const circleSize = baseSize + Math.random() * baseSize;
+                    
+                    circle.style.width = `${circleSize}px`;
+                    circle.style.height = `${circleSize}px`;
+                    circle.style.left = `${left}%`;
+                    circle.style.top = `${top}%`;
+                    circle.style.opacity = 0.1 + Math.random() * 0.2;
+                    
+                    posterBackground.appendChild(circle);
+                }
+            }
+            
+            // 添加粒子装饰
+            function addParticleDecorations(density, size) {
+                const count = density * 5;
+                const baseSize = size;
+                
+                for (let i = 0; i < count; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'decoration-particle';
+                    
+                    // 随机位置和大小
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    const particleSize = baseSize + Math.random() * baseSize;
+                    
+                    particle.style.width = `${particleSize}px`;
+                    particle.style.height = `${particleSize}px`;
+                    particle.style.left = `${left}%`;
+                    particle.style.top = `${top}%`;
+                    particle.style.opacity = 0.3 + Math.random() * 0.4;
+                    
+                    posterBackground.appendChild(particle);
+                }
+            }
+            
+            // 添加形状装饰
+            function addShapeDecorations(density, size) {
+                const count = density * 2;
+                const baseSize = size * 5;
+                
+                for (let i = 0; i < count; i++) {
+                    const shape = document.createElement('div');
+                    shape.className = 'decoration-shape';
+                    
+                    // 随机位置和大小
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    const shapeSize = baseSize + Math.random() * baseSize;
+                    
+                    // 随机形状
+                    const shapeType = Math.floor(Math.random() * 3);
+                    
+                    if (shapeType === 0) {
+                        // 三角形
+                        shape.style.width = '0';
+                        shape.style.height = '0';
+                        shape.style.borderLeft = `${shapeSize/2}px solid transparent`;
+                        shape.style.borderRight = `${shapeSize/2}px solid transparent`;
+                        shape.style.borderBottom = `${shapeSize}px solid rgba(255, 255, 255, 0.5)`;
+                        shape.style.background = 'none';
+                    } else if (shapeType === 1) {
+                        // 正方形
+                        shape.style.width = `${shapeSize}px`;
+                        shape.style.height = `${shapeSize}px`;
+                    } else {
+                        // 圆形
+                        shape.style.width = `${shapeSize}px`;
+                        shape.style.height = `${shapeSize}px`;
+                        shape.style.borderRadius = '50%';
+                    }
+                    
+                    shape.style.left = `${left}%`;
+                    shape.style.top = `${top}%`;
+                    shape.style.opacity = 0.05 + Math.random() * 0.1;
+                    shape.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    
+                    posterBackground.appendChild(shape);
+                }
+            }
+            
+            // 更新动画
+            function updateAnimation() {
+                const animationType = animationTypeInput.value;
+                currentSettings.animation = animationType;
+                
+                // 移除所有动画类
+                const decorations = posterBackground.querySelectorAll('div');
+                decorations.forEach(deco => {
+                    deco.style.animation = 'none';
+                });
+                
+                // 应用新动画
+                if (animationType !== 'none') {
+                    decorations.forEach(deco => {
+                        let animationName = '';
+                        let animationDuration = '';
+                        
+                        switch(animationType) {
+                            case 'float':
+                                animationName = 'float';
+                                animationDuration = `${15 + Math.random() * 10}s`;
+                                break;
+                            case 'rotate':
+                                animationName = 'rotate';
+                                animationDuration = `${30 + Math.random() * 20}s`;
+                                break;
+                            case 'pulse':
+                                animationName = 'pulse';
+                                animationDuration = `${3 + Math.random() * 2}s`;
+                                break;
+                        }
+                        
+                        if (animationName) {
+                            deco.style.animation = `${animationName} ${animationDuration} infinite ease-in-out`;
+                        }
+                    });
+                }
+            }
+            
+            // 重置设置
+            function resetSettings() {
+                // 重置表单
+                allianceNameInput.value = '';
+                allianceTaglineInput.value = '';
+                allianceDescInput.value = '';
+                membersCountInput.value = '50';
+                victoriesCountInput.value = '25';
+                leaderNameInput.value = '';
+                viceLeaderNameInput.value = '';
+                
+                // 重置颜色
+                primaryColorInput.value = '#4776E6';
+                secondaryColorInput.value = '#8E54E9';
+                backgroundColorInput.value = '#0f2027';
+                textColorInput.value = '#ffffff';
+                
+                // 重置颜色选项
+                colorOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.primary === '#4776E6') {
+                        option.classList.add('active');
+                    }
+                });
+                
+                // 重置布局
+                layoutOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.layout === 'standard') {
+                        option.classList.add('active');
+                    }
+                });
+                
+                // 重置装饰
+                decorationOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.decoration === 'circles') {
+                        option.classList.add('active');
+                    }
+                });
+                
+                decorationDensityInput.value = '5';
+                decorationSizeInput.value = '5';
+                animationTypeInput.value = 'none';
+                
+                // 重置当前设置
+                currentSettings = {
+                    colors: {
+                        primary: '#4776E6',
+                        secondary: '#8E54E9',
+                        background: '#0f2027',
+                        text: '#ffffff'
+                    },
+                    layout: 'standard',
+                    decorations: ['circles'],
+                    animation: 'none'
+                };
+                
+                // 更新所有内容
+                updatePosterText();
+                updateColors();
+                updateDecorations();
+                
+                // 重置海报样式
+                posterElement.style.textAlign = 'left';
+                posterElement.style.padding = '30px';
+            }
+            
+            // 下载海报
+            function downloadPoster() {
+                alert('在实际部署中，这里会使用html2canvas库将海报转换为图像并下载。\n\n由于本示例运行在浏览器环境中，无法实际实现下载功能，但代码结构已准备好集成html2canvas。');
+                
+                // 在实际应用中，可以使用以下代码：
+                /*
+                html2canvas(posterElement).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = '联盟海报.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+                */
+            }
+            
+            // 添加CSS动画关键帧
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes float {
+                    0%, 100% { transform: translateY(0) translateX(0); }
+                    25% { transform: translateY(-20px) translateX(10px); }
+                    50% { transform: translateY(10px) translateX(20px); }
+                    75% { transform: translateY(20px) translateX(-10px); }
+                }
+                
+                @keyframes rotate {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.1; }
+                    50% { opacity: 0.3; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 初始化应用
+            init();
+        });
+    </script>
+</body>
+</html>
