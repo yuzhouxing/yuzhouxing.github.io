@@ -67,13 +67,13 @@
             <div class="form-group">
                 <label for="title">🏷️ 事件标题：</label>
                 <input type="text" id="title" name="title" required 
-                       placeholder="例如：天烬联盟成立宣言">
+                       placeholder="无">
             </div>
 
             <div class="form-group">
                 <label for="faction">⚔️ 涉及联盟/势力：</label>
                 <input type="text" id="faction" name="faction" required 
-                       placeholder="例如：天烬联盟、dictators、多方势力">
+                       placeholder="例如：XX联盟、公共势力">
             </div>
 
             <div class="form-group">
@@ -93,22 +93,11 @@
                 <button type="submit" id="submitButton" class="submit-btn">
                     🚀 提交审核
                 </button>
-                <button type="button" onclick="testConnection()" class="test-btn">
-                    🔧 测试连接
-                </button>
-                <button type="button" onclick="toggleDebug()" class="debug-toggle">
-                    📊 调试信息
-                </button>
             </div>
         </form>
 
         <div id="formMessage" class="message"></div>
 
-        <!-- 调试信息区域 -->
-        <div id="debugInfo" class="debug-info">
-            <h4>调试信息：</h4>
-            <div id="debugContent"></div>
-        </div>
 
         <div class="navigation">
             <a href="index.html">🏠 返回首页</a>
@@ -145,7 +134,7 @@
             debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
         }
 
-        function updateConnectionStatus(connected, message = '') {
+       /* function updateConnectionStatus(connected, message = '') {
             const statusEl = document.getElementById('connectionStatus');
             if (connected) {
                 statusEl.className = 'connection-status status-connected';
@@ -180,7 +169,7 @@
                 updateConnectionStatus(false, error.message);
                 showMessage(`❌ 连接失败: ${error.message}`, 'error');
             }
-        }
+        }*/
 
         function showMessage(message, type = 'info') {
             const messageEl = document.getElementById('formMessage');
