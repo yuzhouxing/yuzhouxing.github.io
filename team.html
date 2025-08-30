@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiomet联盟海报生成器</title>
+    <title>联盟海报工作台 - 高度自定义海报生成器</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #4776E6;
+            --secondary-color: #8E54E9;
+            --background-color: #0f2027;
+            --text-color: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --border-radius: 12px;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -14,434 +23,220 @@
         }
         
         body {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            background: var(--background-color);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            color: #fff;
+            color: var(--text-color);
+            overflow-x: hidden;
         }
         
         .container {
-            width: 100%;
-            max-width: 1100px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        header {
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(to right, #4776E6, #8E54E9);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        h1 {
-            font-size: 2.8rem;
-            margin-bottom: 10px;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 2;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .content {
             display: flex;
-            flex-wrap: wrap;
+            min-height: 100vh;
+        }
+        
+        /* 编辑面板样式 */
+        .editor-panel {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.3);
             padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
         }
         
-        .input-section {
-            flex: 1;
-            min-width: 300px;
-            padding: 30px;
+        .panel-section {
+            margin-bottom: 25px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .preview-section {
-            flex: 1;
-            min-width: 300px;
-            padding: 30px;
+        .panel-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
         }
         
-        .form-group {
-            margin-bottom: 20px;
+        .panel-title i {
+            margin-right: 10px;
         }
         
-        label {
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        .option-label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            color: #8E54E9;
+            font-weight: 500;
         }
         
         input, textarea, select {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             background: rgba(255, 255, 255, 0.15);
-            font-size: 16px;
             color: white;
-            transition: all 0.3s ease;
+            margin-bottom: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         textarea {
-            min-height: 120px;
+            min-height: 100px;
             resize: vertical;
         }
         
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 0 3px rgba(142, 84, 233, 0.5);
-        }
-        
-        input::placeholder, textarea::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .form-row {
+        .color-picker {
             display: flex;
-            gap: 15px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         
-        .form-row .form-group {
-            flex: 1;
-        }
-        
-        .generate-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(to right, #4776E6, #8E54E9);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            margin-top: 10px;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
         }
         
-        .generate-btn:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-            z-index: -1;
+        .color-option:hover {
+            transform: scale(1.1);
         }
         
-        .generate-btn:hover:before {
-            left: 100%;
+        .color-option.active {
+            border-color: white;
+            transform: scale(1.1);
         }
         
-        .generate-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-            background: linear-gradient(to right, #3c6cd5, #8048d1);
-        }
-        
-        .generate-btn:active {
-            transform: translateY(0);
-        }
-        
-        .poster {
-            width: 100%;
-            max-width: 420px;
-            background: linear-gradient(135deg, #4776E6, #8E54E9);
-            border-radius: 20px;
-            padding: 25px;
-            color: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .poster::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
-            transform: rotate(30deg);
-        }
-        
-        .poster-header {
-            text-align: center;
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .poster-title {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
-        }
-        
-        .poster-subtitle {
-            font-size: 1rem;
-            font-weight: 300;
-            letter-spacing: 1px;
-            opacity: 0.9;
-        }
-        
-        .poster-content {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 18px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(5px);
-            min-height: 150px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            z-index: 2;
-            font-size: 0.95rem;
-        }
-        
-        .poster-info {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .info-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .info-label {
-            font-size: 0.8rem;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-        
-        .info-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-        
-        .poster-footer {
+        .checkbox-group {
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-option {
+            display: flex;
             align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .checkbox-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .checkbox-option.active {
+            background: var(--primary-color);
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        /* 预览区域样式 */
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
             position: relative;
-            z-index: 2;
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-top: 10px;
         }
         
-        .instructions {
-            margin-top: 25px;
-            text-align: center;
-            font-size: 0.95rem;
-            color: rgba(255, 255, 255, 0.8);
-            max-width: 400px;
-        }
-        
-        .logo {
+        .preview-controls {
             position: absolute;
             top: 20px;
-            left: 20px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #8E54E9;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            z-index: 10;
+            right: 20px;
+            display: flex;
+            gap: 10px;
         }
         
-        @media (max-width: 768px) {
-            .content {
-                flex-direction: column;
-            }
-            
-            .input-section, .preview-section {
-                width: 100%;
-            }
-            
-            h1 {
-                font-size: 2.2rem;
-            }
-            
-            .form-row {
-                flex-direction: column;
-                gap: 0;
-            }
-        }
-        
-        /* 动画效果 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animated {
-            animation: fadeIn 0.8s ease-out;
-        }
-        
-        /* 海报页面样式 */
-        .poster-page {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
-        
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 12px 20px;
+        .control-btn {
+            padding: 10px 15px;
             background: rgba(255, 255, 255, 0.15);
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
             backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         
-        .back-btn:hover {
+        .control-btn:hover {
             background: rgba(255, 255, 255, 0.25);
         }
         
-        .large-poster {
-            max-width: 600px;
-            margin: 40px auto;
-            transform: scale(1.05);
+        .poster-container {
+            width: 100%;
+            max-width: 500px;
+            position: relative;
         }
         
-        .download-btn {
-            margin-top: 30px;
-            padding: 15px 30px;
-            background: linear-gradient(to right, #00b09b, #96c93d);
+        .poster {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 20px;
+            padding: 30px;
             color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
             position: relative;
             overflow: hidden;
-            z-index: 1;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
         
-        .download-btn:before {
-            content: '';
+        /* 海报元素样式 */
+        .poster-bg {
             position: absolute;
             top: 0;
-            left: -100%;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-            z-index: -1;
-        }
-        
-        .download-btn:hover:before {
-            left: 100%;
-        }
-        
-        .download-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-        
-        /* 新增海报装饰元素 */
-        .decorative-circle {
-            position: absolute;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.2);
             z-index: 1;
         }
         
-        .circle-1 {
-            width: 100px;
-            height: 100px;
-            top: -30px;
-            right: -30px;
+        .poster-content {
+            position: relative;
+            z-index: 2;
         }
         
-        .circle-2 {
-            width: 60px;
-            height: 60px;
-            bottom: -20px;
-            left: -20px;
-        }
-        
-        .circle-3 {
-            width: 80px;
-            height: 80px;
-            bottom: 40px;
-            right: 30px;
-        }
-        
-        .shine-effect {
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                to right,
-                rgba(255, 255, 255, 0) 0%,
-                rgba(255, 255, 255, 0.03) 20%,
-                rgba(255, 255, 255, 0.6) 50%,
-                rgba(255, 255, 255, 0.03) 80%,
-                rgba(255, 255, 255, 0) 100%
-            );
-            transform: rotate(30deg);
-            z-index: 3;
-            animation: shine 8s infinite linear;
-        }
-        
-        @keyframes shine {
-            0% { left: -100%; }
-            20% { left: 100%; }
-            100% { left: 100%; }
+        .poster-header {
+            text-align: center;
+            margin-bottom: 20px;
         }
         
         .alliance-badge {
@@ -456,630 +251,757 @@
             font-size: 2rem;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             border: 3px solid white;
+        }
+        
+        .poster-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+        }
+        
+        .poster-subtitle {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        
+        /* 改进的文字框样式 */
+        .poster-body {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            min-height: 150px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             position: relative;
-            z-index: 2;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
         
-        .stats-container {
-            display: flex;
-            justify-content: space-around;
-            margin: 15px 0;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 0.85rem;
-            opacity: 0.8;
-        }
-        
-        .members-list {
-            display: flex;
-            justify-content: center;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .member {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
-            margin: 0 4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.75rem;
-            font-weight: bold;
-            border: 2px solid white;
-        }
-        
-        .pattern-dots {
+        .poster-body::before {
+            content: '';
             position: absolute;
-            width: 100%;
-            height: 100%;
             top: 0;
             left: 0;
-            z-index: 1;
-            opacity: 0.1;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px);
-            background-size: 20px 20px;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
         
-        .leader-info {
-            display: flex;
-            justify-content: space-around;
-            margin: 15px 0;
+        .poster-body::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, 30%);
         }
         
-        .leader-item {
-            text-align: center;
+        .poster-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
             background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 10px;
-            flex: 1;
-            margin: 0 5px;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
-        .leader-role {
+        .info-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        .info-label {
             font-size: 0.8rem;
             opacity: 0.8;
             margin-bottom: 5px;
         }
         
-        .leader-name {
-            font-size: 1rem;
-            font-weight: 600;
+        .info-value {
+            font-size: 1.4rem;
+            font-weight: 700;
         }
         
-        /* 新增装饰元素 */
-        .geometric-shapes {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: 1;
+        .leader-info {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
         }
         
-        .shape {
-            position: absolute;
-            opacity: 0.1;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .shape-triangle {
-            width: 0;
-            height: 0;
-            border-left: 30px solid transparent;
-            border-right: 30px solid transparent;
-            border-bottom: 50px solid rgba(255, 255, 255, 0.5);
-            top: 10%;
-            left: 10%;
-            transform: rotate(25deg);
-        }
-        
-        .shape-square {
-            width: 40px;
-            height: 40px;
-            bottom: 15%;
-            right: 15%;
-            transform: rotate(15deg);
-        }
-        
-        .shape-hexagon {
-            width: 40px;
-            height: 23px;
-            background: rgba(255, 255, 255, 0.5);
+        .leader-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            flex: 1;
+            margin: 0 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             position: relative;
-            top: 30%;
-            left: 70%;
-            transform: rotate(45deg);
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
-        .shape-hexagon:before, .shape-hexagon:after {
-            content: "";
+        .leader-item::before {
+            content: '';
             position: absolute;
-            width: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-        }
-        
-        .shape-hexagon:before {
-            bottom: 100%;
-            border-bottom: 11.5px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .shape-hexagon:after {
-            top: 100%;
-            border-top: 11.5px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .floating-particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        .leader-role {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .leader-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .poster-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        /* 装饰元素 */
+        .decoration-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             z-index: 1;
         }
         
-        .particle {
+        .decoration-particle {
             position: absolute;
             background: rgba(255, 255, 255, 0.6);
             border-radius: 50%;
-        }
-        
-        .particle-1 {
-            width: 6px;
-            height: 6px;
-            top: 20%;
-            left: 20%;
-            animation: float 15s infinite ease-in-out;
-        }
-        
-        .particle-2 {
-            width: 4px;
-            height: 4px;
-            top: 60%;
-            left: 80%;
-            animation: float 12s infinite ease-in-out;
-            animation-delay: 1s;
-        }
-        
-        .particle-3 {
-            width: 5px;
-            height: 5px;
-            top: 70%;
-            left: 30%;
-            animation: float 18s infinite ease-in-out;
-            animation-delay: 2s;
-        }
-        
-        .particle-4 {
-            width: 3px;
-            height: 3px;
-            top: 40%;
-            left: 60%;
-            animation: float 10s infinite ease-in-out;
-            animation-delay: 0.5s;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            25% { transform: translateY(-20px) translateX(10px); }
-            50% { transform: translateY(10px) translateX(20px); }
-            75% { transform: translateY(20px) translateX(-10px); }
-        }
-        
-        .border-decoration {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
             z-index: 1;
-            pointer-events: none;
         }
         
-        .corner {
+        .decoration-shape {
             position: absolute;
-            width: 20px;
-            height: 20px;
-        }
-        
-        .corner-tl {
-            top: 10px;
-            left: 10px;
-            border-top: 2px solid rgba(255, 255, 255, 0.5);
-            border-left: 2px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .corner-tr {
-            top: 10px;
-            right: 10px;
-            border-top: 2px solid rgba(255, 255, 255, 0.5);
-            border-right: 2px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .corner-bl {
-            bottom: 10px;
-            left: 10px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-            border-left: 2px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .corner-br {
-            bottom: 10px;
-            right: 10px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-            border-right: 2px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .header-decoration {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            opacity: 0.1;
+            border: 2px solid rgba(255, 255, 255, 0.5);
             z-index: 1;
-            overflow: hidden;
         }
         
-        .header-circle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+        /* 响应式设计 */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .editor-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                max-height: 400px;
+            }
+            
+            .preview-panel {
+                padding: 20px;
+            }
         }
         
-        .header-circle-1 {
-            width: 150px;
-            height: 150px;
-            top: -50px;
-            left: -50px;
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        .header-circle-2 {
-            width: 100px;
-            height: 100px;
-            bottom: -30px;
-            right: -30px;
+        .animated {
+            animation: fadeIn 0.5s ease-out;
         }
     </style>
 </head>
 <body>
-    <div class="logo">Kiomet</div>
-    
-    <div class="container animated" id="input-container">
-        <header>
-            <div class="header-decoration">
-                <div class="header-circle header-circle-1"></div>
-                <div class="header-circle header-circle-2"></div>
-            </div>
-            <h1>联盟海报生成器</h1>
-            <p class="subtitle">创建您的专属联盟炫酷介绍海报</p>
-        </header>
-        
-        <div class="content">
-            <div class="input-section">
-                <div class="form-group">
-                    <label for="alliance-name"><i class="fas fa-flag"></i> 联盟名称</label>
-                    <input type="text" id="alliance-name" placeholder="输入您的联盟名称">
+    <div class="container">
+        <!-- 编辑面板 -->
+        <div class="editor-panel">
+            <div class="panel-section">
+                <h3 class="panel-title"><i class="fas fa-edit"></i> 基本信息</h3>
+                <div class="option-group">
+                    <label class="option-label">联盟名称</label>
+                    <input type="text" id="alliance-name" placeholder="输入联盟名称">
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="members-count"><i class="fas fa-users"></i> 联盟人数</label>
-                        <input type="number" id="members-count" placeholder="人数" min="1" max="1000" value="25">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="victories-count"><i class="fas fa-trophy"></i> 胜利场次</label>
-                        <input type="number" id="victories-count" placeholder="胜利次数" min="0" value="12">
-                    </div>
+                <div class="option-group">
+                    <label class="option-label">联盟标语</label>
+                    <input type="text" id="alliance-tagline" placeholder="输入联盟标语">
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="leader-name"><i class="fas fa-crown"></i> 盟主名称</label>
-                        <input type="text" id="leader-name" placeholder="输入盟主名称">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="vice-leader-name"><i class="fas fa-star"></i> 副盟主名称</label>
-                        <input type="text" id="vice-leader-name" placeholder="输入副盟主名称">
-                    </div>
+                <div class="option-group">
+                    <label class="option-label">联盟描述</label>
+                    <textarea id="alliance-description" placeholder="输入联盟描述"></textarea>
                 </div>
-                
-                <div class="form-group">
-                    <label for="alliance-description"><i class="fas fa-info-circle"></i> 联盟简介</label>
-                    <textarea id="alliance-description" placeholder="输入联盟简介，包括目标、规则、成员要求等信息"></textarea>
+                <div class="option-group">
+                    <label class="option-label">成员数量</label>
+                    <input type="number" id="members-count" placeholder="输入成员数量" value="50">
                 </div>
-                
-                <button class="generate-btn" id="generate-btn">
-                    <i class="fas fa-magic"></i> 生成炫酷海报
-                </button>
+                <div class="option-group">
+                    <label class="option-label">盟主名称</label>
+                    <input type="text" id="leader-name" placeholder="输入盟主名称">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">副盟主名称</label>
+                    <input type="text" id="vice-leader-name" placeholder="输入副盟主名称">
+                </div>
             </div>
             
-            <div class="preview-section">
-                <div class="poster">
-                    <div class="decorative-circle circle-1"></div>
-                    <div class="decorative-circle circle-2"></div>
-                    <div class="decorative-circle circle-3"></div>
-                    <div class="shine-effect"></div>
-                    <div class="pattern-dots"></div>
-                    
-                    <!-- 新增装饰元素 -->
-                    <div class="geometric-shapes">
-                        <div class="shape shape-triangle"></div>
-                        <div class="shape shape-square"></div>
-                        <div class="shape shape-hexagon"></div>
-                    </div>
-                    
-                    <div class="floating-particles">
-                        <div class="particle particle-1"></div>
-                        <div class="particle particle-2"></div>
-                        <div class="particle particle-3"></div>
-                        <div class="particle particle-4"></div>
-                    </div>
-                    
-                    <div class="border-decoration">
-                        <div class="corner corner-tl"></div>
-                        <div class="corner corner-tr"></div>
-                        <div class="corner corner-bl"></div>
-                        <div class="corner corner-br"></div>
-                    </div>
-                    
-                    <div class="poster-header">
-                        <div class="alliance-badge">
-                            <i class="fas fa-crown"></i>
-                        </div>
-                        <div class="poster-title" id="poster-title">联盟名称</div>
-                        <div class="poster-subtitle">荣耀与力量的象征</div>
-                    </div>
-                    
-                    <div class="poster-info">
-                        <div class="info-item">
-                            <div class="info-label">成员</div>
-                            <div class="info-value" id="poster-members">25</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">胜利</div>
-                            <div class="info-value" id="poster-victories">12</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">活跃度</div>
-                            <div class="info-value">高</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">等级</div>
-                            <div class="info-value">5</div>
-                        </div>
-                    </div>
-                    
-                    <div class="leader-info">
-                        <div class="leader-item">
-                            <div class="leader-role">盟主</div>
-                            <div class="leader-name" id="poster-leader">待输入</div>
-                        </div>
-                        <div class="leader-item">
-                            <div class="leader-role">副盟主</div>
-                            <div class="leader-name" id="poster-vice-leader">待输入</div>
-                        </div>
-                    </div>
-                    
-                    <div class="poster-content" id="poster-content">
-                        在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
-                    </div>
-                    
-                    <div class="poster-footer">
-                        强大 · 团结 · 荣耀
+            <div class="panel-section">
+                <h3 class="panel-title"><i class="fas fa-palette"></i> 颜色主题</h3>
+                <div class="option-group">
+                    <label class="option-label">预设配色</label>
+                    <div class="color-picker">
+                        <div class="color-option active" style="background: linear-gradient(135deg, #4776E6, #8E54E9);" data-primary="#4776E6" data-secondary="#8E54E9"></div>
+                        <div class="color-option" style="background: linear-gradient(135deg, #FF512F, #DD2476);" data-primary="#FF512F" data-secondary="#DD2476"></div>
+                        <div class="color-option" style="background: linear-gradient(135deg, #00b09b, #96c93d);" data-primary="#00b09b" data-secondary="#96c93d"></div>
+                        <div class="color-option" style="background: linear-gradient(135deg, #FF416C, #FF4B2B);" data-primary="#FF416C" data-secondary="#FF4B2B"></div>
                     </div>
                 </div>
-                
-                <div class="instructions">
-                    <p><i class="fas fa-lightbulb"></i> 输入联盟信息后点击生成按钮，将跳转到专属海报页面</p>
+                <div class="option-group">
+                    <label class="option-label">主色调</label>
+                    <input type="color" id="primary-color" value="#4776E6">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">辅助色</label>
+                    <input type="color" id="secondary-color" value="#8E54E9">
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3 class="panel-title"><i class="fas fa-star"></i> 装饰元素</h3>
+                <div class="option-group">
+                    <label class="option-label">装饰类型</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-option active" data-decoration="circles">圆形</div>
+                        <div class="checkbox-option" data-decoration="particles">粒子</div>
+                        <div class="checkbox-option" data-decoration="shapes">几何形状</div>
+                    </div>
+                </div>
+                <div class="option-group">
+                    <label class="option-label">装饰密度</label>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="decoration-density">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">装饰大小</label>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="decoration-size">
+                </div>
+                <div class="option-group">
+                    <label class="option-label">动画效果</label>
+                    <select id="animation-type">
+                        <option value="none">无动画</option>
+                        <option value="float">浮动</option>
+                        <option value="rotate">旋转</option>
+                        <option value="pulse">脉动</option>
+                    </select>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="container animated poster-page" id="poster-page">
-        <button class="back-btn" id="back-btn">
-            <i class="fas fa-arrow-left"></i> 返回编辑
-        </button>
         
-        <header>
-            <div class="header-decoration">
-                <div class="header-circle header-circle-1"></div>
-                <div class="header-circle header-circle-2"></div>
-            </div>
-            <h1>您的联盟海报</h1>
-            <p class="subtitle">保存并分享此海报，吸引更多玩家加入</p>
-        </header>
-        
-        <div class="poster large-poster">
-            <div class="decorative-circle circle-1"></div>
-            <div class="decorative-circle circle-2"></div>
-            <div class="decorative-circle circle-3"></div>
-            <div class="shine-effect"></div>
-            <div class="pattern-dots"></div>
-            
-            <!-- 新增装饰元素 -->
-            <div class="geometric-shapes">
-                <div class="shape shape-triangle"></div>
-                <div class="shape shape-square"></div>
-                <div class="shape shape-hexagon"></div>
+        <!-- 预览面板 -->
+        <div class="preview-panel">
+            <div class="preview-controls">
+                <button class="control-btn" id="reset-btn"><i class="fas fa-redo"></i> 重置</button>
+                <button class="control-btn" id="download-btn"><i class="fas fa-download"></i> 下载海报</button>
             </div>
             
-            <div class="floating-particles">
-                <div class="particle particle-1"></div>
-                <div class="particle particle-2"></div>
-                <div class="particle particle-3"></div>
-                <div class="particle particle-4"></div>
-            </div>
-            
-            <div class="border-decoration">
-                <div class="corner corner-tl"></div>
-                <div class="corner corner-tr"></div>
-                <div class="corner corner-bl"></div>
-                <div class="corner corner-br"></div>
-            </div>
-            
-            <div class="poster-header">
-                <div class="alliance-badge">
-                    <i class="fas fa-crown"></i>
+            <div class="poster-container">
+                <div class="poster animated">
+                    <div class="poster-bg" id="poster-background">
+                        <!-- 动态生成的装饰元素 -->
+                    </div>
+                    
+                    <div class="poster-content">
+                        <div class="poster-header">
+                            <div class="alliance-badge">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <h1 class="poster-title" id="poster-title">联盟名称</h1>
+                            <p class="poster-subtitle" id="poster-tagline">荣耀与力量的象征</p>
+                        </div>
+                        
+                        <div class="poster-body" id="poster-description">
+                            在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
+                        </div>
+                        
+                        <div class="poster-info">
+                            <div class="info-item">
+                                <div class="info-label">成员</div>
+                                <div class="info-value" id="poster-members">50</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">活跃度</div>
+                                <div class="info-value">高</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">等级</div>
+                                <div class="info-value">5</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">排名</div>
+                                <div class="info-value">7</div>
+                            </div>
+                        </div>
+                        
+                        <div class="leader-info">
+                            <div class="leader-item">
+                                <div class="leader-role">盟主</div>
+                                <div class="leader-name" id="poster-leader">待输入</div>
+                            </div>
+                            <div class="leader-item">
+                                <div class="leader-role">副盟主</div>
+                                <div class="leader-name" id="poster-vice-leader">待输入</div>
+                            </div>
+                        </div>
+                        
+                        <div class="poster-footer">
+                            强大 · 团结 · 荣耀
+                        </div>
+                    </div>
                 </div>
-                <div class="poster-title" id="final-title">联盟名称</div>
-                <div class="poster-subtitle">荣耀与力量的象征</div>
-            </div>
-            
-            <div class="poster-info">
-                <div class="info-item">
-                    <div class="info-label">成员</div>
-                    <div class="info-value" id="final-members">25</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">胜利</div>
-                    <div class="info-value" id="final-victories">12</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">活跃度</div>
-                    <div class="info-value">高</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">等级</div>
-                    <div class="info-value">5</div>
-                </div>
-            </div>
-            
-            <div class="leader-info">
-                <div class="leader-item">
-                    <div class="leader-role">盟主</div>
-                    <div class="leader-name" id="final-leader">待输入</div>
-                </div>
-                <div class="leader-item">
-                    <div class="leader-role">副盟主</div>
-                    <div class="leader-name" id="final-vice-leader">待输入</div>
-                </div>
-            </div>
-            
-            <div class="poster-content" id="final-content">
-                在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。
-            </div>
-            
-            <div class="members-list">
-                <div class="member">K</div>
-                <div class="member">A</div>
-                <div class="member">L</div>
-                <div class="member">M</div>
-                <div class="member">S</div>
-            </div>
-            
-            <div class="poster-footer">
-                强大 · 团结 · 荣耀
             </div>
         </div>
-        
-        <button class="download-btn" id="download-btn">
-            <i class="fas fa-download"></i> 下载海报
-        </button>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const generateBtn = document.getElementById('generate-btn');
-            const backBtn = document.getElementById('back-btn');
-            const downloadBtn = document.getElementById('download-btn');
+            // 获取DOM元素
             const allianceNameInput = document.getElementById('alliance-name');
+            const allianceTaglineInput = document.getElementById('alliance-tagline');
             const allianceDescInput = document.getElementById('alliance-description');
             const membersCountInput = document.getElementById('members-count');
-            const victoriesCountInput = document.getElementById('victories-count');
             const leaderNameInput = document.getElementById('leader-name');
             const viceLeaderNameInput = document.getElementById('vice-leader-name');
             
+            const primaryColorInput = document.getElementById('primary-color');
+            const secondaryColorInput = document.getElementById('secondary-color');
+            
+            const colorOptions = document.querySelectorAll('.color-option');
+            const decorationOptions = document.querySelectorAll('.checkbox-option');
+            const decorationDensityInput = document.getElementById('decoration-density');
+            const decorationSizeInput = document.getElementById('decoration-size');
+            const animationTypeInput = document.getElementById('animation-type');
+            
             const posterTitle = document.getElementById('poster-title');
-            const posterContent = document.getElementById('poster-content');
+            const posterTagline = document.getElementById('poster-tagline');
+            const posterDescription = document.getElementById('poster-description');
             const posterMembers = document.getElementById('poster-members');
-            const posterVictories = document.getElementById('poster-victories');
             const posterLeader = document.getElementById('poster-leader');
             const posterViceLeader = document.getElementById('poster-vice-leader');
+            const posterBackground = document.getElementById('poster-background');
+            const posterElement = document.querySelector('.poster');
             
-            const finalTitle = document.getElementById('final-title');
-            const finalContent = document.getElementById('final-content');
-            const finalMembers = document.getElementById('final-members');
-            const finalVictories = document.getElementById('final-victories');
-            const finalLeader = document.getElementById('final-leader');
-            const finalViceLeader = document.getElementById('final-vice-leader');
+            const resetBtn = document.getElementById('reset-btn');
+            const downloadBtn = document.getElementById('download-btn');
             
-            const inputContainer = document.getElementById('input-container');
-            const posterPage = document.getElementById('poster-page');
+            // 当前设置
+            let currentSettings = {
+                colors: {
+                    primary: '#4776E6',
+                    secondary: '#8E54E9'
+                },
+                decorations: ['circles'],
+                animation: 'none'
+            };
             
-            // 初始显示输入界面，隐藏海报界面
-            inputContainer.style.display = 'block';
-            posterPage.style.display = 'none';
-            
-            // 生成海报
-            generateBtn.addEventListener('click', function() {
-                const name = allianceNameInput.value.trim() || '联盟名称';
-                const description = allianceDescInput.value.trim() || '在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。';
-                const members = membersCountInput.value || '25';
-                const victories = victoriesCountInput.value || '12';
-                const leader = leaderNameInput.value.trim() || '待输入';
-                const viceLeader = viceLeaderNameInput.value.trim() || '待输入';
+            // 初始化
+            function init() {
+                // 添加事件监听器
+                allianceNameInput.addEventListener('input', updatePosterText);
+                allianceTaglineInput.addEventListener('input', updatePosterText);
+                allianceDescInput.addEventListener('input', updatePosterText);
+                membersCountInput.addEventListener('input', updatePosterText);
+                leaderNameInput.addEventListener('input', updatePosterText);
+                viceLeaderNameInput.addEventListener('input', updatePosterText);
                 
-                // 更新预览
-                posterTitle.textContent = name;
-                posterContent.textContent = description;
-                posterMembers.textContent = members;
-                posterVictories.textContent = victories;
-                posterLeader.textContent = leader;
-                posterViceLeader.textContent = viceLeader;
+                primaryColorInput.addEventListener('input', updateColors);
+                secondaryColorInput.addEventListener('input', updateColors);
                 
-                // 更新最终海报
-                finalTitle.textContent = name;
-                finalContent.textContent = description;
-                finalMembers.textContent = members;
-                finalVictories.textContent = victories;
-                finalLeader.textContent = leader;
-                finalViceLeader.textContent = viceLeader;
+                colorOptions.forEach(option => {
+                    option.addEventListener('click', applyColorPreset);
+                });
                 
-                // 添加动画效果
-                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+                decorationOptions.forEach(option => {
+                    option.addEventListener('click', toggleDecoration);
+                });
                 
-                setTimeout(() => {
-                    // 切换到海报页面
-                    inputContainer.style.display = 'none';
-                    posterPage.style.display = 'block';
-                    generateBtn.innerHTML = '<i class="fas fa-magic"></i> 生成炫酷海报';
-                }, 800);
-            });
+                decorationDensityInput.addEventListener('input', updateDecorations);
+                decorationSizeInput.addEventListener('input', updateDecorations);
+                animationTypeInput.addEventListener('change', updateAnimation);
+                
+                resetBtn.addEventListener('click', resetSettings);
+                downloadBtn.addEventListener('click', downloadPoster);
+                
+                // 初始更新
+                updatePosterText();
+                updateDecorations();
+            }
             
-            // 返回编辑
-            backBtn.addEventListener('click', function() {
-                posterPage.style.display = 'none';
-                inputContainer.style.display = 'block';
-            });
+            // 更新海报文本
+            function updatePosterText() {
+                posterTitle.textContent = allianceNameInput.value || '联盟名称';
+                posterTagline.textContent = allianceTaglineInput.value || '荣耀与力量的象征';
+                posterDescription.textContent = allianceDescInput.value || '在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。';
+                posterMembers.textContent = membersCountInput.value || '50';
+                posterLeader.textContent = leaderNameInput.value || '待输入';
+                posterViceLeader.textContent = viceLeaderNameInput.value || '待输入';
+            }
             
-            // 下载海报功能
-            downloadBtn.addEventListener('click', function() {
-                const btn = downloadBtn;
-                const originalText = btn.innerHTML;
+            // 更新颜色
+            function updateColors() {
+                const primaryColor = primaryColorInput.value;
+                const secondaryColor = secondaryColorInput.value;
                 
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 准备下载...';
+                // 更新CSS变量
+                document.documentElement.style.setProperty('--primary-color', primaryColor);
+                document.documentElement.style.setProperty('--secondary-color', secondaryColor);
                 
-                setTimeout(() => {
-                    alert('海报下载功能需要引入html2canvas库。在实际部署时，请添加该库以实现完整功能。');
-                    btn.innerHTML = originalText;
-                }, 1500);
-            });
+                // 更新海报背景
+                posterElement.style.background = `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`;
+                
+                // 保存当前颜色设置
+                currentSettings.colors = {
+                    primary: primaryColor,
+                    secondary: secondaryColor
+                };
+            }
             
-            // 初始生成一次预览
-            posterTitle.textContent = "联盟名称";
-            posterContent.textContent = "在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。";
-            posterMembers.textContent = "25";
-            posterVictories.textContent = "12";
-            posterLeader.textContent = "待输入";
-            posterViceLeader.textContent = "待输入";
+            // 应用颜色预设
+            function applyColorPreset(e) {
+                const option = e.target.closest('.color-option');
+                if (!option) return;
+                
+                // 移除其他选项的active类
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                // 添加active类到当前选项
+                option.classList.add('active');
+                
+                // 获取颜色值
+                const primaryColor = option.dataset.primary;
+                const secondaryColor = option.dataset.secondary;
+                
+                // 更新颜色输入
+                primaryColorInput.value = primaryColor;
+                secondaryColorInput.value = secondaryColor;
+                
+                // 更新颜色
+                updateColors();
+            }
             
-            finalTitle.textContent = "联盟名称";
-            finalContent.textContent = "在这里输入联盟简介，将会显示在海报上。您可以详细介绍联盟的目标、规则和成员要求等信息。";
-            finalMembers.textContent = "25";
-            finalVictories.textContent = "12";
-            finalLeader.textContent = "待输入";
-            finalViceLeader.textContent = "待输入";
+            // 切换装饰
+            function toggleDecoration(e) {
+                const option = e.target.closest('.checkbox-option');
+                if (!option) return;
+                
+                // 获取装饰类型
+                const decoration = option.dataset.decoration;
+                
+                // 切换active类
+                option.classList.toggle('active');
+                
+                // 更新装饰设置
+                if (option.classList.contains('active')) {
+                    if (!currentSettings.decorations.includes(decoration)) {
+                        currentSettings.decorations.push(decoration);
+                    }
+                } else {
+                    currentSettings.decorations = currentSettings.decorations.filter(d => d !== decoration);
+                }
+                
+                // 更新装饰
+                updateDecorations();
+            }
+            
+            // 更新装饰
+            function updateDecorations() {
+                // 清空现有装饰
+                posterBackground.innerHTML = '';
+                
+                // 获取密度和大小
+                const density = parseInt(decorationDensityInput.value);
+                const size = parseInt(decorationSizeInput.value);
+                
+                // 添加新装饰
+                if (currentSettings.decorations.includes('circles')) {
+                    addCircleDecorations(density, size);
+                }
+                
+                if (currentSettings.decorations.includes('particles')) {
+                    addParticleDecorations(density, size);
+                }
+                
+                if (currentSettings.decorations.includes('shapes')) {
+                    addShapeDecorations(density, size);
+                }
+                
+                // 更新动画
+                updateAnimation();
+            }
+            
+            // 添加圆形装饰
+            function addCircleDecorations(density, size) {
+                const count = density * 3;
+                const baseSize = size * 3;
+                
+                for (let i = 0; i < count; i++) {
+                    const circle = document.createElement('div');
+                    circle.className = 'decoration-circle';
+                    
+                    // 随机位置和大小
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    const circleSize = baseSize + Math.random() * baseSize;
+                    
+                    circle.style.width = `${circleSize}px`;
+                    circle.style.height = `${circleSize}px`;
+                    circle.style.left = `${left}%`;
+                    circle.style.top = `${top}%`;
+                    circle.style.opacity = 0.1 + Math.random() * 0.2;
+                    
+                    posterBackground.appendChild(circle);
+                }
+            }
+            
+            // 添加粒子装饰
+            function addParticleDecorations(density, size) {
+                const count = density * 5;
+                const baseSize = size;
+                
+                for (let i = 0; i < count; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'decoration-particle';
+                    
+                    // 随机位置和大小
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    const particleSize = baseSize + Math.random() * baseSize;
+                    
+                    particle.style.width = `${particleSize}px`;
+                    particle.style.height = `${particleSize}px`;
+                    particle.style.left = `${left}%`;
+                    particle.style.top = `${top}%`;
+                    particle.style.opacity = 0.3 + Math.random() * 0.4;
+                    
+                    posterBackground.appendChild(particle);
+                }
+            }
+            
+            // 添加形状装饰
+            function addShapeDecorations(density, size) {
+                const count = density * 2;
+                const baseSize = size * 5;
+                
+                for (let i = 0; i < count; i++) {
+                    const shape = document.createElement('div');
+                    shape.className = 'decoration-shape';
+                    
+                    // 随机位置和大小
+                    const left = Math.random() * 100;
+                    const top = Math.random() * 100;
+                    const shapeSize = baseSize + Math.random() * baseSize;
+                    
+                    // 随机形状
+                    const shapeType = Math.floor(Math.random() * 3);
+                    
+                    if (shapeType === 0) {
+                        // 三角形
+                        shape.style.width = '0';
+                        shape.style.height = '0';
+                        shape.style.borderLeft = `${shapeSize/2}px solid transparent`;
+                        shape.style.borderRight = `${shapeSize/2}px solid transparent`;
+                        shape.style.borderBottom = `${shapeSize}px solid rgba(255, 255, 255, 0.5)`;
+                        shape.style.background = 'none';
+                    } else if (shapeType === 1) {
+                        // 正方形
+                        shape.style.width = `${shapeSize}px`;
+                        shape.style.height = `${shapeSize}px`;
+                    } else {
+                        // 圆形
+                        shape.style.width = `${shapeSize}px`;
+                        shape.style.height = `${shapeSize}px`;
+                        shape.style.borderRadius = '50%';
+                    }
+                    
+                    shape.style.left = `${left}%`;
+                    shape.style.top = `${top}%`;
+                    shape.style.opacity = 0.05 + Math.random() * 0.1;
+                    shape.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    
+                    posterBackground.appendChild(shape);
+                }
+            }
+            
+            // 更新动画
+            function updateAnimation() {
+                const animationType = animationTypeInput.value;
+                currentSettings.animation = animationType;
+                
+                // 移除所有动画类
+                const decorations = posterBackground.querySelectorAll('div');
+                decorations.forEach(deco => {
+                    deco.style.animation = 'none';
+                });
+                
+                // 应用新动画
+                if (animationType !== 'none') {
+                    decorations.forEach(deco => {
+                        let animationName = '';
+                        let animationDuration = '';
+                        
+                        switch(animationType) {
+                            case 'float':
+                                animationName = 'float';
+                                animationDuration = `${15 + Math.random() * 10}s`;
+                                break;
+                            case 'rotate':
+                                animationName = 'rotate';
+                                animationDuration = `${30 + Math.random() * 20}s`;
+                                break;
+                            case 'pulse':
+                                animationName = 'pulse';
+                                animationDuration = `${3 + Math.random() * 2}s`;
+                                break;
+                        }
+                        
+                        if (animationName) {
+                            deco.style.animation = `${animationName} ${animationDuration} infinite ease-in-out`;
+                        }
+                    });
+                }
+            }
+            
+            // 重置设置
+            function resetSettings() {
+                // 重置表单
+                allianceNameInput.value = '';
+                allianceTaglineInput.value = '';
+                allianceDescInput.value = '';
+                membersCountInput.value = '50';
+                leaderNameInput.value = '';
+                viceLeaderNameInput.value = '';
+                
+                // 重置颜色
+                primaryColorInput.value = '#4776E6';
+                secondaryColorInput.value = '#8E54E9';
+                
+                // 重置颜色选项
+                colorOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.primary === '#4776E6') {
+                        option.classList.add('active');
+                    }
+                });
+                
+                // 重置装饰
+                decorationOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.dataset.decoration === 'circles') {
+                        option.classList.add('active');
+                    }
+                });
+                
+                decorationDensityInput.value = '5';
+                decorationSizeInput.value = '5';
+                animationTypeInput.value = 'none';
+                
+                // 重置当前设置
+                currentSettings = {
+                    colors: {
+                        primary: '#4776E6',
+                        secondary: '#8E54E9'
+                    },
+                    decorations: ['circles'],
+                    animation: 'none'
+                };
+                
+                // 更新所有内容
+                updatePosterText();
+                updateColors();
+                updateDecorations();
+            }
+            
+            // 下载海报
+            function downloadPoster() {
+                alert('在实际部署中，这里会使用html2canvas库将海报转换为图像并下载。\n\n由于本示例运行在浏览器环境中，无法实际实现下载功能，但代码结构已准备好集成html2canvas。');
+                
+                // 在实际应用中，可以使用以下代码：
+                /*
+                html2canvas(posterElement).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = '联盟海报.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+                */
+            }
+            
+            // 添加CSS动画关键帧
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes float {
+                    0%, 100% { transform: translateY(0) translateX(0); }
+                    25% { transform: translateY(-20px) translateX(10px); }
+                    50% { transform: translateY(10px) translateX(20px); }
+                    75% { transform: translateY(20px) translateX(-10px); }
+                }
+                
+                @keyframes rotate {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.1; }
+                    50% { opacity: 0.3; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 初始化应用
+            init();
         });
     </script>
 </body>
