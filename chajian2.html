@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiomet进度共享</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* 样式保持不变，与之前相同 */
+    </style>
+</head>
+<body>
+    <!-- HTML结构保持不变 -->
+
+    <script>
+        // Supabase初始化
+        const supabaseUrl = 'https://meeuseqgrbegaalrayeu.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1lZXVzZXFncmJlZ2FhbHJheWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0MjUsImV4cCI6MjA3MTcwODQyNX0.DSLAtwP-vrFYyVeBH0l9_tyoQF2rHHW6jPcnsQ7dKEM';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // 全局变量
+        let selectedSaveId = null;
+        let currentUser = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            updateStorageInfo();
+            setupEventListeners();
+        });
+        
+        // 获取所有可能的游戏数据
+        async function getAllGameData() {
+            const gameData = {
+                localStorage: {},
+                cookies: {},
+                sessionStorage: {},
+                indexedDB: null
+            };
+            
+            // 1. 获取localStorage数据
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                // 捕获所有可能相关的键
+                if (key && (
+                    key.toLowerCase().includes('kiomet') || 
+                    key.toLowerCase().includes('game') ||
+                    key.toLowerCase().includes('player') ||
+                    key.toLowerCase().includes('save') ||
+                    key.toLowerCase().includes('progress')
+                )) {
+                    gameData.localStorage[key] = localStorage.getItem(key);
+                }
+            }
+            
+            // 2. 获取Cookie数据
+            const cookies = document.cookie.split(';');
+            cookies.forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                // 捕获所有可能相关的Cookie
+                if (name && (
+                    name.toLowerCase().includes('kiomet') || 
+                    name.toLowerCase().includes('game') ||
+                    name.toLowerCase().includes('session') ||
+                    name.toLowerCase().includes('auth') ||
+                    name.toLowerCase().includes('token')
+                )) {
+                    gameData.cookies[name] = decodeURIComponent(value);
+                }
+            });
+            
+            // 3. 获取sessionStorage数据
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                if (key && (
+                    key.toLowerCase().includes('kiomet') || 
+                    key.toLowerCase().includes('game')
+                )) {
+                    gameData.sessionStorage[key] = sessionStorage.getItem(key);
+                }
+            }
+            
+            // 4. 尝试获取IndexedDB数据（需要用户交互）
+            // 由于安全限制，IndexedDB的完整备份比较复杂
+            
+            return gameData;
+        }
+        
+        // 应用所有游戏数据
+        async function applyAllGameData(gameData) {
+            let appliedCount = 0;
+            
+            // 1. 应用localStorage数据
+            if (gameData.localStorage) {
+                Object.keys(gameData.localStorage).forEach(key => {
+                    localStorage.setItem(key, gameData.localStorage[key]);
+                    appliedCount++;
+                });
+            }
+            
+            // 2. 应用Cookie数据
+            if (gameData.cookies) {
+                Object.keys(gameData.cookies).forEach(name => {
+                    // 设置Cookie（注意：有些Cookie可能有特殊属性如HttpOnly，无法通过JS设置）
+                    const value = gameData.cookies[name];
+                    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000`; // 30天
+                    appliedCount++;
+                });
+            }
+            
+            // 3. 应用sessionStorage数据
+            if (gameData.sessionStorage) {
+                Object.keys(gameData.sessionStorage).forEach(key => {
+                    sessionStorage.setItem(key, gameData.sessionStorage[key]);
+                    appliedCount++;
+                });
+            }
+            
+            return appliedCount;
+        }
+        
+        // 更新存储信息显示
+        async function updateStorageInfo() {
+            const gameData = await getAllGameData();
+            const totalSize = JSON.stringify(gameData).length;
+            
+            // 计算各类型数据数量
+            const localStorageCount = Object.keys(gameData.localStorage).length;
+            const cookiesCount = Object.keys(gameData.cookies).length;
+            const sessionStorageCount = Object.keys(gameData.sessionStorage).length;
+            
+            // 更新UI显示
+            document.getElementById('localStorageUsage').textContent = 
+                `${(totalSize / 1024).toFixed(1)} KB / 5 MB`;
+            
+            document.getElementById('kiometItems').textContent = 
+                `${localStorageCount + cookiesCount + sessionStorageCount} 项`;
+            
+            document.getElementById('dataSize').textContent = 
+                `${(totalSize / 1024).toFixed(1)} KB`;
+            
+            // 显示详细数据预览
+            const storageDetails = `
+LocalStorage: ${localStorageCount} 项
+Cookies: ${cookiesCount} 项  
+SessionStorage: ${sessionStorageCount} 项
+总计大小: ${(totalSize / 1024).toFixed(1)} KB
+
+${JSON.stringify(gameData, null, 2)}
+            `;
+            
+            document.getElementById('localData').value = storageDetails;
+        }
+        
+        // 上传存档到Supabase
+        async function uploadSave() {
+            if (!currentUser) {
+                document.getElementById('uploadStatus').className = 'status error';
+                document.getElementById('uploadStatus').textContent = '请先登录';
+                return;
+            }
+            
+            const uploadStatus = document.getElementById('uploadStatus');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const saveDescription = document.getElementById('saveDescription').value;
+            const saveName = document.getElementById('saveName').value;
+            
+            if (!saveName) {
+                uploadStatus.className = 'status error';
+                uploadStatus.textContent = '请输入存档名称';
+                return;
+            }
+            
+            uploadStatus.className = 'status info';
+            uploadStatus.textContent = '正在收集游戏数据...';
+            
+            // 获取所有游戏数据
+            const gameData = await getAllGameData();
+            const dataSize = JSON.stringify(gameData).length;
+            
+            if (dataSize === 0) {
+                uploadStatus.className = 'status warning';
+                uploadStatus.textContent = '未找到游戏数据';
+                return;
+            }
+            
+            // 显示上传进度
+            uploadProgress.style.width = '30%';
+            uploadStatus.textContent = '上传中...';
+            
+            try {
+                // 上传到Supabase
+                const { data, error } = await supabase
+                    .from('kiomet_saves')
+                    .insert([
+                        {
+                            name: saveName,
+                            description: saveDescription,
+                            data: gameData,
+                            user_id: currentUser.id,
+                            user_email: currentUser.email,
+                            data_size: dataSize,
+                            data_type: 'full_backup' // 标记为完整备份
+                        }
+                    ])
+                    .select();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                uploadProgress.style.width = '100%';
+                uploadStatus.className = 'status success';
+                uploadStatus.textContent = `上传成功！已备份 ${Object.keys(gameData.localStorage).length} 项localStorage, ${Object.keys(gameData.cookies).length} 项Cookie`;
+                
+                // 刷新列表
+                if (document.getElementById('download-tab').classList.contains('active')) {
+                    loadCloudSaves();
+                }
+                
+                // 重置进度条
+                setTimeout(() => {
+                    uploadProgress.style.width = '0%';
+                }, 2000);
+                
+            } catch (error) {
+                uploadProgress.style.width = '0%';
+                uploadStatus.className = 'status error';
+                uploadStatus.textContent = `上传失败: ${error.message}`;
+            }
+        }
+        
+        // 从Supabase下载存档
+        async function downloadSave() {
+            if (!currentUser) {
+                document.getElementById('downloadStatus').className = 'status error';
+                document.getElementById('downloadStatus').textContent = '请先登录';
+                return;
+            }
+            
+            if (!selectedSaveId) {
+                document.getElementById('downloadStatus').className = 'status error';
+                document.getElementById('downloadStatus').textContent = '请先选择一个存档';
+                return;
+            }
+            
+            const downloadStatus = document.getElementById('downloadStatus');
+            
+            downloadStatus.className = 'status info';
+            downloadStatus.textContent = '下载中...';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('kiomet_saves')
+                    .select('*')
+                    .eq('id', selectedSaveId)
+                    .single();
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // 应用所有游戏数据
+                const appliedCount = await applyAllGameData(data.data);
+                
+                downloadStatus.className = 'status success';
+                downloadStatus.textContent = `下载完成！已恢复 ${appliedCount} 项数据`;
+                
+                // 更新显示
+                updateStorageInfo();
+                
+                // 提示用户刷新页面
+                showRefreshWarning();
+                
+            } catch (error) {
+                downloadStatus.className = 'status error';
+                downloadStatus.textContent = `下载失败: ${error.message}`;
+            }
+        }
+        
+        // 显示刷新警告
+        function showRefreshWarning() {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'status warning';
+            warningDiv.innerHTML = `
+                <strong>重要提示：</strong>
+                <p>游戏数据已恢复，但某些更改可能需要刷新页面才能生效：</p>
+                <ul style="text-align: left; margin: 10px 0;">
+                    <li>Cookie和sessionStorage数据需要刷新</li>
+                    <li>某些游戏状态可能需要重新登录</li>
+                    <li>如果进度仍未恢复，请尝试清除浏览器缓存后重试</li>
+                </ul>
+                <button onclick="location.reload()" style="margin-top: 10px;">
+                    <i class="fas fa-sync"></i> 立即刷新页面
+                </button>
+            `;
+            
+            const manageTab = document.getElementById('manage-tab');
+            manageTab.appendChild(warningDiv);
+        }
+        
+        // 手动迁移Cookie功能
+        async function manualCookieMigration() {
+            const cookieData = prompt('请粘贴从原浏览器获取的Cookie数据（格式: name=value; name2=value2）:');
+            if (!cookieData) return;
+            
+            try {
+                const cookies = cookieData.split(';');
+                let migratedCount = 0;
+                
+                cookies.forEach(cookie => {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name && value) {
+                        document.cookie = `${name}=${value}; path=/; max-age=2592000`;
+                        migratedCount++;
+                    }
+                });
+                
+                alert(`已迁移 ${migratedCount} 个Cookie。请刷新页面使更改生效。`);
+                
+            } catch (error) {
+                alert('Cookie迁移失败: ' + error.message);
+            }
+        }
+        
+        // 添加上面的函数到全局作用域，以便可以从HTML调用
+        window.manualCookieMigration = manualCookieMigration;
+        
+        // 在管理标签页添加手动迁移按钮
+        function addManualMigrationOption() {
+            const manageTab = document.getElementById('manage-tab');
+            const widget = manageTab.querySelector('.widget');
+            
+            const migrationSection = document.createElement('div');
+            migrationSection.innerHTML = `
+                <h3 class="widget-title"><i class="fas fa-cookie-bite"></i> 手动Cookie迁移</h3>
+                <p style="margin-bottom: 15px; font-size: 14px;">
+                    如果自动迁移失败，可以手动迁移Cookie数据。需要在原浏览器中查看Cookie并粘贴到这里。
+                </p>
+                <button onclick="manualCookieMigration()" class="secondary">
+                    <i class="fas fa-hand-point-right"></i> 手动迁移Cookie
+                </button>
+            `;
+            
+            widget.appendChild(migrationSection);
+        }
+        
+        // 修改初始化函数
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            updateStorageInfo();
+            setupEventListeners();
+            addManualMigrationOption(); // 添加手动迁移选项
+        });
+    </script>
+</body>
+</html>
