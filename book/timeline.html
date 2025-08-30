@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>KIOMET 编年史 | 正文</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="book-container">
+        <header class="book-header">
+            <h1>KIOMET 编年史</h1>
+            <a href="index.html">返回封面</a>
+        </header>
+
+        <main class="timeline-container" id="timeline">
+            <!-- 事件卡片将通过JS动态加载到这里 -->
+            <div class="loading">史书正在加载中...</div>
+        </main>
+
+        <div class="pagination">
+            <button id="prevPage">上一页</button>
+            <span id="currentPage">1</span>
+            <button id="nextPage">下一页</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="script.js"></script>
+    <script>
+        // 专门用于timeline.html的代码
+        let currentPage = 1;
+        const eventsPerPage = 5; // 每页显示5个事件
+
+        async function fetchEvents() {
+            // 只获取已审核通过的事件，按时间倒序排列（最新最近）
+            const { data, error } = await supabase
+                .from('events')
+                .select('*')
+                .eq('approved', true)
+                .order('created_at', { ascending: false }); 
+
+            if (error) {
+                console.error('读取历史失败:', error);
+                return [];
+            }
+            return data;
+        }
+
+        function renderEvents(events, page) {
+            const container = document.getElementById('timeline');
+            container.innerHTML = ''; // 清空加载提示
+
+            const start = (page - 1) * eventsPerPage;
+            const end = start + eventsPerPage;
+            const paginatedEvents = events.slice(start, end);
+
+            if (paginatedEvents.length === 0) {
+                container.innerHTML = '<div class="event-card">这一页是空白的，等待书写...</div>';
+                return;
+            }
+
+            paginatedEvents.forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'event-card';
+                eventEl.innerHTML = `
+                    <h3>${event.date}</h3>
+                    <h2>${event.title}</h2>
+                    <p><strong>涉及势力：</strong>${event.faction}</p>
+                    <p>${event.content}</p>
+                    ${event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">查看证据</a>` : ''}
+                `;
+                container.appendChild(eventEl);
+            });
+        }
+
+        async function loadPage() {
+            const allEvents = await fetchEvents();
+            const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+            
+            // 简单分页控制
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            document.getElementById('currentPage').textContent = `${currentPage} / ${totalPages || 1}`;
+            renderEvents(allEvents, currentPage);
+        }
+
+        // 初始化
+        document.getElementById('prevPage').addEventListener('click', () => {
+            currentPage--;
+            loadPage();
+        });
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentPage++;
+            loadPage();
+        });
+
+        loadPage(); // 加载第一页
+    </script>
+</body>
+</html>
