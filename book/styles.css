@@ -324,3 +324,51 @@ form button {
     border-left: 5px solid #dc3545;
     opacity: 0.7;
 }
+/* 提交者信息样式 */
+.submitter-section {
+    background: #e8f5e8;
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    border-left: 4px solid #4caf50;
+}
+
+.submitter-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.submitter-name {
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.change-submitter-btn {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.change-submitter-btn:hover {
+    background: #3d8b40;
+}
+
+/* 事件元信息样式增强 */
+.event-meta {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #ddd;
+    line-height: 1.5;
+}
+
+.event-meta strong {
+    color: #2e7d32;
+}
