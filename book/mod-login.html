@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审核员登录 - KIOMET 编年史</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .login-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body class="submit-body">
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🔐 审核员登录</h1>
+            <p>请输入您的审核密钥以管理事件</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="secretKey">审核密钥：</label>
+                <input type="password" id="secretKey" required 
+                       placeholder="请输入您的审核密钥">
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                登录审核系统
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="index.html" style="color: #667eea; text-decoration: none;">
+                ← 返回首页
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const MODERATOR_STORAGE_KEY = 'kiomet_moderator_info';
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const secretKey = document.getElementById('secretKey').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            if (!secretKey) {
+                showError('请输入审核密钥');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = '验证中...';
+
+            try {
+                // 验证审核密钥
+                const { data: moderators, error } = await supabase
+                    .from('moderators')
+                    .select('id, username')
+                    .eq('secret_key', secretKey)
+                    .eq('is_active', true)
+                    .single();
+
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        throw new Error('审核密钥无效或已失效');
+                    }
+                    throw error;
+                }
+
+                if (!moderators) {
+                    throw new Error('审核密钥无效');
+                }
+
+                // 存储审核员信息
+                const moderatorInfo = {
+                    id: moderators.id,
+                    username: moderators.username,
+                    loggedInAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem(MODERATOR_STORAGE_KEY, JSON.stringify(moderatorInfo));
+                
+                showSuccess('登录成功！正在跳转...');
+                
+                // 跳转到审核页面
+                setTimeout(() => {
+                    window.location.href = 'mod-dashboard.html';
+                }, 1500);
+
+            } catch (error) {
+                console.error('登录失败:', error);
+                showError(error.message || '登录失败，请检查密钥');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录审核系统';
+            }
+        });
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // 检查是否已登录
+        function checkExistingLogin() {
+            const moderatorInfo = localStorage.getItem(MODERATOR_STORAGE_KEY);
+            if (moderatorInfo) {
+                showSuccess('检测到已登录，正在跳转...');
+                setTimeout(() => {
+                    window.location.href = 'mod-dashboard.html';
+                }, 1000);
+            }
+        }
+
+        // 页面加载时检查
+        document.addEventListener('DOMContentLoaded', checkExistingLogin);
+    </script>
+</body>
+</html>
