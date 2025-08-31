@@ -6,7 +6,7 @@
     <title>贡献史料 - KIOMET 编年史</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* 新增的提交者样式 */
+        /* 提交者信息样式 */
         .submitter-section {
             background: #e8f5e8;
             padding: 1rem;
@@ -31,10 +31,36 @@
             background: #4caf50;
             color: white;
             border: none;
-            padding: 0.25rem 0.5rem;
-            border-radius: 3px;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .change-submitter-btn:hover {
+            background: #3d8b40;
+        }
+        
+        .submitter-input {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .submitter-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .submitter-input button {
+            padding: 0.5rem 1rem;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -46,15 +72,24 @@
         <!-- 提交者信息区域 -->
         <div class="submitter-section">
             <h3>👤 提交者信息</h3>
-            <div class="submitter-info">
-                <span>当前提交者：<span id="currentSubmitter" class="submitter-name">加载中...</span></span>
-                <button onclick="changeSubmitter()" class="change-submitter-btn">更改</button>
+            <div id="submitterDisplay">
+                <div class="submitter-info">
+                    <span>当前提交者：<span id="currentSubmitter" class="submitter-name">加载中...</span></span>
+                    <button onclick="changeSubmitter()" class="change-submitter-btn">更改名字</button>
+                </div>
+                <small>您的名字将永久记录在历史事件中</small>
             </div>
-            <small>您的名字将永久记录在历史事件中</small>
+            
+            <div id="submitterInput" style="display: none;">
+                <div class="submitter-input">
+                    <input type="text" id="newSubmitterName" placeholder="请输入您的名字">
+                    <button onclick="saveSubmitter()">保存</button>
+                    <button onclick="cancelChangeSubmitter()" style="background: #666;">取消</button>
+                </div>
+            </div>
         </div>
 
         <form id="eventForm">
-            <!-- 原有的表单字段保持不变 -->
             <div class="form-group">
                 <label for="date">🗓️ 历史日期：</label>
                 <input type="text" id="date" name="date" required 
@@ -65,13 +100,13 @@
             <div class="form-group">
                 <label for="title">🏷️ 事件标题：</label>
                 <input type="text" id="title" name="title" required 
-                       placeholder="无">
+                       placeholder="例如：无">
             </div>
 
             <div class="form-group">
                 <label for="faction">⚔️ 涉及联盟/势力：</label>
                 <input type="text" id="faction" name="faction" required 
-                       placeholder="例如：XX联盟、公共势力、多方势力">
+                       placeholder="例如：XX联盟、公共、多方势力">
             </div>
 
             <div class="form-group">
@@ -115,25 +150,75 @@
         // 初始化提交者信息
         function initSubmitter() {
             const savedName = localStorage.getItem(SUBMITTER_STORAGE_KEY);
+            
             if (savedName) {
+                // 有保存的名字
                 currentSubmitter = savedName;
+                updateSubmitterDisplay();
             } else {
-                // 第一次使用，提示设置名字
-                const defaultName = prompt('请输入您的名字（这将用于记录您的贡献）：') || '匿名玩家';
-                currentSubmitter = defaultName;
-                localStorage.setItem(SUBMITTER_STORAGE_KEY, defaultName);
+                // 第一次使用，显示输入框
+                showSubmitterInput();
             }
+        }
+
+        // 更新提交者显示
+        function updateSubmitterDisplay() {
             document.getElementById('currentSubmitter').textContent = currentSubmitter;
+            document.getElementById('submitterDisplay').style.display = 'block';
+            document.getElementById('submitterInput').style.display = 'none';
+        }
+
+        // 显示提交者输入框
+        function showSubmitterInput() {
+            document.getElementById('submitterDisplay').style.display = 'none';
+            document.getElementById('submitterInput').style.display = 'block';
+            document.getElementById('newSubmitterName').value = currentSubmitter || '';
+            document.getElementById('newSubmitterName').focus();
         }
 
         // 更改提交者名字
         function changeSubmitter() {
-            const newName = prompt('请输入新的提交者名字：', currentSubmitter);
-            if (newName && newName.trim() !== '') {
-                currentSubmitter = newName.trim();
-                localStorage.setItem(SUBMITTER_STORAGE_KEY, currentSubmitter);
-                document.getElementById('currentSubmitter').textContent = currentSubmitter;
-                alert('提交者名字已更新！');
+            showSubmitterInput();
+        }
+
+        // 保存提交者名字
+        function saveSubmitter() {
+            const newName = document.getElementById('newSubmitterName').value.trim();
+            
+            if (!newName) {
+                alert('请输入有效的名字');
+                return;
+            }
+            
+            if (newName.length > 20) {
+                alert('名字长度不能超过20个字符');
+                return;
+            }
+            
+            currentSubmitter = newName;
+            localStorage.setItem(SUBMITTER_STORAGE_KEY, currentSubmitter);
+            updateSubmitterDisplay();
+            
+            alert(`提交者名字已设置为: ${currentSubmitter}`);
+        }
+
+        // 取消更改提交者名字
+        function cancelChangeSubmitter() {
+            if (!currentSubmitter) {
+                // 如果还没有设置过名字，提示必须设置
+                const defaultName = prompt('请设置您的提交者名字：') || '匿名玩家';
+                if (defaultName.trim()) {
+                    currentSubmitter = defaultName.trim();
+                    localStorage.setItem(SUBMITTER_STORAGE_KEY, currentSubmitter);
+                    updateSubmitterDisplay();
+                } else {
+                    // 如果用户取消，使用默认名字
+                    currentSubmitter = '匿名玩家';
+                    localStorage.setItem(SUBMITTER_STORAGE_KEY, currentSubmitter);
+                    updateSubmitterDisplay();
+                }
+            } else {
+                updateSubmitterDisplay();
             }
         }
 
@@ -141,11 +226,18 @@
         document.getElementById('eventForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // 检查是否设置了提交者名字
+            if (!currentSubmitter) {
+                alert('请先设置提交者名字');
+                showSubmitterInput();
+                return;
+            }
+            
             const submitButton = document.getElementById('submitButton');
             const formData = new FormData(e.target);
             const eventData = Object.fromEntries(formData.entries());
 
-            // 添加提交者信息
+            // 添加提交者信息和审核状态
             eventData.submitted_by = currentSubmitter;
             eventData.approved = false;
 
@@ -156,18 +248,14 @@
             messageEl.textContent = '🔄 正在提交，请稍候...';
             messageEl.className = 'message info';
 
-            console.log('准备提交的数据:', eventData);
-
             try {
                 const { data, error } = await supabase
                     .from('events')
                     .insert([eventData])
                     .select();
 
-                console.log('Supabase响应:', { data, error });
-
                 if (error) {
-                    throw new Error(`数据库错误: ${error.message} (代码: ${error.code})`);
+                    throw new Error(`数据库错误: ${error.message}`);
                 }
 
                 if (data && data.length > 0) {
@@ -189,23 +277,9 @@
         });
 
         // 页面加载时初始化
-        // 页面加载时立即初始化提交者信息
-        function initSubmitter() {
-            const savedName = localStorage.getItem(SUBMITTER_STORAGE_KEY);
-            if (savedName) {
-                currentSubmitter = savedName;
-                document.getElementById('currentSubmitter').textContent = currentSubmitter;
-            } else {
-                // 第一次使用，提示设置名字
-                const defaultName = prompt('请输入您的名字（这将用于记录您的贡献）：') || '匿名玩家';
-                currentSubmitter = defaultName;
-                localStorage.setItem(SUBMITTER_STORAGE_KEY, defaultName);
-                document.getElementById('currentSubmitter').textContent = currentSubmitter;
-            }
-        }
-
-        // 立即执行初始化
-        initSubmitter();
+        document.addEventListener('DOMContentLoaded', function() {
+            initSubmitter();
+        });
     </script>
 </body>
 </html>
