@@ -125,14 +125,18 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 先引入Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
-        // Supabase配置
+        // Supabase配置 - 使用正确的初始化方式
         const SUPABASE_URL = 'https://exvsmuoyxmpnnaocoxie.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4dnNtdW95eG1wbm5hb2NveGllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTY5MTQsImV4cCI6MjA3MjEzMjkxNH0.0tcoiCMaIMI7tdu_Zajg0Dq4kp_qnG-K4r1Ak89g6JM';
         const SUBMITTER_STORAGE_KEY = 'kiomet_submitter_name';
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // 正确的Supabase初始化方式
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase客户端已初始化');
+        
         let currentSubmitter = '';
 
         // 初始化提交者信息
@@ -231,20 +235,27 @@
             messageEl.textContent = '🔄 正在提交，请稍候...';
             messageEl.className = 'message info';
 
+            console.log('准备提交的数据:', eventData);
+
             try {
                 const { data, error } = await supabase
                     .from('events')
                     .insert([eventData])
                     .select();
 
+                console.log('Supabase响应:', { data, error });
+
                 if (error) {
-                    throw new Error(`数据库错误: ${error.message}`);
+                    throw new Error(`数据库错误: ${error.message} (代码: ${error.code})`);
                 }
 
                 if (data && data.length > 0) {
                     messageEl.textContent = '✅ 成功提交！等待管理员审核后将会出现在史书中。';
                     messageEl.className = 'message success';
                     e.target.reset();
+                    
+                    // 显示成功提交的数据详情
+                    console.log('成功提交的数据:', data[0]);
                 } else {
                     throw new Error('服务器返回空数据，可能插入失败');
                 }
@@ -253,6 +264,15 @@
                 console.error('提交错误:', error);
                 messageEl.textContent = `提交失败: ${error.message}`;
                 messageEl.className = 'message error';
+                
+                // 显示详细的错误信息
+                if (error.message.includes('JWT')) {
+                    messageEl.innerHTML += '<br>❌ API密钥配置错误';
+                } else if (error.message.includes('CORS')) {
+                    messageEl.innerHTML += '<br>❌ 跨域问题，请检查CORS设置';
+                } else if (error.message.includes('network')) {
+                    messageEl.innerHTML += '<br>❌ 网络连接问题';
+                }
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = '🚀 提交审核';
@@ -262,6 +282,7 @@
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('页面加载完成，初始化提交者系统');
+            console.log('Supabase客户端状态:', window.supabase ? '已加载' : '未加载');
             initSubmitter();
         });
     </script>
