@@ -189,9 +189,23 @@
         });
 
         // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initSubmitter();
-        });
+        // 页面加载时立即初始化提交者信息
+        function initSubmitter() {
+            const savedName = localStorage.getItem(SUBMITTER_STORAGE_KEY);
+            if (savedName) {
+                currentSubmitter = savedName;
+                document.getElementById('currentSubmitter').textContent = currentSubmitter;
+            } else {
+                // 第一次使用，提示设置名字
+                const defaultName = prompt('请输入您的名字（这将用于记录您的贡献）：') || '匿名玩家';
+                currentSubmitter = defaultName;
+                localStorage.setItem(SUBMITTER_STORAGE_KEY, defaultName);
+                document.getElementById('currentSubmitter').textContent = currentSubmitter;
+            }
+        }
+
+        // 立即执行初始化
+        initSubmitter();
     </script>
 </body>
 </html>
