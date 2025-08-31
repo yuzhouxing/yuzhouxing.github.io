@@ -400,3 +400,14 @@ form button {
 .event-meta strong {
     color: #2e7d32;
 }
+/* 名人堂相关样式 */
+.hall-of-fame-link {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #333 !important;
+    margin-top: 1rem;
+}
+
+.hall-of-fame-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
