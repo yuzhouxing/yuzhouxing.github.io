@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审核面板 - KIOMET 编年史</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .mod-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .mod-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .mod-info {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .mod-event-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #ffc107;
+        }
+        .mod-event-card.approved {
+            border-left-color: #28a745;
+            background: #f8fff8;
+        }
+        .mod-event-card.rejected {
+            border-left-color: #dc3545;
+            background: #fff8f8;
+            opacity: 0.7;
+        }
+        .mod-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="submit-body">
+    <div class="mod-container">
+        <div class="mod-header">
+            <h1>📋 审核面板</h1>
+            <button onclick="logout()" class="logout-btn">🚪 退出登录</button>
+        </div>
+
+        <div id="modInfo" class="mod-info">
+            加载中...
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalEvents">0</div>
+                <div>总事件数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingEvents">0</div>
+                <div>待审核</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="approvedEvents">0</div>
+                <div>已通过</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rejectedEvents">0</div>
+                <div>已拒绝</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterEvents('all')">全部</button>
+            <button class="filter-btn" onclick="filterEvents('pending')">待审核</button>
+            <button class="filter-btn" onclick="filterEvents('approved')">已通过</button>
+            <button class="filter-btn" onclick="filterEvents('rejected')">已拒绝</button>
+        </div>
+
+        <div class="event-list" id="eventList">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        const MODERATOR_STORAGE_KEY = 'kiomet_moderator_info';
+        let currentModerator = null;
+        let allEvents = [];
+
+        // 检查登录状态
+        function checkLogin() {
+            const moderatorInfo = localStorage.getItem(MODERATOR_STORAGE_KEY);
+            if (!moderatorInfo) {
+                alert('请先登录审核系统');
+                window.location.href = 'mod-login.html';
+                return false;
+            }
+            
+            try {
+                currentModerator = JSON.parse(moderatorInfo);
+                document.getElementById('modInfo').innerHTML = `
+                    👤 审核员: <strong>${currentModerator.username}</strong> | 
+                    🕐 登录时间: ${new Date(currentModerator.loggedInAt).toLocaleString('zh-CN')}
+                `;
+                return true;
+            } catch (error) {
+                console.error('解析审核员信息失败:', error);
+                logout();
+                return false;
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem(MODERATOR_STORAGE_KEY);
+            window.location.href = 'mod-login.html';
+        }
+
+        // 加载事件数据
+        async function loadEvents() {
+            if (!checkLogin()) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('events')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allEvents = data || [];
+                updateStats();
+                renderEvents(allEvents);
+                
+            } catch (error) {
+                console.error('加载事件失败:', error);
+                document.getElementById('eventList').innerHTML = `
+                    <div class="error-message">加载失败: ${error.message}</div>
+                `;
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const total = allEvents.length;
+            const pending = allEvents.filter(e => !e.approved && !e.rejected).length;
+            const approved = allEvents.filter(e => e.approved).length;
+            const rejected = allEvents.filter(e => e.rejected).length;
+
+            document.getElementById('totalEvents').textContent = total;
+            document.getElementById('pendingEvents').textContent = pending;
+            document.getElementById('approvedEvents').textContent = approved;
+            document.getElementById('rejectedEvents').textContent = rejected;
+        }
+
+        // 渲染事件列表
+        function renderEvents(events) {
+            const eventList = document.getElementById('eventList');
+            
+            if (events.length === 0) {
+                eventList.innerHTML = '<div class="mod-event-card">暂无事件</div>';
+                return;
+            }
+
+            eventList.innerHTML = events.map(event => `
+                <div class="mod-event-card ${event.approved ? 'approved' : ''} ${event.rejected ? 'rejected' : ''}">
+                    <h3>${event.date}</h3>
+                    <h2>${event.title}</h2>
+                    <p><strong>涉及势力：</strong>${event.faction}</p>
+                    <p>${event.content}</p>
+                    ${event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">📜 查看证据</a>` : ''}
+                    <div class="event-meta">
+                        提交者: ${event.submitted_by || '匿名'} | 
+                        状态: ${event.approved ? '✅ 已通过' : event.rejected ? '❌ 已拒绝' : '⏳ 待审核'} |
+                        提交时间: ${new Date(event.created_at).toLocaleString('zh-CN')}
+                    </div>
+                    ${!event.approved && !event.rejected ? `
+                    <div class="mod-actions">
+                        <button class="admin-btn approve-btn" onclick="reviewEvent(${event.id}, 'approve')">
+                            ✅ 通过
+                        </button>
+                        <button class="admin-btn reject-btn" onclick="reviewEvent(${event.id}, 'reject')">
+                            ❌ 拒绝
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 审核事件
+        async function reviewEvent(eventId, action) {
+            if (!checkLogin()) return;
+
+            const comment = prompt('请输入审核意见（可选）：');
+            const reviewData = {
+                reviewed_at: new Date().toISOString(),
+                moderator_id: currentModerator.id,
+                review_comment: comment || null
+            };
+
+            if (action === 'approve') {
+                reviewData.approved = true;
+                reviewData.rejected = false;
+            } else {
+                reviewData.approved = false;
+                reviewData.rejected = true;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('events')
+                    .update(reviewData)
+                    .eq('id', eventId);
+
+                if (error) throw error;
+
+                alert(`事件已${action === 'approve' ? '通过' : '拒绝'}`);
+                loadEvents(); // 重新加载
+                
+            } catch (error) {
+                console.error('审核失败:', error);
+                alert('审核失败: ' + error.message);
+            }
+        }
+
+        // 过滤事件
+        function filterEvents(filter) {
+            const filteredEvents = allEvents.filter(event => {
+                switch (filter) {
+                    case 'pending': return !event.approved && !event.rejected;
+                    case 'approved': return event.approved;
+                    case 'rejected': return event.rejected;
+                    default: return true;
+                }
+            });
+
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            renderEvents(filteredEvents);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            if (checkLogin()) {
+                loadEvents();
+            }
+        });
+    </script>
+</body>
+</html>
