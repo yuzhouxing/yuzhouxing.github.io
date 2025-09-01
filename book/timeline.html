@@ -334,7 +334,7 @@
                     console.log('获取所有事件（包括待审核）');
                 }
                 
-                const { data, error } = await query.order('event_date', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
+                const { data, error } = await query.order('event_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true });
 
                 if (error) {
                     console.error('读取历史失败:', error);
