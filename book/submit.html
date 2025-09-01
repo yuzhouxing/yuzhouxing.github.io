@@ -57,6 +57,21 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        
+        .date-error {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .date-examples {
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body class="submit-body">
@@ -87,8 +102,15 @@
         <form id="eventForm">
             <div class="form-group">
                 <label for="date">🗓️ 历史日期：</label>
-                <input type="text" id="date" name="date" required placeholder="例如：2025年夏 或 2025-08-22">
-                <small>请尽量使用标准日期格式</small>
+                <input type="text" id="date" name="date" required 
+                       placeholder="例如：2025.3 或 2025.3.18"
+                       oninput="validateDate(this)">
+                <div id="dateError" class="date-error"></div>
+                <small>请使用标准格式：YYYY.M 或 YYYY.M.D</small>
+                <div class="date-examples">
+                    📋 正确示例：2025.3、2025.3.18、2025.12、2025.12.1<br>
+                    ❌ 错误示例：2025年3月、2025/3/18、2025-3-18
+                </div>
             </div>
 
             <div class="form-group">
@@ -138,6 +160,74 @@
         console.log('Supabase客户端已初始化');
         
         let currentSubmitter = '';
+
+        // 日期验证函数
+        function validateDate(input) {
+            const errorDiv = document.getElementById('dateError');
+            const value = input.value.trim();
+            
+            if (!value) {
+                errorDiv.style.display = 'none';
+                input.setCustomValidity('');
+                return true;
+            }
+            
+            // 严格的日期格式验证：YYYY.M 或 YYYY.M.D
+            const isValid = /^20[2-9][0-9]\.(1[0-2]|[1-9])(\.(3[01]|[12][0-9]|[1-9]))?$/.test(value);
+            
+            if (!isValid) {
+                errorDiv.textContent = '请使用正确格式：YYYY.M 或 YYYY.M.D（如：2025.3 或 2025.3.18）';
+                errorDiv.style.display = 'block';
+                input.setCustomValidity('日期格式不正确');
+                return false;
+            }
+            
+            // 验证日期是否合理
+            const parts = value.split('.');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            let day = parts.length > 2 ? parseInt(parts[2]) : 0;
+            
+            // 检查月份是否有效
+            if (month < 1 || month > 12) {
+                errorDiv.textContent = '月份必须在1-12之间';
+                errorDiv.style.display = 'block';
+                input.setCustomValidity('月份无效');
+                return false;
+            }
+            
+            // 检查日期是否有效（如果有日期部分）
+            if (day > 0) {
+                const daysInMonth = new Date(year, month, 0).getDate();
+                if (day < 1 || day > daysInMonth) {
+                    errorDiv.textContent = `日期无效，${year}年${month}月只有${daysInMonth}天`;
+                    errorDiv.style.display = 'block';
+                    input.setCustomValidity('日期无效');
+                    return false;
+                }
+            }
+            
+            errorDiv.style.display = 'none';
+            input.setCustomValidity('');
+            return true;
+        }
+
+        // 将文本日期转换为标准ISO日期格式
+        function parseDateToISO(dateText) {
+            const parts = dateText.split('.');
+            const year = parts[0];
+            const month = parts[1].padStart(2, '0');
+            
+            if (parts.length === 2) {
+                // YYYY.M 格式，设置为该月第一天
+                return `${year}-${month}-01`;
+            } else if (parts.length === 3) {
+                // YYYY.M.D 格式
+                const day = parts[2].padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            return null;
+        }
 
         // 初始化提交者信息
         function initSubmitter() {
@@ -220,6 +310,15 @@
                 return;
             }
             
+            // 验证日期格式
+            const dateInput = document.getElementById('date');
+            const dateValue = dateInput.value.trim();
+            if (!validateDate(dateInput)) {
+                alert('请使用正确的日期格式：YYYY.M 或 YYYY.M.D');
+                dateInput.focus();
+                return;
+            }
+            
             const submitButton = document.getElementById('submitButton');
             const formData = new FormData(e.target);
             const eventData = Object.fromEntries(formData.entries());
@@ -227,6 +326,9 @@
             // 添加提交者信息和审核状态
             eventData.submitted_by = currentSubmitter;
             eventData.approved = false;
+            
+            // 添加标准化日期字段用于排序
+            eventData.event_date = parseDateToISO(dateValue);
 
             submitButton.disabled = true;
             submitButton.textContent = '提交中...';
@@ -284,6 +386,11 @@
             console.log('页面加载完成，初始化提交者系统');
             console.log('Supabase客户端状态:', window.supabase ? '已加载' : '未加载');
             initSubmitter();
+            
+            // 为日期输入框添加实时验证
+            document.getElementById('date').addEventListener('blur', function() {
+                validateDate(this);
+            });
         });
     </script>
 </body>
