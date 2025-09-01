@@ -328,14 +328,15 @@
                 
                 // 如果不是管理员或者没有勾选显示待审核，只显示已审核的
                 if (!currentModerator || !showPendingEvents) {
-                    query = query.eq('approved', true);
+                    query = query.eq('approved', true).order('event_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true });
+;
                     console.log('只获取已审核的事件');
                 } else {
+                    query = query.eq('reject',false).order('approved', { ascending: true }).order('event_date', { ascending: true });
                     console.log('获取所有事件（包括待审核）');
                 }
                 
-                const { data, error } = await query.order('event_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true });
-
+                const { data, error } = await query;
                 if (error) {
                     console.error('读取历史失败:', error);
                     throw error;
