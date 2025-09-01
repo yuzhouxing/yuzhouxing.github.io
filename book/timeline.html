@@ -332,7 +332,7 @@
 ;
                     console.log('只获取已审核的事件');
                 } else {
-                    query = query.eq('reject',false).order('approved', { ascending: true }).order('event_date', { ascending: true });
+                    query = query.eq('rejected',false).order('approved', { ascending: true }).order('event_date', { ascending: true });
                     console.log('获取所有事件（包括待审核）');
                 }
                 
