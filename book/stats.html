@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计 - KIOMET 编年史</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stats-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body class="submit-body">
+    <div class="stats-container">
+        <div class="stats-header">
+            <h1>📊 编年史数据统计</h1>
+            <p>探索KIOMET历史事件的时间分布</p>
+        </div>
+
+        <div class="navigation" style="text-align: center; margin-bottom: 2rem;">
+            <a href="index.html">🏠 返回首页</a>
+            <a href="timeline.html">📖 查看史书</a>
+            <a href="submit.html">📝 贡献史料</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalEvents">0</div>
+                <div>总事件数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgEvents">0</div>
+                <div>日均事件</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="peakDay">暂无</div>
+                <div>最活跃日</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="changeTimeRange('month')">月视图</button>
+            <button class="filter-btn" onclick="changeTimeRange('week')">周视图</button>
+            <button class="filter-btn" onclick="changeTimeRange('all')">全部时间</button>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="timelineChart"></canvas>
+        </div>
+
+        <div id="chartInfo" style="text-align: center; color: #666; margin-top: 1rem;">
+            加载中...
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://exvsmuoyxmpnnaocoxie.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4dnNtdW95eG1wbm5hb2NveGllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTY5MTQsImV4cCI6MjA3MjEzMjkxNH0.0tcoiCMaIMI7tdu_Zajg0Dq4kp_qnG-K4r1Ak89g6JM';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let timelineChart = null;
+        let currentTimeRange = 'month';
+
+        // 获取事件数据
+        async function fetchEventsForStats() {
+            try {
+                const { data, error } = await supabase
+                    .from('events')
+                    .select('created_at, approved')
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+                return data || [];
+            } catch (error) {
+                console.error('获取统计数据失败:', error);
+                return [];
+            }
+        }
+
+        // 处理数据并生成图表
+        async function generateTimelineChart() {
+            const events = await fetchEventsForStats();
+            const approvedEvents = events.filter(event => event.approved);
+            
+            // 更新统计卡片
+            document.getElementById('totalEvents').textContent = approvedEvents.length;
+            document.getElementById('avgEvents').textContent = calculateDailyAverage(approvedEvents);
+            
+            // 按时间范围分组数据
+            const groupedData = groupEventsByTime(approvedEvents, currentTimeRange);
+            
+            // 更新峰值信息
+            updatePeakInfo(groupedData);
+            
+            // 生成图表
+            renderChart(groupedData);
+        }
+
+        // 按时间范围分组事件
+        function groupEventsByTime(events, range) {
+            const groups = {};
+            
+            events.forEach(event => {
+                const date = new Date(event.created_at);
+                let key;
+                
+                switch (range) {
+                    case 'week':
+                        key = date.toISOString().slice(0, 10); // 按天分组
+                        break;
+                    case 'month':
+                        key = date.toISOString().slice(0, 7); // 按月分组
+                        break;
+                    default:
+                        key = date.toISOString().slice(0, 10); // 默认按天
+                }
+                
+                groups[key] = (groups[key] || 0) + 1;
+            });
+            
+            return groups;
+        }
+
+        // 计算日均事件数
+        function calculateDailyAverage(events) {
+            if (events.length === 0) return '0';
+            
+            const firstDate = new Date(events[0].created_at);
+            const lastDate = new Date(events[events.length - 1].created_at);
+            const daysDiff = Math.max(1, (lastDate - firstDate) / (1000 * 60 * 60 * 24));
+            
+            return (events.length / daysDiff).toFixed(1);
+        }
+
+        // 更新峰值信息
+        function updatePeakInfo(groupedData) {
+            let peakValue = 0;
+            let peakDate = '';
+            
+            Object.entries(groupedData).forEach(([date, count]) => {
+                if (count > peakValue) {
+                    peakValue = count;
+                    peakDate = date;
+                }
+            });
+            
+            document.getElementById('peakDay').textContent = peakValue > 0 ? 
+                `${peakValue}件 (${formatDate(peakDate)})` : '暂无';
+        }
+
+        // 格式化日期显示
+        function formatDate(dateString) {
+            if (dateString.includes('-')) {
+                if (dateString.length === 10) {
+                    return dateString; // 已经是 YYYY-MM-DD
+                } else if (dateString.length === 7) {
+                    return dateString + '-01'; // 转换为 YYYY-MM-01
+                }
+            }
+            return dateString;
+        }
+
+        // 渲染图表
+        function renderChart(groupedData) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            const labels = Object.keys(groupedData);
+            const data = Object.values(groupedData);
+            
+            if (timelineChart) {
+                timelineChart.destroy();
+            }
+            
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '事件数量',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `历史事件时间分布 (${getRangeText()})`,
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '时间'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '事件数量'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('chartInfo').textContent = 
+                `共显示 ${labels.length} 个时间点，总计 ${data.reduce((a, b) => a + b, 0)} 个事件`;
+        }
+
+        // 获取时间范围文本
+        function getRangeText() {
+            switch (currentTimeRange) {
+                case 'week': return '每日';
+                case 'month': return '每月';
+                case 'all': return '全部时间';
+                default: return '月度';
+            }
+        }
+
+        // 切换时间范围
+        function changeTimeRange(range) {
+            currentTimeRange = range;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 重新生成图表
+            generateTimelineChart();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            generateTimelineChart();
+        });
+    </script>
+</body>
+</html>
