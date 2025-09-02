@@ -410,6 +410,18 @@
                     <h2>${event.title}</h2>
                     <p><strong>涉及势力：</strong>${event.faction}</p>
                     <p>${event.content}</p>
+                    ${event.images && event.images.length > 0 ? `
+                       <div class="event-images">
+                            <h4>🖼️ 相关图片</h4>
+                            <div class="image-gallery">
+                                ${event.images.map(img => `
+                                    <a href="${img}" target="_blank">
+                                        <img src="${img}" alt="事件图片" loading="lazy">
+                                    </a>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
                     ${event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">📜 查看证据</a>` : ''}
                     <div class="event-meta">
                         提交者: ${event.submitted_by || '匿名'} | 
