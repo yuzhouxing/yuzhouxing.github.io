@@ -127,11 +127,30 @@
                 <label for="content">📖 事件详情：</label>
                 <textarea id="content" name="content" rows="6" required placeholder="请详细描述事件的经过、影响和意义..."></textarea>
             </div>
+            <!-- 图片上传区域 -->
+            <div class="image-upload-section">
+                <h3>🖼️ 上传图片证据</h3>
+                <p>可以上传游戏截图、战报图片等（最多5张，每张不超过5MB）</p>
+                
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <p>点击选择图片或拖拽到此处</p>
+                    <p class="upload-status">支持 JPG, PNG, GIF 格式</p>
+                </div>
+                
+                <input type="file" id="imageInput" class="file-input" multiple accept="image/jpeg,image/png,image/gif" onchange="handleFileSelect(this.files)">
+                
+                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                </div>
+                
+                <div class="image-preview" id="imagePreview"></div>
+            </div>
 
             <div class="form-group">
-                <label for="evidence_url">🔗 证据链接（可选）：</label>
+                <label for="evidence_url">🔗 其它证据链接（可选）：</label>
                 <input type="url" id="evidence_url" name="evidence_url" placeholder="https://...（截图、战报视频链接等）">
-                <small>请提供可靠的证据来源</small>
+                <small>如果是视频等其他类型证据，可以提供链接</small>
             </div>
 
             <div class="form-actions">
@@ -156,12 +175,127 @@
         const SUPABASE_URL = 'https://exvsmuoyxmpnnaocoxie.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4dnNtdW95eG1wbm5hb2NveGllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTY5MTQsImV4cCI6MjA3MjEzMjkxNH0.0tcoiCMaIMI7tdu_Zajg0Dq4kp_qnG-K4r1Ak89g6JM';
         const SUBMITTER_STORAGE_KEY = 'kiomet_submitter_name';
-        
+        const BUCKET_NAME = 'event-images';
         // 正确的Supabase初始化方式
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('Supabase客户端已初始化');
         
         let currentSubmitter = '';
+        let uploadedImages = [];
+
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFileSelect(e.dataTransfer.files);
+            });
+        }
+
+        function handleFileSelect(files) {
+            if (uploadedImages.length + files.length > 5) {
+                alert('最多只能上传5张图片');
+                return;
+            }
+            
+            Array.from(files).forEach(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`文件 ${file.name} 超过5MB限制`);
+                    return;
+                }
+                
+                if (!file.type.startsWith('image/')) {
+                    alert(`文件 ${file.name} 不是图片格式`);
+                    return;
+                }
+                
+                uploadImage(file);
+            });
+        }
+
+        async function uploadImage(file) {
+            const progressBar = document.getElementById('progressBar');
+            const uploadProgress = document.getElementById('uploadProgress');
+            
+            uploadProgress.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            try {
+                // 生成唯一文件名
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substr(2, 9)}_${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+                
+                const { data, error } = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false,
+                        onUploadProgress: (progress) => {
+                            const percentage = (progress.loaded / progress.total) * 100;
+                            progressBar.style.width = `${percentage}%`;
+                        }
+                    });
+                
+                if (error) throw error;
+                
+                // 获取图片公开URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from(BUCKET_NAME)
+                    .getPublicUrl(filePath);
+                
+                // 添加到已上传图片列表
+                uploadedImages.push(publicUrl);
+                
+                // 显示图片预览
+                addImagePreview(publicUrl, file.name);
+                
+                // 隐藏进度条
+                setTimeout(() => {
+                    uploadProgress.style.display = 'none';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('图片上传失败:', error);
+                alert(`图片上传失败: ${error.message}`);
+                uploadProgress.style.display = 'none';
+            }
+        }
+
+        function addImagePreview(url, filename) {
+            const previewContainer = document.getElementById('imagePreview');
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            previewItem.innerHTML = `
+                <img src="${url}" alt="${filename}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lm77niYc8L3RleHQ+PC9zdmc+'">
+                <button type="button" class="remove-image" onclick="removeImage('${url}')">×</button>
+            `;
+            previewContainer.appendChild(previewItem);
+        }
+
+        function removeImage(url) {
+            // 从预览中移除
+            const previewItems = document.getElementById('imagePreview').children;
+            for (let i = 0; i < previewItems.length; i++) {
+                if (previewItems[i].querySelector('img').src === url) {
+                    previewItems[i].remove();
+                    break;
+                }
+            }
+            
+            // 从上传列表中移除
+            uploadedImages = uploadedImages.filter(imgUrl => imgUrl !== url);
+        }
 
         // 日期验证函数
         function validateDate(input) {
@@ -331,7 +465,10 @@
             
             // 添加标准化日期字段用于排序
             eventData.event_date = parseDateToISO(dateValue);
-
+            if (uploadedImages.length > 0) {
+                eventData.images = uploadedImages;
+                eventData.has_images = true;
+            }
             submitButton.disabled = true;
             submitButton.textContent = '提交中...';
             
@@ -357,7 +494,8 @@
                     messageEl.textContent = '✅ 成功提交！等待管理员审核后将会出现在史书中。';
                     messageEl.className = 'message success';
                     e.target.reset();
-                    
+                    document.getElementById('imagePreview').innerHTML = '';
+                    uploadedImages = [];
                     // 显示成功提交的数据详情
                     console.log('成功提交的数据:', data[0]);
                 } else {
