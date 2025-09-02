@@ -115,7 +115,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="peakDay">暂无</div>
-                    <div>最活跃日</div>
+                    <div>最活跃时段</div>
                 </div>
             </div>
 
@@ -365,7 +365,7 @@
             });
             
             document.getElementById('chartInfo').textContent = 
-                `统计周期: ${getRangeText()} | 时间点数量: ${labels.length} | 总事件数: ${data.reduce((a, b) => a + b, 0)}`;
+                `统计周期: ${getRangeText()} | 总事件数: ${data.reduce((a, b) => a + b, 0)}`;
         }
 
         // 获取时间范围文本
