@@ -6,6 +6,42 @@
     <title>贡献史料 - KIOMET 编年史</title>
     <link rel="stylesheet" href="styles.css">
     <style>
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+            max-width: 100%;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 120px; /* 限制最大宽度 */
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 80px; /* 减小高度 */
+            object-fit: cover;
+        }    
+
+        .remove-image {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+        }
         .submitter-section {
             background: #e8f5e8;
             padding: 1rem;
