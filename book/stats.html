@@ -72,6 +72,22 @@
             color: white;
             border-color: #667eea;
         }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
 <body class="submit-body">
@@ -87,71 +103,117 @@
             <a href="submit.html">📝 贡献史料</a>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number" id="totalEvents">0</div>
-                <div>总事件数</div>
+        <div id="statsContent">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalEvents">0</div>
+                    <div>总事件数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgEvents">0</div>
+                    <div>日均事件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="peakDay">暂无</div>
+                    <div>最活跃日</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="avgEvents">0</div>
-                <div>日均事件</div>
+
+            <div class="filters">
+                <button class="filter-btn active" onclick="changeTimeRange('month')">月视图</button>
+                <button class="filter-btn" onclick="changeTimeRange('week')">周视图</button>
+                <button class="filter-btn" onclick="changeTimeRange('day')">日视图</button>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="peakDay">暂无</div>
-                <div>最活跃日</div>
+
+            <div class="chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+
+            <div id="chartInfo" style="text-align: center; color: #666; margin-top: 1rem;">
+                加载中...
             </div>
         </div>
 
-        <div class="filters">
-            <button class="filter-btn active" onclick="changeTimeRange('month')">月视图</button>
-            <button class="filter-btn" onclick="changeTimeRange('week')">周视图</button>
-            <button class="filter-btn" onclick="changeTimeRange('all')">全部时间</button>
-        </div>
-
-        <div class="chart-container">
-            <canvas id="timelineChart"></canvas>
-        </div>
-
-        <div id="chartInfo" style="text-align: center; color: #666; margin-top: 1rem;">
-            加载中...
-        </div>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
     </div>
 
+    <!-- 先引入Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
+        // Supabase配置
         const SUPABASE_URL = 'https://exvsmuoyxmpnnaocoxie.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4dnNtdW95eG1wbm5hb2NveGllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NTY5MTQsImV4cCI6MjA3MjEzMjkxNH0.0tcoiCMaIMI7tdu_Zajg0Dq4kp_qnG-K4r1Ak89g6JM';
         
+        // 初始化Supabase客户端
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase客户端已初始化');
+        
         let timelineChart = null;
         let currentTimeRange = 'month';
 
+        // 显示错误信息
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('statsContent').style.display = 'none';
+        }
+
+        // 隐藏错误信息
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('statsContent').style.display = 'block';
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('chartInfo').textContent = '数据加载中...';
+        }
+
         // 获取事件数据
         async function fetchEventsForStats() {
+            showLoading();
+            console.log('开始获取事件数据...');
+            
             try {
+                // 只获取已审核通过的事件
                 const { data, error } = await supabase
                     .from('events')
-                    .select('created_at, approved')
+                    .select('created_at, date, title')
+                    .eq('approved', true)
                     .order('created_at', { ascending: true });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase查询错误:', error);
+                    throw new Error(`数据库查询失败: ${error.message}`);
+                }
+
+                console.log(`成功获取 ${data?.length || 0} 条已审核事件`);
                 return data || [];
+                
             } catch (error) {
                 console.error('获取统计数据失败:', error);
+                showError('获取数据失败: ' + error.message);
                 return [];
             }
         }
 
         // 处理数据并生成图表
         async function generateTimelineChart() {
+            hideError();
             const events = await fetchEventsForStats();
-            const approvedEvents = events.filter(event => event.approved);
             
+            if (events.length === 0) {
+                showError('暂无已审核的历史事件数据');
+                return;
+            }
+
             // 更新统计卡片
-            document.getElementById('totalEvents').textContent = approvedEvents.length;
-            document.getElementById('avgEvents').textContent = calculateDailyAverage(approvedEvents);
+            document.getElementById('totalEvents').textContent = events.length;
+            document.getElementById('avgEvents').textContent = calculateDailyAverage(events);
             
             // 按时间范围分组数据
-            const groupedData = groupEventsByTime(approvedEvents, currentTimeRange);
+            const groupedData = groupEventsByTime(events, currentTimeRange);
             
             // 更新峰值信息
             updatePeakInfo(groupedData);
@@ -169,20 +231,34 @@
                 let key;
                 
                 switch (range) {
+                    case 'day':
+                        key = date.toLocaleDateString('zh-CN'); // 按天分组，中文格式
+                        break;
                     case 'week':
-                        key = date.toISOString().slice(0, 10); // 按天分组
+                        // 按周分组，显示周数
+                        const weekNumber = getWeekNumber(date);
+                        key = `${date.getFullYear()}年第${weekNumber}周`;
                         break;
                     case 'month':
-                        key = date.toISOString().slice(0, 7); // 按月分组
-                        break;
                     default:
-                        key = date.toISOString().slice(0, 10); // 默认按天
+                        // 按月分组，显示年月
+                        key = date.toLocaleDateString('zh-CN', { 
+                            year: 'numeric', 
+                            month: 'long' 
+                        });
                 }
                 
                 groups[key] = (groups[key] || 0) + 1;
             });
             
             return groups;
+        }
+
+        // 获取周数
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
         }
 
         // 计算日均事件数
@@ -209,19 +285,7 @@
             });
             
             document.getElementById('peakDay').textContent = peakValue > 0 ? 
-                `${peakValue}件 (${formatDate(peakDate)})` : '暂无';
-        }
-
-        // 格式化日期显示
-        function formatDate(dateString) {
-            if (dateString.includes('-')) {
-                if (dateString.length === 10) {
-                    return dateString; // 已经是 YYYY-MM-DD
-                } else if (dateString.length === 7) {
-                    return dateString + '-01'; // 转换为 YYYY-MM-01
-                }
-            }
-            return dateString;
+                `${peakValue}件 (${peakDate})` : '暂无';
         }
 
         // 渲染图表
@@ -245,7 +309,12 @@
                         backgroundColor: 'rgba(102, 126, 234, 0.1)',
                         borderWidth: 2,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
                 options: {
@@ -254,26 +323,41 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `历史事件时间分布 (${getRangeText()})`,
-                            font: { size: 16 }
+                            text: `历史事件时间分布 - ${getRangeText()}`,
+                            font: { size: 16, weight: 'bold' }
                         },
                         tooltip: {
                             mode: 'index',
-                            intersect: false
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 }
+                        },
+                        legend: {
+                            display: false
                         }
                     },
                     scales: {
                         x: {
                             title: {
                                 display: true,
-                                text: '时间'
+                                text: '时间周期',
+                                font: { weight: 'bold' }
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
                             }
                         },
                         y: {
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: '事件数量'
+                                text: '事件数量',
+                                font: { weight: 'bold' }
+                            },
+                            ticks: {
+                                stepSize: 1
                             }
                         }
                     }
@@ -281,16 +365,16 @@
             });
             
             document.getElementById('chartInfo').textContent = 
-                `共显示 ${labels.length} 个时间点，总计 ${data.reduce((a, b) => a + b, 0)} 个事件`;
+                `统计周期: ${getRangeText()} | 时间点数量: ${labels.length} | 总事件数: ${data.reduce((a, b) => a + b, 0)}`;
         }
 
         // 获取时间范围文本
         function getRangeText() {
             switch (currentTimeRange) {
-                case 'week': return '每日';
-                case 'month': return '每月';
-                case 'all': return '全部时间';
-                default: return '月度';
+                case 'day': return '每日分布';
+                case 'week': return '每周分布';
+                case 'month': return '每月分布';
+                default: return '月度分布';
             }
         }
 
@@ -310,6 +394,7 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('统计页面加载完成');
             generateTimelineChart();
         });
     </script>
