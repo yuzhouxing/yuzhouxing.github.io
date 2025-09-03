@@ -162,14 +162,17 @@
                     .from('events')
                     .select('submitted_by, approved, created_at')
                     .eq('approved', true)
-                    .order('created_at', { ascending: false });
+                    .order('created_at', { ascending: true });
 
                 if (error) throw error;
 
                 // 统计每个提交者的事件数量
                 const stats = {};
                 events.forEach(event => {
-                    const submitter = event.submitted_by || '匿名';
+                    const submitter = event.submitted_by;
+                    if (!submitter || submitter === '匿名' || submitter.trim() === '') {
+                        return; // 直接跳过，不统计
+                    }
                     if (!stats[submitter]) {
                         stats[submitter] = {
                             total: 0,
