@@ -553,17 +553,16 @@
                 );
             });
         }
-
-        // 显示搜索结果
+                // 显示搜索结果
         function displaySearchResults(results, searchTerm) {
             const resultsContainer = document.getElementById('searchResults');
             const timelineContainer = document.getElementById('timeline');
     
             if (results.length === 0) {
                 resultsContainer.innerHTML = `
-                   <div class="search-info">
+                    <div class="search-info">
                         没有找到包含 "<strong>${searchTerm}</strong>" 的事件
-                   </div>
+                    </div>
                 `;
                 timelineContainer.innerHTML = '<div class="event-card">没有找到相关事件</div>';
                 return;
@@ -572,29 +571,55 @@
             // 显示搜索结果信息
             resultsContainer.innerHTML = `
                 <div class="search-info">
-                找到 ${results.length} 个包含 "<strong>${searchTerm}</strong>" 的事件
+                    找到 ${results.length} 个包含 "<strong>${searchTerm}</strong>" 的事件
                 </div>
             `;
     
             // 高亮显示搜索结果
             const highlightedResults = results.map(event => {
-            const highlightedEvent = { ...event };
-            const highlight = (text) => {
-                if (!text) return text;
-                return text.replace(
-                    new RegExp(searchTerm, 'gi'),
-                    match => `<span class="highlight">${match}</span>`
-                );
-            };
-        
-            highlightedEvent.title = highlight(event.title);
-            highlightedEvent.content = highlight(event.content);
-            highlightedEvent.faction = highlight(event.faction);
-            highlightedEvent.submitted_by = highlight(event.submitted_by);
-        
-             return highlightedEvent;
+                const highlightedEvent = { ...event };
+                const highlight = (text) => {
+                    if (!text) return text;
+                    return text.replace(
+                        new RegExp(searchTerm, 'gi'),
+                        match => `<span class="highlight">${match}</span>`
+                    );
+                };
+            
+                highlightedEvent.title = highlight(event.title);
+                highlightedEvent.content = highlight(event.content);
+                highlightedEvent.faction = highlight(event.faction);
+                highlightedEvent.submitted_by = highlight(event.submitted_by);
+            
+                return highlightedEvent;
+            });
+            
+            // 显示搜索到的事件
+            renderEvents(highlightedResults, 1);
+        }
+
+        // 修改分页按钮事件处理
+        document.getElementById('prevPage').addEventListener('click', () => {
+            currentPage--;
+            if (currentSearchTerm) {
+                const results = searchEvents(currentSearchTerm);
+                renderEvents(results, currentPage);
+            } else {
+                loadEvents();
+            }
         });
-        // 初始化
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentPage++;
+            if (currentSearchTerm) {
+                const results = searchEvents(currentSearchTerm);
+                renderEvents(results, currentPage);
+            } else {
+                loadEvents();
+            }
+        });
+
+        // 初始化 - 这个应该在最外层
         document.addEventListener('DOMContentLoaded', function() {
             console.log('页面加载完成，开始初始化...');
             
@@ -604,12 +629,22 @@
             // 设置分页事件
             document.getElementById('prevPage').addEventListener('click', () => {
                 currentPage--;
-                loadEvents();
+                if (currentSearchTerm) {
+                    const results = searchEvents(currentSearchTerm);
+                    renderEvents(results, currentPage);
+                } else {
+                    loadEvents();
+                }
             });
             
             document.getElementById('nextPage').addEventListener('click', () => {
                 currentPage++;
-                loadEvents();
+                if (currentSearchTerm) {
+                    const results = searchEvents(currentSearchTerm);
+                    renderEvents(results, currentPage);
+                } else {
+                    loadEvents();
+                }
             });
 
             // 初始加载
