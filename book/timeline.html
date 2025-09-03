@@ -204,6 +204,15 @@
             </div>
         </div>
 
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 搜索事件关键词..." onkeyup="handleSearch(event)">
+                <button onclick="performSearch()">搜索</button>
+                <button onclick="clearSearch()" class="clear-btn">清除</button>
+            </div>
+            <div id="searchResults" class="search-results"></div>
+        </div>
+        
         <main class="timeline-container" id="timeline">
             <div class="loading">史书正在加载中...</div>
         </main>
@@ -500,6 +509,91 @@
             renderEvents(allEvents, currentPage);
         }
 
+        // 搜索处理函数
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            currentSearchTerm = searchTerm;
+    
+            if (!searchTerm) {
+                clearSearch();
+                return;
+            }
+    
+            // 执行搜索
+            const results = searchEvents(searchTerm);
+            displaySearchResults(results, searchTerm);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentSearchTerm = '';
+            document.getElementById('searchResults').innerHTML = '';
+            renderEvents(allEvents, currentPage); // 重新显示所有事件
+        }
+
+        // 搜索事件函数
+        function searchEvents(searchTerm) {
+            if (!searchTerm || !allEvents.length) return [];
+    
+            const lowerSearchTerm = searchTerm.toLowerCase();
+    
+            return allEvents.filter(event => {
+                // 搜索标题、内容、势力、提交者
+                return (
+                    (event.title && event.title.toLowerCase().includes(lowerSearchTerm)) ||
+                    (event.content && event.content.toLowerCase().includes(lowerSearchTerm)) ||
+                    (event.faction && event.faction.toLowerCase().includes(lowerSearchTerm)) ||
+                    (event.submitted_by && event.submitted_by.toLowerCase().includes(lowerSearchTerm))
+                );
+            });
+        }
+
+        // 显示搜索结果
+        function displaySearchResults(results, searchTerm) {
+            const resultsContainer = document.getElementById('searchResults');
+            const timelineContainer = document.getElementById('timeline');
+    
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `
+                   <div class="search-info">
+                        没有找到包含 "<strong>${searchTerm}</strong>" 的事件
+                   </div>
+                `;
+                timelineContainer.innerHTML = '<div class="event-card">没有找到相关事件</div>';
+                return;
+            }
+    
+            // 显示搜索结果信息
+            resultsContainer.innerHTML = `
+                <div class="search-info">
+                找到 ${results.length} 个包含 "<strong>${searchTerm}</strong>" 的事件
+                </div>
+            `;
+    
+            // 高亮显示搜索结果
+            const highlightedResults = results.map(event => {
+            const highlightedEvent = { ...event };
+            const highlight = (text) => {
+                if (!text) return text;
+                return text.replace(
+                    new RegExp(searchTerm, 'gi'),
+                    match => `<span class="highlight">${match}</span>`
+                );
+            };
+        
+            highlightedEvent.title = highlight(event.title);
+            highlightedEvent.content = highlight(event.content);
+            highlightedEvent.faction = highlight(event.faction);
+            highlightedEvent.submitted_by = highlight(event.submitted_by);
+        
+             return highlightedEvent;
+        });
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('页面加载完成，开始初始化...');
