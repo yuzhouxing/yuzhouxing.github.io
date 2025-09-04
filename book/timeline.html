@@ -598,26 +598,6 @@
             renderEvents(highlightedResults, 1);
         }
 
-        // 修改分页按钮事件处理
-        document.getElementById('prevPage').addEventListener('click', () => {
-            currentPage--;
-            if (currentSearchTerm) {
-                const results = searchEvents(currentSearchTerm);
-                renderEvents(results, currentPage);
-            } else {
-                loadEvents();
-            }
-        });
-
-        document.getElementById('nextPage').addEventListener('click', () => {
-            currentPage++;
-            if (currentSearchTerm) {
-                const results = searchEvents(currentSearchTerm);
-                renderEvents(results, currentPage);
-            } else {
-                loadEvents();
-            }
-        });
 
         // 初始化 - 这个应该在最外层
         document.addEventListener('DOMContentLoaded', function() {
