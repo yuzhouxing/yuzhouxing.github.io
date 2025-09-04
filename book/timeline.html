@@ -602,7 +602,7 @@
         // 初始化 - 这个应该在最外层
         document.addEventListener('DOMContentLoaded', function() {
             console.log('页面加载完成，开始初始化...');
-            
+            let currentSearchTerm = '';
             // 检查管理员状态
             checkModeratorStatus();
             
