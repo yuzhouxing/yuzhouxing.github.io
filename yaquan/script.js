@@ -1,8 +1,8 @@
 // 配置
 const COMMUNITY_ID = 4353;
-const MAX_PAGES = 50;
+const MAX_PAGES = 30;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
-const MIN_LIKES = 3; // 最小点赞数要求
+const MIN_LIKES = 5; // 最小点赞数要求
 
 // 代理服务列表
 const PROXY_SERVICES = [
