@@ -1,11 +1,10 @@
+// api/proxy.js - 修复版
 export default async function handler(req, res) {
-  // 设置CORS头
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, User-Agent, Referer');
-
   // 处理预检请求
   if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, User-Agent, Referer');
     return res.status(200).end();
   }
 
@@ -22,9 +21,9 @@ export default async function handler(req, res) {
 
   try {
     const targetUrl = decodeURIComponent(url);
-    console.log('Proxying request to:', targetUrl);
+    console.log('Proxying to:', targetUrl);
     
-    const response = await fetch(targetUrl, {
+    const apiResponse = await fetch(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Referer': 'https://m.ximalaya.com/',
@@ -34,19 +33,26 @@ export default async function handler(req, res) {
       timeout: 10000
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (!apiResponse.ok) {
+      throw new Error(`API responded with status ${apiResponse.status}`);
     }
 
-    const data = await response.json();
+    const data = await apiResponse.json();
+
+    // 设置CORS头
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Content-Type', 'application/json');
+
     return res.status(200).json(data);
 
   } catch (error) {
     console.error('Proxy error:', error);
+    res.setHeader('Access-Control-Allow-Origin', '*');
     return res.status(500).json({ 
       error: 'Proxy request failed',
       message: error.message,
-      details: '请检查控制台获取更多信息'
+      url: req.query.url
     });
   }
 }
