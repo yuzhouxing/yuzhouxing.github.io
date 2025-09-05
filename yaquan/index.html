@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喜马拉雅雅圈发帖统计</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>喜马拉雅雅圈发帖统计</h1>
+            <p>最近一个月用户发帖数量排名</p>
+        </header>
+        
+        <div class="controls">
+            <button id="refreshBtn">刷新数据</button>
+            <span id="lastUpdate">上次更新: 从未</span>
+        </div>
+        
+        <div class="loading" id="loading">
+            正在获取数据，请稍候...
+            <div class="progress-bar">
+                <div class="progress"></div>
+            </div>
+            <div id="progressText">准备中...</div>
+        </div>
+        
+        <div class="charts">
+            <div id="userRankChart" class="chart"></div>
+            <div id="postDistributionChart" class="chart"></div>
+        </div>
+        
+        <div class="data-table">
+            <h2>详细数据</h2>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>用户名</th>
+                        <th>发帖数量</th>
+                        <th>最后发帖时间</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
