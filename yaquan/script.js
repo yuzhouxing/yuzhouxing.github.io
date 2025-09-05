@@ -1,6 +1,6 @@
 // 配置
 const COMMUNITY_ID = 4353;
-const MAX_PAGES = 5; // 先测试少量页面
+const MAX_PAGES = 20; // 先测试少量页面
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 // 代理服务列表（按优先级排序）
