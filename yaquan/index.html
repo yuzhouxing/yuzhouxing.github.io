@@ -17,6 +17,18 @@
         <div class="controls">
             <button id="refreshBtn">刷新数据</button>
             <span id="lastUpdate">上次更新: 从未</span>
+            <button id="toggleDebug" style="margin-left: 20px; padding: 5px 10px; font-size: 12px;">显示调试</button>
+        </div>
+        
+        <!-- 调试面板 -->
+        <div id="debugPanel" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #ddd;">
+            <h3>调试信息</h3>
+            <div>
+                <button id="testProxyBtn">测试代理连接</button>
+                <button id="testDirectBtn">测试直接连接</button>
+                <button id="clearStorageBtn">清除本地数据</button>
+            </div>
+            <pre id="debugInfo" style="background: white; padding: 10px; border-radius: 3px; max-height: 300px; overflow: auto;"></pre>
         </div>
         
         <div class="loading" id="loading">
