@@ -1,19 +1,20 @@
 // 配置
 const COMMUNITY_ID = 4353;
-const MAX_PAGES = 20; // 先测试少量页面
+const MAX_PAGES = 50;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+const MIN_LIKES = 3; // 最小点赞数要求
 
-// 代理服务列表（按优先级排序）
+// 代理服务列表
 const PROXY_SERVICES = [
-    { name: 'Vercel', url: '/api/proxy?url=' }, // 相对路径，避免CORS
+    { name: 'Vercel', url: '/api/proxy?url=' },
     { name: 'CorsProxy', url: 'https://corsproxy.io/?' },
     { name: 'AllOrigins', url: 'https://api.allorigins.win/raw?url=' },
     { name: 'CorsAnywhere', url: 'https://cors-anywhere.herokuapp.com/' }
 ];
 
 // 全局变量
-let userPostData = {};
-let allPosts = [];
+let userScoreData = {}; // 改为存储用户积分数据
+let allQualifiedPosts = []; // 存储符合条件的帖子
 let currentPage = 1;
 let isLoading = false;
 let currentProxyIndex = 0;
@@ -47,12 +48,12 @@ function initCharts() {
     const postDistributionChart = echarts.init(document.getElementById('postDistributionChart'));
 
     userRankChart.setOption({
-        title: { text: '用户发帖数量排名(TOP20)', left: 'center' },
+        title: { text: '优质发帖者积分排名(TOP20)', left: 'center' },
         tooltip: { trigger: 'axis' },
-        xAxis: { type: 'value' },
+        xAxis: { type: 'value', name: '积分' },
         yAxis: { type: 'category', data: [] },
         series: [{
-            name: '发帖数',
+            name: '积分',
             type: 'bar',
             data: [],
             itemStyle: { color: '#ff6a33' }
@@ -60,10 +61,10 @@ function initCharts() {
     });
 
     postDistributionChart.setOption({
-        title: { text: '发帖分布情况', left: 'center' },
-        tooltip: { trigger: 'item' },
+        title: { text: '积分分布情况', left: 'center' },
+        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
         series: [{
-            name: '发帖分布',
+            name: '积分分布',
             type: 'pie',
             radius: '50%',
             data: []
@@ -78,18 +79,17 @@ let charts = initCharts();
 // 从本地存储加载数据
 function loadFromStorage() {
     try {
-        const savedData = localStorage.getItem('yaquanData');
+        const savedData = localStorage.getItem('yaquanScoreData');
         const savedTime = localStorage.getItem('yaquanUpdateTime');
         
         if (savedData && savedTime) {
             const updateTime = new Date(parseInt(savedTime));
             lastUpdateEl.textContent = `上次更新: ${updateTime.toLocaleString()}`;
             
-            // 检查数据是否在一个月内
             if (Date.now() - updateTime.getTime() < ONE_MONTH_MS) {
-                userPostData = JSON.parse(savedData);
+                userScoreData = JSON.parse(savedData);
                 processData();
-                debugLog('从本地存储加载数据成功');
+                debugLog('从本地存储加载积分数据成功');
                 return true;
             } else {
                 debugLog('本地数据已过期', 'warn');
@@ -104,13 +104,99 @@ function loadFromStorage() {
 // 保存数据到本地存储
 function saveToStorage() {
     try {
-        localStorage.setItem('yaquanData', JSON.stringify(userPostData));
+        localStorage.setItem('yaquanScoreData', JSON.stringify(userScoreData));
         localStorage.setItem('yaquanUpdateTime', Date.now().toString());
         lastUpdateEl.textContent = `上次更新: ${new Date().toLocaleString()}`;
-        debugLog('数据已保存到本地存储');
+        debugLog('积分数据已保存到本地存储');
     } catch (error) {
         debugLog('保存到本地存储失败: ' + error.message, 'error');
     }
+}
+
+// 计算帖子积分
+function calculatePostScore(post) {
+    let score = 0;
+    
+    // 获取点赞数（兼容不同字段名）
+    const likeCount = post.statCount?.feedPraiseCount || post.likeCount || 0;
+    
+    // 只有点赞数大于3的帖子才参与积分
+    if (likeCount > MIN_LIKES) {
+        // 基础积分 = 点赞数
+        score += likeCount;
+        
+        // 精华帖额外+10分
+        const isEssence = post.communityContext?.isEssence || false;
+        if (isEssence) {
+            score += 10;
+            debugLog(`精华帖额外+10分: ${post.authorInfo.nickname}`);
+        }
+    }
+    
+    return score;
+}
+
+// 处理单页数据
+function processPageData(data) {
+    if (!data || !data.data || !data.data.list) {
+        debugLog('无效的数据格式', 'warn');
+        return 0;
+    }
+    
+    const posts = data.data.list;
+    let qualifiedPosts = 0;
+    const oneMonthAgo = Date.now() - ONE_MONTH_MS;
+    
+    for (const post of posts) {
+        // 只统计一个月内的帖子
+        const createdTime = post.createdTs || post.createTime;
+        if (!createdTime || createdTime < oneMonthAgo) continue;
+        
+        // 计算帖子积分
+        const postScore = calculatePostScore(post);
+        
+        // 只有有积分的帖子才计入
+        if (postScore > 0) {
+            qualifiedPosts++;
+            allQualifiedPosts.push(post);
+            
+            const authorInfo = post.authorInfo || post.userInfo || {};
+            const author = authorInfo.nickname || '匿名用户';
+            const uid = authorInfo.uid || 'unknown';
+            
+            // 初始化用户数据
+            if (!userScoreData[uid]) {
+                userScoreData[uid] = {
+                    name: author,
+                    totalScore: 0,
+                    postCount: 0,
+                    essenceCount: 0,
+                    totalLikes: 0,
+                    lastPostTime: 0
+                };
+            }
+            
+            // 更新用户积分数据
+            userScoreData[uid].totalScore += postScore;
+            userScoreData[uid].postCount += 1;
+            userScoreData[uid].totalLikes += (post.statCount?.feedPraiseCount || 0);
+            
+            // 统计精华帖数量
+            const isEssence = post.communityContext?.isEssence || false;
+            if (isEssence) {
+                userScoreData[uid].essenceCount += 1;
+            }
+            
+            // 更新最后发帖时间
+            if (createdTime > userScoreData[uid].lastPostTime) {
+                userScoreData[uid].lastPostTime = createdTime;
+            }
+            
+            debugLog(`用户 ${author} 获得 ${postScore} 分 (点赞: ${post.statCount?.feedPraiseCount || 0}, 精华: ${isEssence ? '是' : '否'})`);
+        }
+    }
+    
+    return qualifiedPosts;
 }
 
 // 获取帖子数据
@@ -124,7 +210,6 @@ async function fetchPosts(page) {
     };
     
     const fullUrl = `${targetUrl}?${new URLSearchParams(params)}`;
-    debugLog(`构建目标URL: ${fullUrl}`);
     
     // 尝试当前代理
     const proxy = PROXY_SERVICES[currentProxyIndex];
@@ -133,7 +218,6 @@ async function fetchPosts(page) {
     if (proxy.url.startsWith('http')) {
         proxyUrl = `${proxy.url}${encodeURIComponent(fullUrl)}`;
     } else {
-        // 相对路径
         proxyUrl = `${proxy.url}${encodeURIComponent(fullUrl)}`;
     }
     
@@ -145,9 +229,7 @@ async function fetchPosts(page) {
         
         const response = await fetch(proxyUrl, {
             signal: controller.signal,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: { 'Accept': 'application/json' }
         });
         
         clearTimeout(timeoutId);
@@ -170,49 +252,15 @@ async function fetchPosts(page) {
         }
         
         debugLog(`切换到代理: ${PROXY_SERVICES[currentProxyIndex].name}`);
-        return fetchPosts(page); // 重试
+        return fetchPosts(page);
     }
-}
-
-// 处理单页数据
-function processPageData(data) {
-    if (!data || !data.data || !data.data.list) {
-        debugLog('无效的数据格式', 'warn');
-        return 0;
-    }
-    
-    const posts = data.data.list;
-    let validPosts = 0;
-    const oneMonthAgo = Date.now() - ONE_MONTH_MS;
-    
-    for (const post of posts) {
-        const createdTime = post.createdTs || post.createTime;
-        if (!createdTime || createdTime < oneMonthAgo) continue;
-        
-        validPosts++;
-        allPosts.push(post);
-        
-        const authorInfo = post.authorInfo || post.userInfo || {};
-        const author = authorInfo.nickname || '匿名用户';
-        
-        if (!userPostData[author]) {
-            userPostData[author] = { count: 0, lastPostTime: 0 };
-        }
-        
-        userPostData[author].count++;
-        if (createdTime > userPostData[author].lastPostTime) {
-            userPostData[author].lastPostTime = createdTime;
-        }
-    }
-    
-    return validPosts;
 }
 
 // 更新进度条
 function updateProgress(page, totalPages, currentPosts) {
     const percent = (page / totalPages) * 100;
     progressBarEl.style.width = `${percent}%`;
-    progressTextEl.textContent = `正在获取第 ${page}/${totalPages} 页，已找到 ${currentPosts} 篇帖子`;
+    progressTextEl.textContent = `正在获取第 ${page}/${totalPages} 页，已找到 ${currentPosts} 篇优质帖子`;
 }
 
 // 获取所有帖子
@@ -224,35 +272,38 @@ async function fetchAllPosts() {
     
     isLoading = true;
     loadingEl.style.display = 'block';
-    userPostData = {};
-    allPosts = [];
+    userScoreData = {};
+    allQualifiedPosts = [];
     currentPage = 1;
     currentProxyIndex = 0;
     
-    debugLog('开始获取数据...');
+    debugLog('开始获取优质帖子数据...');
     
     let hasMore = true;
     let success = false;
+    let totalQualifiedPosts = 0;
     
     try {
         while (hasMore && currentPage <= MAX_PAGES) {
-            updateProgress(currentPage, MAX_PAGES, allPosts.length);
+            updateProgress(currentPage, MAX_PAGES, totalQualifiedPosts);
             
             const data = await fetchPosts(currentPage);
             if (!data) {
                 throw new Error('获取数据失败');
             }
             
-            const validPosts = processPageData(data);
-            debugLog(`第 ${currentPage} 页找到 ${validPosts} 篇有效帖子`);
+            const qualifiedPosts = processPageData(data);
+            totalQualifiedPosts += qualifiedPosts;
+            debugLog(`第 ${currentPage} 页找到 ${qualifiedPosts} 篇优质帖子`);
             
-            if (validPosts === 0 || !data.data?.list || data.data.list.length === 0) {
+            // 检查是否还有更多数据
+            if (qualifiedPosts === 0 || !data.data?.list || data.data.list.length === 0) {
                 hasMore = false;
                 debugLog('没有更多数据了');
             }
             
             currentPage++;
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 800));
         }
         
         success = true;
@@ -264,10 +315,10 @@ async function fetchAllPosts() {
         loadingEl.style.display = 'none';
         isLoading = false;
         
-        if (success && allPosts.length > 0) {
+        if (success && totalQualifiedPosts > 0) {
             saveToStorage();
             processData();
-            alert(`数据获取完成，共获取 ${allPosts.length} 篇帖子`);
+            alert(`数据获取完成，共找到 ${totalQualifiedPosts} 篇优质帖子，${Object.keys(userScoreData).length} 位用户参与排名`);
         } else if (!success) {
             alert('未能获取到数据，请检查网络或稍后重试');
         }
@@ -276,17 +327,13 @@ async function fetchAllPosts() {
 
 // 处理和分析数据
 function processData() {
-    const userArray = Object.entries(userPostData)
-        .map(([name, data]) => ({
-            name,
-            count: data.count,
-            lastPostTime: data.lastPostTime
-        }))
-        .sort((a, b) => b.count - a.count);
+    // 转换为数组并按积分排序
+    const userArray = Object.values(userScoreData)
+        .sort((a, b) => b.totalScore - a.totalScore);
     
     updateTable(userArray);
     updateCharts(userArray);
-    debugLog(`数据处理完成，共 ${userArray.length} 位用户`);
+    debugLog(`数据处理完成，共 ${userArray.length} 位用户参与排名`);
 }
 
 // 更新表格数据
@@ -298,7 +345,10 @@ function updateTable(data) {
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${user.name}</td>
-            <td>${user.count}</td>
+            <td>${user.totalScore}</td>
+            <td>${user.postCount}</td>
+            <td>${user.essenceCount}</td>
+            <td>${user.totalLikes}</td>
             <td>${new Date(user.lastPostTime).toLocaleDateString()}</td>
         `;
         tableBody.appendChild(row);
@@ -310,21 +360,47 @@ function updateCharts(data) {
     const top20 = data.slice(0, 20);
     charts.userRankChart.setOption({
         yAxis: { data: top20.map(user => user.name) },
-        series: [{ data: top20.map(user => user.count) }]
+        series: [{ data: top20.map(user => user.totalScore) }]
     });
     
-    const othersCount = data.slice(10).reduce((sum, user) => sum + user.count, 0);
-    const distributionData = data.slice(0, 10).map(user => ({
-        name: user.name,
-        value: user.count
-    }));
+    // 积分分布图表 - 按积分区间分组
+    const scoreRanges = [
+        { range: '1000+', min: 1000, count: 0 },
+        { range: '500-999', min: 500, max: 999, count: 0 },
+        { range: '100-499', min: 100, max: 499, count: 0 },
+        { range: '50-99', min: 50, max: 99, count: 0 },
+        { range: '10-49', min: 10, max: 49, count: 0 },
+        { range: '1-9', min: 1, max: 9, count: 0 }
+    ];
     
-    if (othersCount > 0) {
-        distributionData.push({ name: '其他用户', value: othersCount });
-    }
+    data.forEach(user => {
+        for (const range of scoreRanges) {
+            if (range.min && range.max) {
+                if (user.totalScore >= range.min && user.totalScore <= range.max) {
+                    range.count++;
+                    break;
+                }
+            } else if (range.min && user.totalScore >= range.min) {
+                range.count++;
+                break;
+            }
+        }
+    });
+    
+    const distributionData = scoreRanges
+        .filter(range => range.count > 0)
+        .map(range => ({
+            name: range.range,
+            value: range.count
+        }));
     
     charts.postDistributionChart.setOption({
-        series: [{ data: distributionData }]
+        series: [{
+            data: distributionData,
+            label: {
+                formatter: '{b}: {c}人 ({d}%)'
+            }
+        }]
     });
 }
 
@@ -354,6 +430,17 @@ async function testProxyConnection() {
 
 // 初始化
 function init() {
+    // 更新表格标题
+    document.querySelector('#dataTable thead tr').innerHTML = `
+        <th>排名</th>
+        <th>用户名</th>
+        <th>总积分</th>
+        <th>优质帖数</th>
+        <th>精华帖数</th>
+        <th>总点赞数</th>
+        <th>最后发帖时间</th>
+    `;
+    
     // 尝试从本地存储加载数据
     if (!loadFromStorage()) {
         lastUpdateEl.textContent = '数据已过期，请点击刷新按钮更新数据';
@@ -381,7 +468,7 @@ function init() {
         charts.postDistributionChart.resize();
     });
     
-    debugLog('页面初始化完成');
+    debugLog('优质发帖者排名系统初始化完成');
 }
 
 // 页面加载完成后初始化
