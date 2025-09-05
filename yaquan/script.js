@@ -1,17 +1,14 @@
 // 配置
 const COMMUNITY_ID = 4353;
-const MAX_PAGES = 50; // 减少页数以提高性能
+const MAX_PAGES = 20; // 减少页数以提高性能
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
-
-// 使用CORS代理解决跨域问题
-const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
-const BASE_URL = "https://m.ximalaya.com/community/v2/communities";
 
 // 全局变量
 let userPostData = {};
 let allPosts = [];
 let currentPage = 1;
 let isLoading = false;
+let jsonpCallbackId = 0;
 
 // DOM元素
 const refreshBtn = document.getElementById('refreshBtn');
@@ -103,21 +100,57 @@ function saveToStorage() {
     lastUpdateEl.textContent = `上次更新: ${new Date().toLocaleString()}`;
 }
 
-// 获取随机User-Agent
-function getRandomUserAgent() {
-    const agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
-    ];
-    return agents[Math.floor(Math.random() * agents.length)];
+// JSONP请求函数
+function jsonpRequest(url, params, callback) {
+    return new Promise((resolve, reject) => {
+        const callbackName = `jsonpCallback_${jsonpCallbackId++}_${Date.now()}`;
+        
+        // 创建script标签
+        const script = document.createElement('script');
+        
+        // 添加参数
+        params.callback = callbackName;
+        
+        // 构建URL
+        const queryString = Object.keys(params)
+            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+            .join('&');
+        
+        script.src = `${url}?${queryString}`;
+        
+        // 设置超时
+        const timeoutId = setTimeout(() => {
+            cleanup();
+            reject(new Error('JSONP request timeout'));
+        }, 10000);
+        
+        // 定义全局回调函数
+        window[callbackName] = (data) => {
+            cleanup();
+            resolve(data);
+        };
+        
+        // 清理函数
+        function cleanup() {
+            clearTimeout(timeoutId);
+            document.head.removeChild(script);
+            delete window[callbackName];
+        }
+        
+        // 错误处理
+        script.onerror = () => {
+            cleanup();
+            reject(new Error('JSONP request failed'));
+        };
+        
+        // 添加到文档
+        document.head.appendChild(script);
+    });
 }
 
-// 获取帖子数据
+// 获取帖子数据 - JSONP版本
 async function fetchPosts(page) {
-    const url = `${CORS_PROXY}${BASE_URL}/${COMMUNITY_ID}/articles`;
+    const url = `https://m.ximalaya.com/community/v2/communities/${COMMUNITY_ID}/articles`;
     const params = {
         communityId: COMMUNITY_ID,
         pageId: page,
@@ -129,40 +162,10 @@ async function fetchPosts(page) {
         // 添加随机延迟
         await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
         
-        const response = await fetch(`${url}?${new URLSearchParams(params)}`, {
-            headers: {
-                'User-Agent': getRandomUserAgent(),
-                'Referer': `https://m.ximalaya.com/community_circle/pc_community?id=${COMMUNITY_ID}`,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
+        const data = await jsonpRequest(url, params, 'callback');
+        return data;
     } catch (error) {
-        console.error('获取数据失败:', error);
-        
-        // 如果CORS代理失败，尝试直接请求（可能会失败）
-        try {
-            const directUrl = `https://m.ximalaya.com/community/v2/communities/${COMMUNITY_ID}/articles`;
-            const directResponse = await fetch(`${directUrl}?${new URLSearchParams(params)}`, {
-                headers: {
-                    'User-Agent': getRandomUserAgent(),
-                    'Referer': `https://m.ximalaya.com/community_circle/pc_community?id=${COMMUNITY_ID}`,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            
-            if (directResponse.ok) {
-                return await directResponse.json();
-            }
-        } catch (e) {
-            console.error('直接请求也失败:', e);
-        }
-        
+        console.error('JSONP请求失败:', error);
         return null;
     }
 }
@@ -221,27 +224,29 @@ async function fetchAllPosts() {
     currentPage = 1;
     
     let hasMore = true;
+    let successCount = 0;
     
     while (hasMore && currentPage <= MAX_PAGES) {
         updateProgress(currentPage, MAX_PAGES, allPosts.length);
         
         const data = await fetchPosts(currentPage);
-        if (!data) {
-            alert('获取数据失败，请稍后重试');
-            break;
-        }
         
-        const validPosts = processPageData(data);
-        
-        // 检查是否还有更多数据
-        if (validPosts === 0 || !data.data || !data.data.list || data.data.list.length === 0) {
-            hasMore = false;
+        if (data) {
+            successCount++;
+            const validPosts = processPageData(data);
+            
+            // 检查是否还有更多数据
+            if (validPosts === 0 || !data.data || !data.data.list || data.data.list.length === 0) {
+                hasMore = false;
+            }
+        } else {
+            console.warn(`第 ${currentPage} 页获取失败`);
         }
         
         currentPage++;
         
         // 添加延迟以避免请求过于频繁
-        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
     }
     
     loadingEl.style.display = 'none';
@@ -250,9 +255,9 @@ async function fetchAllPosts() {
     if (allPosts.length > 0) {
         saveToStorage();
         processData();
-        alert(`数据获取完成，共获取 ${allPosts.length} 篇帖子`);
+        alert(`数据获取完成，成功获取 ${successCount}/${MAX_PAGES} 页，共 ${allPosts.length} 篇帖子`);
     } else {
-        alert('未能获取到数据，请刷新重试');
+        alert('未能获取到数据，请刷新重试。可能原因：API不支持JSONP或已更改');
     }
 }
 
@@ -342,7 +347,22 @@ function init() {
         userRankChart.resize();
         postDistributionChart.resize();
     });
+    
+    // 添加使用说明
+    const infoDiv = document.createElement('div');
+    infoDiv.style.marginTop = '20px';
+    infoDiv.style.padding = '15px';
+    infoDiv.style.backgroundColor = '#fff3cd';
+    infoDiv.style.border = '1px solid #ffeaa7';
+    infoDiv.style.borderRadius = '5px';
+    infoDiv.innerHTML = `
+        <h3>使用说明：</h3>
+        <p>1. 点击"刷新数据"按钮开始获取最新数据</p>
+        <p>2. 数据会保存在浏览器本地，下次访问自动加载</p>
+        <p>3. 如果获取失败，可能是喜马拉雅API不支持JSONP方式</p>
+    `;
+    document.querySelector('.container').appendChild(infoDiv);
 }
 
 // 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentContentLoaded', init);
