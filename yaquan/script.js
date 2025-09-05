@@ -3,6 +3,10 @@ const COMMUNITY_ID = 4353;
 const MAX_PAGES = 50; // 减少页数以提高性能
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
+// 使用CORS代理解决跨域问题
+const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+const BASE_URL = "https://m.ximalaya.com/community/v2/communities";
+
 // 全局变量
 let userPostData = {};
 let allPosts = [];
@@ -99,9 +103,21 @@ function saveToStorage() {
     lastUpdateEl.textContent = `上次更新: ${new Date().toLocaleString()}`;
 }
 
+// 获取随机User-Agent
+function getRandomUserAgent() {
+    const agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
+    ];
+    return agents[Math.floor(Math.random() * agents.length)];
+}
+
 // 获取帖子数据
 async function fetchPosts(page) {
-    const url = `https://m.ximalaya.com/community/v2/communities/${COMMUNITY_ID}/articles`;
+    const url = `${CORS_PROXY}${BASE_URL}/${COMMUNITY_ID}/articles`;
     const params = {
         communityId: COMMUNITY_ID,
         pageId: page,
@@ -110,10 +126,14 @@ async function fetchPosts(page) {
     };
     
     try {
+        // 添加随机延迟
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+        
         const response = await fetch(`${url}?${new URLSearchParams(params)}`, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Referer': `https://m.ximalaya.com/community_circle/pc_community?id=${COMMUNITY_ID}`
+                'User-Agent': getRandomUserAgent(),
+                'Referer': `https://m.ximalaya.com/community_circle/pc_community?id=${COMMUNITY_ID}`,
+                'X-Requested-With': 'XMLHttpRequest'
             }
         });
         
@@ -124,6 +144,25 @@ async function fetchPosts(page) {
         return await response.json();
     } catch (error) {
         console.error('获取数据失败:', error);
+        
+        // 如果CORS代理失败，尝试直接请求（可能会失败）
+        try {
+            const directUrl = `https://m.ximalaya.com/community/v2/communities/${COMMUNITY_ID}/articles`;
+            const directResponse = await fetch(`${directUrl}?${new URLSearchParams(params)}`, {
+                headers: {
+                    'User-Agent': getRandomUserAgent(),
+                    'Referer': `https://m.ximalaya.com/community_circle/pc_community?id=${COMMUNITY_ID}`,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (directResponse.ok) {
+                return await directResponse.json();
+            }
+        } catch (e) {
+            console.error('直接请求也失败:', e);
+        }
+        
         return null;
     }
 }
@@ -135,15 +174,19 @@ function processPageData(data) {
     const posts = data.data.list;
     let validPosts = 0;
     const now = Date.now();
+    const oneMonthAgo = now - ONE_MONTH_MS;
     
     for (const post of posts) {
         // 只统计一个月内的帖子
-        if (now - post.createdTs > ONE_MONTH_MS) continue;
+        const createdTime = post.createdTs || post.createTime;
+        if (!createdTime || createdTime < oneMonthAgo) continue;
         
         validPosts++;
         allPosts.push(post);
         
-        const author = post.authorInfo.nickname;
+        const authorInfo = post.authorInfo || post.userInfo || {};
+        const author = authorInfo.nickname || '匿名用户';
+        
         if (!userPostData[author]) {
             userPostData[author] = {
                 count: 0,
@@ -152,8 +195,8 @@ function processPageData(data) {
         }
         
         userPostData[author].count++;
-        if (post.createdTs > userPostData[author].lastPostTime) {
-            userPostData[author].lastPostTime = post.createdTs;
+        if (createdTime > userPostData[author].lastPostTime) {
+            userPostData[author].lastPostTime = createdTime;
         }
     }
     
@@ -177,7 +220,6 @@ async function fetchAllPosts() {
     allPosts = [];
     currentPage = 1;
     
-    let totalPosts = 0;
     let hasMore = true;
     
     while (hasMore && currentPage <= MAX_PAGES) {
@@ -190,7 +232,6 @@ async function fetchAllPosts() {
         }
         
         const validPosts = processPageData(data);
-        totalPosts += validPosts;
         
         // 检查是否还有更多数据
         if (validPosts === 0 || !data.data || !data.data.list || data.data.list.length === 0) {
@@ -200,7 +241,7 @@ async function fetchAllPosts() {
         currentPage++;
         
         // 添加延迟以避免请求过于频繁
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
     }
     
     loadingEl.style.display = 'none';
@@ -209,6 +250,7 @@ async function fetchAllPosts() {
     if (allPosts.length > 0) {
         saveToStorage();
         processData();
+        alert(`数据获取完成，共获取 ${allPosts.length} 篇帖子`);
     } else {
         alert('未能获取到数据，请刷新重试');
     }
