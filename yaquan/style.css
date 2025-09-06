@@ -389,3 +389,79 @@ tbody tr:hover {
         padding: 1px 4px;
     }
 }
+/* 用户标签样式 */
+.user-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    margin: 3px;
+    white-space: nowrap;
+    line-height: 1.3;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+    transition: all 0.2s ease;
+    cursor: default;
+    backdrop-filter: blur(4px);
+}
+
+.user-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 表格中的标签容器 */
+#dataTable td:last-child {
+    min-width: 220px;
+}
+
+#dataTable td:last-child .user-tag {
+    margin: 2px 3px;
+    font-size: 10px;
+    padding: 3px 8px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    #dataTable td:last-child {
+        min-width: 180px;
+    }
+    
+    .user-tag {
+        font-size: 9px;
+        padding: 2px 6px;
+        margin: 1px 2px;
+    }
+}
+
+/* 标签颜色分类提示 */
+.tag-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 15px 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    border: 1px solid #e8e8e8;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #666;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 6px;
+    border: 1px solid;
+}
+
+.legend-orange { background: linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%); border-color: #ffbb96; }
+.legend-yellow { background: linear-gradient(135deg, #feffe6 0%, #ffffb8 100%); border-color: #ffe58f; }
+.legend-green { background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%); border-color: #b7eb8f; }
+.legend-red { background: linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%); border-color: #ffa39e; }
