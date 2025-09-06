@@ -5,7 +5,7 @@ const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_LIKES = 5;
 const ESSENCE_BONUS = 10;
 const RECENT_DAYS = 10;
-const UPDATE_INTERVAL = 60 * 1000; // 1分钟更新一次
+const UPDATE_INTERVAL = 300 * 1000; // 5分钟更新一次
 
 // 代理服务列表
 const PROXY_SERVICES = [
@@ -270,7 +270,7 @@ async function calculateAverageLikes() {
                 }
             }
             
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 110));
         } catch (error) {
             console.warn('计算平均点赞数时出错:', error);
         }
@@ -359,7 +359,7 @@ async function fetchAllPosts() {
                 totalQualifiedPosts += qualifiedPosts;
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
-                await new Promise(resolve => setTimeout(resolve, 500));
+                await new Promise(resolve => setTimeout(resolve, 130));
             } catch (error) {
                 console.warn(`第 ${page} 页获取失败:`, error);
             }
