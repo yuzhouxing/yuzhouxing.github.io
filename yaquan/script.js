@@ -30,26 +30,26 @@ const TAG_CONFIG = {
     },
     // 点赞相关
     LIKES: {
-        '人气之王': { threshold: 200, description: '总点赞数超过200' },
+        '爆款作者': { threshold: 200, description: '总点赞数超过200' },
         '热门作者': { threshold: 100, description: '总点赞数超过100' },
-        '受欢迎作者': { threshold: 50, description: '总点赞数超过50' }
+        '优秀作者': { threshold: 50, description: '总点赞数超过50' }
     },
     // 平均点赞相关
     AVG_LIKES: {
-        '质量标杆': { threshold: 20, description: '平均每帖点赞超过20' },
-        '内容优质': { threshold: 14, description: '平均每帖点赞超过14' },
-        '互动良好': { threshold: 8, description: '平均每帖点赞超过8' }
+        '质量标杆': { threshold: 30, description: '平均每帖点赞超过30' },
+        '内容优质': { threshold: 20, description: '平均每帖点赞超过20' },
+        '互动良好': { threshold: 10, description: '平均每帖点赞超过10' }
     },
     // 近期活跃
     RECENT_ACTIVE: {
-        '近期之星': { threshold: 3, description: '最近7天内有发帖' },
-        '持续输出': { threshold: 5, description: '最近3天内有发帖' }
+        '闪耀新星': { threshold: 3, description: '最近7天内有发帖' },
+        '活跃作家': { threshold: 5, description: '最近3天内有发帖' }
     },
     // 特殊成就
     SPECIAL: {
         '稳定输出': { condition: (user) => user.postCount >= 10 && (user.totalLikes / user.postCount) >= 10 },
-        '明星作家': { condition: (user) => user.postCount >= 3 && user.totalLikes >= 200 },
-        '新秀鹤立': { condition: (user) => user.postCount < 2 && (user.totalLikes / user.postCount) >= 20 }
+        '人气之王': { condition: (user) => user.totalLikes >= 300 },
+        '一帖傲群': { condition: (user) => (user.totalLikes / user.postCount) >= 50 }
     }
 };
 
@@ -187,8 +187,8 @@ let charts = initCharts();
 function calculateUserTags(user) {
     const tags = [];
     const now = Date.now();
-    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-    const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
+    const twoDaysAgo = now - 2 * 24 * 60 * 60 * 1000;
+    const oneDaysAgo = now - 1 * 24 * 60 * 60 * 1000;
     const avgLikes = user.postCount > 0 ? user.totalLikes / user.postCount : 0;
 
     // 发帖数量标签
@@ -224,11 +224,11 @@ function calculateUserTags(user) {
     }
 
     // 近期活跃标签
-    if (user.lastPostTime >= sevenDaysAgo) {
-        tags.push('近期之星');
+    if (user.lastPostTime >= oneDaysAgo) {
+        tags.push('闪耀新星');
     }
-    if (user.lastPostTime >= threeDaysAgo) {
-        tags.push('持续输出');
+    if (user.lastPostTime >= twoDaysAgo) {
+        tags.push('活跃作家');
     }
 
     // 特殊成就标签
