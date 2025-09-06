@@ -244,39 +244,74 @@ function calculateUserTags(user) {
 
 // 获取标签样式
 // 获取标签样式
+// 获取标签样式
 function getTagStyle(tag) {
-    const tagStyles = {
-        // 发帖数量类 - 橙色系（最高级）
-        '更帖达人': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
-        '高产作者': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
-        '活跃分子': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
-        
-        // 精华帖类 - 橙色系（最高级）
-        '精华大师': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
-        '优质创作者': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
-        '潜力新人': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
-        
-        // 点赞总数类 - 橙色系（最高级）
-        '人气之王': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
-        '热门作者': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
-        '受欢迎作者': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
-        
-        // 平均点赞类 - 橙色系（最高级）
-        '质量标杆': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
-        '内容优质': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
-        '互动良好': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
-        
-        // 近期活跃类 - 橙色系（最高级）
-        '近期之星': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
-        '持续输出': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
-        
-        // 特殊成就类 - 红色系
-        '稳定输出': { bg: '#fff1f0', color: '#f5222d', border: '#ffa39e' },
-        '爆文制造机': { bg: '#fff1f0', color: '#f5222d', border: '#ffa39e' },
-        '新秀崛起': { bg: '#fff1f0', color: '#f5222d', border: '#ffa39e' }
+    // 定义精美的颜色方案
+    const colorScheme = {
+        // 橙色 - 最高级别（温暖、醒目）
+        '最高级': { 
+            bg: 'linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%)', 
+            color: '#d46b08', 
+            border: '#ffbb96',
+            shadow: '0 2px 4px rgba(250, 140, 22, 0.2)'
+        },
+        // 黄色 - 次高级别（明亮、积极）
+        '次高级': { 
+            bg: 'linear-gradient(135deg, #feffe6 0%, #ffffb8 100%)', 
+            color: '#ad8b00', 
+            border: '#ffe58f',
+            shadow: '0 2px 4px rgba(250, 173, 20, 0.2)'
+        },
+        // 绿色 - 基础级别（清新、成长）  
+        '基础级': { 
+            bg: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', 
+            color: '#389e0d', 
+            border: '#b7eb8f',
+            shadow: '0 2px 4px rgba(82, 196, 26, 0.2)'
+        },
+        // 红色 - 特殊成就（突出、重要）
+        '特殊级': { 
+            bg: 'linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%)', 
+            color: '#cf1322', 
+            border: '#ffa39e',
+            shadow: '0 2px 4px rgba(245, 34, 45, 0.2)'
+        }
     };
 
-    return tagStyles[tag] || { bg: '#f0f0f0', color: '#666', border: '#d9d9d9' };
+    // 标签级别映射
+    const tagLevels = {
+        // 发帖数量类
+        '更帖达人': '最高级',
+        '高产作者': '次高级', 
+        '活跃分子': '基础级',
+        
+        // 精华帖类
+        '精华大师': '最高级',
+        '优质创作者': '次高级',
+        '潜力新人': '基础级',
+        
+        // 点赞总数类
+        '人气之王': '最高级',
+        '热门作者': '次高级',
+        '受欢迎作者': '基础级',
+        
+        // 平均点赞类
+        '质量标杆': '最高级',
+        '内容优质': '次高级',
+        '互动良好': '基础级',
+        
+        // 近期活跃类
+        '近期之星': '次高级',
+        '持续输出': '基础级',
+        
+        // 特殊成就类
+        '稳定输出': '特殊级',
+        '爆文制造机': '特殊级',
+        '新秀崛起': '特殊级'
+    };
+
+    const level = tagLevels[tag] || '基础级';
+    return colorScheme[level];
 }
 
 // 显示更新指示器
@@ -602,6 +637,7 @@ function updateLastUpdateTime() {
 }
 
 // 更新表格数据
+// 更新表格数据
 function updateTable(users) {
     if (!dataTableBody) return;
     
@@ -613,7 +649,16 @@ function updateTable(users) {
         // 生成标签HTML
         const tagsHtml = user.tags.map(tag => {
             const style = getTagStyle(tag);
-            return `<span class="user-tag" style="background:${style.bg};color:${style.color};border:1px solid ${style.border}">${tag}</span>`;
+            return `
+                <span class="user-tag" 
+                    style="background: ${style.bg}; 
+                           color: ${style.color}; 
+                           border: 1px solid ${style.border};
+                           box-shadow: ${style.shadow};
+                           font-weight: 500;">
+                    ${tag}
+                </span>
+            `;
         }).join(' ');
         
         row.innerHTML = `
