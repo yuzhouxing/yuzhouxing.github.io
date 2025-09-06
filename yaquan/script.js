@@ -2,9 +2,16 @@
 const COMMUNITY_ID = 4353;
 const MAX_PAGES = 30;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
-const MIN_LIKES = 3; // 最小点赞数要求
+const MIN_LIKES = 5; // 最小点赞数要求
 const ESSENCE_BONUS = 10; // 精华帖奖励
 const RECENT_DAYS = 30; // 近期帖子天数
+
+// 代理服务列表
+const PROXY_SERVICES = [
+    { name: 'CorsProxy', url: 'https://corsproxy.io/?' },
+    { name: 'AllOrigins', url: 'https://api.allorigins.win/raw?url=' },
+    { name: 'CorsAnywhere', url: 'https://cors-anywhere.herokuapp.com/' }
+];
 
 // 全局变量
 let userScoreData = {};
@@ -19,23 +26,36 @@ let globalStats = {
     totalLikes: 0
 };
 
-// 代理服务列表
-const PROXY_SERVICES = [
-    { name: 'Vercel', url: '/api/proxy?url=' },
-    { name: 'CorsProxy', url: 'https://corsproxy.io/?' },
-    { name: 'AllOrigins', url: 'https://api.allorigins.win/raw?url=' },
-    { name: 'CorsAnywhere', url: 'https://cors-anywhere.herokuapp.com/' }
-];
-
 // DOM元素
-const refreshBtn = document.getElementById('refreshBtn');
-const lastUpdateEl = document.getElementById('lastUpdate');
-const loadingEl = document.getElementById('loading');
-const progressTextEl = document.getElementById('progressText');
-const progressBarEl = document.querySelector('.progress');
-const tableBody = document.querySelector('#dataTable tbody');
-const debugPanel = document.getElementById('debugPanel');
-const debugInfo = document.getElementById('debugInfo');
+let refreshBtn, lastUpdateEl, loadingEl, progressTextEl, progressBarEl, tableBody;
+let debugPanel, debugInfo, toggleDebugBtn, testProxyBtn, testDirectBtn, clearStorageBtn;
+
+// 初始化DOM元素
+function initDOMElements() {
+    refreshBtn = document.getElementById('refreshBtn');
+    lastUpdateEl = document.getElementById('lastUpdate');
+    loadingEl = document.getElementById('loading');
+    progressTextEl = document.getElementById('progressText');
+    progressBarEl = document.querySelector('.progress');
+    tableBody = document.querySelector('#dataTable tbody');
+    debugPanel = document.getElementById('debugPanel');
+    debugInfo = document.getElementById('debugInfo');
+    toggleDebugBtn = document.getElementById('toggleDebug');
+    testProxyBtn = document.getElementById('testProxyBtn');
+    testDirectBtn = document.getElementById('testDirectBtn');
+    clearStorageBtn = document.getElementById('clearStorageBtn');
+}
+
+// 调试函数
+function debugLog(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+    console.log(logEntry);
+    if (debugInfo) {
+        debugInfo.textContent += logEntry;
+        debugInfo.scrollTop = debugInfo.scrollHeight;
+    }
+}
 
 // 初始化图表
 function initCharts() {
@@ -92,7 +112,7 @@ let charts = initCharts();
 
 // 计算质量系数
 function calculateQualityCoefficient(likes, avgLikes) {
-    if (avgLikes <= 0) return 1;
+    if (avgLikes <= 0 || likes <= 0) return 1;
     return 1 + Math.pow(likes / avgLikes, 0.5) * 0.5;
 }
 
@@ -109,7 +129,7 @@ function calculatePostScore(post, avgLikes) {
     const likeCount = post.statCount?.feedPraiseCount || post.likeCount || 0;
     
     // 只有点赞数大于3的帖子才参与积分
-    if (likeCount < MIN_LIKES) return 0;
+    if (likeCount < MIN_LIKES) return null;
 
     const isEssence = post.communityContext?.isEssence || false;
     const createdTime = post.createdTs || post.createTime || Date.now();
@@ -126,7 +146,7 @@ function calculatePostScore(post, avgLikes) {
     const totalScore = baseScore + essenceBonus + timeBonus;
     
     return {
-        total: Math.round(totalScore * 100) / 100, // 保留两位小数
+        total: Math.round(totalScore * 100) / 100,
         base: Math.round(likeCount * 100) / 100,
         qualityBonus: Math.round(likeCount * (qualityCoeff - 1) * 100) / 100,
         essenceBonus: essenceBonus,
@@ -136,6 +156,57 @@ function calculatePostScore(post, avgLikes) {
         isEssence: isEssence,
         likeCount: likeCount
     };
+}
+
+// 获取帖子数据
+async function fetchPosts(page) {
+    const targetUrl = `https://m.ximalaya.com/community/v2/communities/${COMMUNITY_ID}/articles`;
+    const params = {
+        communityId: COMMUNITY_ID,
+        pageId: page,
+        orderBy: 2,
+        includeTotalCount: "true"
+    };
+    
+    const fullUrl = `${targetUrl}?${new URLSearchParams(params)}`;
+    
+    // 尝试当前代理
+    const proxy = PROXY_SERVICES[currentProxyIndex];
+    let proxyUrl;
+    
+    if (proxy.url.startsWith('http')) {
+        proxyUrl = `${proxy.url}${encodeURIComponent(fullUrl)}`;
+    } else {
+        proxyUrl = `${proxy.url}${encodeURIComponent(fullUrl)}`;
+    }
+    
+    debugLog(`尝试代理 ${proxy.name}: ${proxyUrl}`);
+    
+    try {
+        const response = await fetch(proxyUrl, {
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        debugLog(`代理 ${proxy.name} 成功获取第 ${page} 页数据`);
+        return data;
+        
+    } catch (error) {
+        debugLog(`代理 ${proxy.name} 失败: ${error.message}`, 'error');
+        
+        // 切换到下一个代理
+        currentProxyIndex = (currentProxyIndex + 1) % PROXY_SERVICES.length;
+        if (currentProxyIndex === 0) {
+            throw new Error('所有代理都失败了');
+        }
+        
+        debugLog(`切换到代理: ${PROXY_SERVICES[currentProxyIndex].name}`);
+        return fetchPosts(page);
+    }
 }
 
 // 处理单页数据
@@ -159,7 +230,7 @@ function processPageData(data, avgLikes) {
         const postScore = calculatePostScore(post, avgLikes);
         
         // 只有有积分的帖子才计入
-        if (postScore.total > 0) {
+        if (postScore && postScore.total > 0) {
             qualifiedPosts++;
             allQualifiedPosts.push({ post, score: postScore });
             
@@ -225,7 +296,7 @@ async function calculateAverageLikes() {
     
     debugLog('正在计算平均点赞数...');
     
-    while (hasMore && currentPage <= 10) { // 只扫描前10页计算平均值
+    while (hasMore && currentPage <= 5) { // 只扫描前5页计算平均值
         const data = await fetchPosts(currentPage);
         if (!data || !data.data || !data.data.list) break;
         
@@ -248,17 +319,29 @@ async function calculateAverageLikes() {
         await new Promise(resolve => setTimeout(resolve, 300));
     }
     
-    const avgLikes = totalPosts > 0 ? totalLikes / totalPosts : 0;
+    const avgLikes = totalPosts > 0 ? totalLikes / totalPosts : 3; // 默认3
     debugLog(`平均点赞数计算完成: ${avgLikes.toFixed(2)} (基于${totalPosts}篇帖子)`);
     return avgLikes;
 }
 
+// 更新进度条
+function updateProgress(page, totalPages, currentPosts) {
+    if (!progressBarEl || !progressTextEl) return;
+    
+    const percent = (page / totalPages) * 100;
+    progressBarEl.style.width = `${percent}%`;
+    progressTextEl.textContent = `正在获取第 ${page}/${totalPages} 页，已找到 ${currentPosts} 篇优质帖子`;
+}
+
 // 获取所有帖子
 async function fetchAllPosts() {
-    if (isLoading) return;
+    if (isLoading) {
+        debugLog('已经在获取数据中', 'warn');
+        return;
+    }
     
     isLoading = true;
-    loadingEl.style.display = 'block';
+    if (loadingEl) loadingEl.style.display = 'block';
     userScoreData = {};
     allQualifiedPosts = [];
     currentPage = 1;
@@ -304,7 +387,7 @@ async function fetchAllPosts() {
         debugLog('获取数据过程中出错: ' + error.message, 'error');
         alert('获取数据失败: ' + error.message);
     } finally {
-        loadingEl.style.display = 'none';
+        if (loadingEl) loadingEl.style.display = 'none';
         isLoading = false;
         
         if (success && totalQualifiedPosts > 0) {
@@ -329,6 +412,8 @@ function processData() {
 
 // 更新表格数据
 function updateTable(data) {
+    if (!tableBody) return;
+    
     tableBody.innerHTML = '';
     
     data.forEach((user, index) => {
@@ -352,6 +437,8 @@ function updateTable(data) {
 
 // 更新图表
 function updateCharts(data) {
+    if (!charts.userRankChart || !charts.scoreDistributionChart) return;
+    
     const top20 = data.slice(0, 20);
     charts.userRankChart.setOption({
         yAxis: { data: top20.map(user => user.name) },
@@ -378,7 +465,7 @@ function updateCharts(data) {
     }
 }
 
-// 保存和加载数据（需要修改存储结构）
+// 保存和加载数据
 function saveToStorage() {
     try {
         const storageData = {
@@ -388,7 +475,7 @@ function saveToStorage() {
         };
         localStorage.setItem('yaquanScoreData', JSON.stringify(storageData));
         localStorage.setItem('yaquanUpdateTime', Date.now().toString());
-        lastUpdateEl.textContent = `上次更新: ${new Date().toLocaleString()}`;
+        if (lastUpdateEl) lastUpdateEl.textContent = `上次更新: ${new Date().toLocaleString()}`;
         debugLog('积分数据已保存到本地存储');
     } catch (error) {
         debugLog('保存到本地存储失败: ' + error.message, 'error');
@@ -407,7 +494,7 @@ function loadFromStorage() {
             if (Date.now() - updateTime.getTime() < ONE_MONTH_MS) {
                 userScoreData = data.userScoreData || {};
                 globalStats = data.globalStats || {};
-                lastUpdateEl.textContent = `上次更新: ${updateTime.toLocaleString()}`;
+                if (lastUpdateEl) lastUpdateEl.textContent = `上次更新: ${updateTime.toLocaleString()}`;
                 processData();
                 debugLog('从本地存储加载积分数据成功');
                 return true;
@@ -419,5 +506,102 @@ function loadFromStorage() {
     return false;
 }
 
-// 其他辅助函数保持不变（fetchPosts, updateProgress, debugLog等）
-// 需要保持原有的fetchPosts函数和其他工具函数
+// 测试函数
+async function testProxyConnection() {
+    debugLog('测试代理连接...');
+    const testUrl = 'https://m.ximalaya.com/community/v2/communities/4353/articles?communityId=4353&pageId=1&orderBy=2&includeTotalCount=true';
+    
+    for (let i = 0; i < PROXY_SERVICES.length; i++) {
+        const proxy = PROXY_SERVICES[i];
+        let proxyUrl;
+        
+        if (proxy.url.startsWith('http')) {
+            proxyUrl = `${proxy.url}${encodeURIComponent(testUrl)}`;
+        } else {
+            proxyUrl = `${proxy.url}${encodeURIComponent(testUrl)}`;
+        }
+        
+        try {
+            const response = await fetch(proxyUrl, { timeout: 10000 });
+            debugLog(`代理 ${proxy.name}: ${response.status === 200 ? '成功' : '失败'} (${response.status})`);
+        } catch (error) {
+            debugLog(`代理 ${proxy.name}: 失败 - ${error.message}`, 'error');
+        }
+    }
+}
+
+// 初始化事件绑定
+function initEventListeners() {
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', fetchAllPosts);
+    }
+    
+    if (toggleDebugBtn) {
+        toggleDebugBtn.addEventListener('click', () => {
+            if (debugPanel) {
+                debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    }
+    
+    if (testProxyBtn) {
+        testProxyBtn.addEventListener('click', testProxyConnection);
+    }
+    
+    if (testDirectBtn) {
+        testDirectBtn.addEventListener('click', () => {
+            debugLog('正在测试直接连接...');
+            window.open('https://m.ximalaya.com/community/v2/communities/4353/articles?communityId=4353&pageId=1&orderBy=2&includeTotalCount=true', '_blank');
+        });
+    }
+    
+    if (clearStorageBtn) {
+        clearStorageBtn.addEventListener('click', () => {
+            localStorage.clear();
+            debugLog('本地存储已清除');
+            if (lastUpdateEl) lastUpdateEl.textContent = '上次更新: 从未';
+        });
+    }
+    
+    // 窗口调整大小时重绘图表
+    window.addEventListener('resize', () => {
+        if (charts.userRankChart) charts.userRankChart.resize();
+        if (charts.scoreDistributionChart) charts.scoreDistributionChart.resize();
+    });
+}
+
+// 主初始化函数
+function init() {
+    // 初始化DOM元素
+    initDOMElements();
+    
+    // 初始化事件监听
+    initEventListeners();
+    
+    // 更新表格标题
+    if (tableBody) {
+        document.querySelector('#dataTable thead tr').innerHTML = `
+            <th>排名</th>
+            <th>用户名</th>
+            <th>总积分</th>
+            <th>基础分</th>
+            <th>质量加成</th>
+            <th>精华奖励</th>
+            <th>近期加成</th>
+            <th>优质帖数</th>
+            <th>精华帖数</th>
+            <th>总点赞数</th>
+            <th>最后发帖</th>
+        `;
+    }
+    
+    // 尝试从本地存储加载数据
+    if (!loadFromStorage()) {
+        if (lastUpdateEl) lastUpdateEl.textContent = '数据已过期，请点击刷新按钮更新数据';
+    }
+    
+    debugLog('优质发帖者排名系统初始化完成');
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', init);
