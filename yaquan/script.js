@@ -5,7 +5,7 @@ const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_LIKES = 5;
 const ESSENCE_BONUS = 10;
 const RECENT_DAYS = 10;
-const UPDATE_INTERVAL = 300 * 1000; // 5分钟更新一次
+const UPDATE_INTERVAL = 300 * 1000; // 1分钟更新一次
 
 // 代理服务列表
 const PROXY_SERVICES = [
@@ -25,10 +25,11 @@ let globalStats = {
 let currentProxyIndex = 0;
 let updateTimer = null;
 let nextUpdateTime = Date.now() + UPDATE_INTERVAL;
+let isUpdating = false;
 
 // DOM元素
 let topUserEl, totalUsersEl, totalPostsEl, lastUpdateEl;
-let updateTimerEl, dataTableBody, globalLoading;
+let updateTimerEl, dataTableBody, updateIndicator;
 
 // 初始化DOM元素
 function initDOMElements() {
@@ -38,7 +39,7 @@ function initDOMElements() {
     lastUpdateEl = document.getElementById('lastUpdate');
     updateTimerEl = document.getElementById('updateTimer');
     dataTableBody = document.querySelector('#dataTable tbody');
-    globalLoading = document.getElementById('globalLoading');
+    updateIndicator = document.getElementById('updateIndicator');
 }
 
 // 初始化图表
@@ -143,14 +144,55 @@ function initCharts() {
 
 let charts = initCharts();
 
-// 显示全局加载
-function showLoading() {
-    if (globalLoading) globalLoading.style.display = 'flex';
+// 显示更新指示器
+function showUpdateIndicator() {
+    if (updateIndicator) {
+        updateIndicator.style.display = 'inline-block';
+        updateIndicator.textContent = '🔄 更新中...';
+    }
 }
 
-// 隐藏全局加载
-function hideLoading() {
-    if (globalLoading) globalLoading.style.display = 'none';
+// 隐藏更新指示器
+function hideUpdateIndicator() {
+    if (updateIndicator) {
+        updateIndicator.style.display = 'none';
+    }
+}
+
+// 显示轻微提示
+function showSubtleNotification(message) {
+    // 创建临时提示
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(255,255,255,0.95);
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid #48bb78;
+        z-index: 1000;
+        font-size: 14px;
+        color: #2d3748;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // 显示动画
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // 自动隐藏
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
 }
 
 // 更新倒计时显示
@@ -162,7 +204,7 @@ function updateCountdown() {
         updateTimerEl.textContent = `${secondsLeft}秒后更新`;
     }
     
-    if (secondsLeft === 0) {
+    if (secondsLeft === 0 && !isUpdating) {
         nextUpdateTime = now + UPDATE_INTERVAL;
         fetchAllPosts();
     }
@@ -270,7 +312,7 @@ async function calculateAverageLikes() {
                 }
             }
             
-            await new Promise(resolve => setTimeout(resolve, 110));
+            await new Promise(resolve => setTimeout(resolve, 43));
         } catch (error) {
             console.warn('计算平均点赞数时出错:', error);
         }
@@ -343,7 +385,13 @@ function processPageData(data, avgLikes) {
 
 // 获取所有帖子
 async function fetchAllPosts() {
-    showLoading();
+    if (isUpdating) return;
+    
+    isUpdating = true;
+    showUpdateIndicator();
+    
+    const oldUserScoreData = { ...userScoreData };
+    const oldGlobalStats = { ...globalStats };
     
     userScoreData = {};
     globalStats = { totalPosts: 0, qualifiedPosts: 0, avgLikes: 0, totalLikes: 0 };
@@ -359,7 +407,7 @@ async function fetchAllPosts() {
                 totalQualifiedPosts += qualifiedPosts;
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
-                await new Promise(resolve => setTimeout(resolve, 130));
+                await new Promise(resolve => setTimeout(resolve, 71));
             } catch (error) {
                 console.warn(`第 ${page} 页获取失败:`, error);
             }
@@ -368,10 +416,19 @@ async function fetchAllPosts() {
         globalStats.qualifiedPosts = totalQualifiedPosts;
         processData();
         
+        // 显示更新成功的轻微提示
+        const userCount = Object.keys(userScoreData).length;
+        showSubtleNotification(`数据更新完成！${userCount}位创作者，${totalQualifiedPosts}篇优质内容`);
+        
     } catch (error) {
         console.error('数据获取失败:', error);
+        // 恢复旧数据
+        userScoreData = oldUserScoreData;
+        globalStats = oldGlobalStats;
+        showSubtleNotification('数据更新失败，保持原有数据');
     } finally {
-        hideLoading();
+        isUpdating = false;
+        hideUpdateIndicator();
         startUpdateTimer(); // 重新启动定时器
     }
 }
