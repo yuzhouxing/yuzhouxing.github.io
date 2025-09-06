@@ -1,6 +1,6 @@
 // 配置
 const COMMUNITY_ID = 4353;
-const MAX_PAGES = 30;
+const MAX_PAGES = 25;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_LIKES = 5;
 const ESSENCE_BONUS = 10;
@@ -293,7 +293,7 @@ async function calculateAverageLikes() {
     let totalLikes = 0;
     let totalPosts = 0;
     
-    for (let page = 1; page <= 3; page++) {
+    for (let page = 1; page <= 5; page++) {
         try {
             const data = await fetchPosts(page);
             if (!data?.data?.list) continue;
@@ -312,7 +312,7 @@ async function calculateAverageLikes() {
                 }
             }
             
-            await new Promise(resolve => setTimeout(resolve, 43));
+            await new Promise(resolve => setTimeout(resolve, 13));
         } catch (error) {
             console.warn('计算平均点赞数时出错:', error);
         }
@@ -407,7 +407,7 @@ async function fetchAllPosts() {
                 totalQualifiedPosts += qualifiedPosts;
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
-                await new Promise(resolve => setTimeout(resolve, 71));
+                await new Promise(resolve => setTimeout(resolve, 17));
             } catch (error) {
                 console.warn(`第 ${page} 页获取失败:`, error);
             }
