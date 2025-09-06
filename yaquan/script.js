@@ -14,6 +14,45 @@ const PROXY_SERVICES = [
     { name: 'CorsAnywhere', url: 'https://cors-anywhere.herokuapp.com/' }
 ];
 
+// 特色标签配置
+const TAG_CONFIG = {
+    // 发帖数量相关
+    POST_COUNT: {
+        '更帖达人': { threshold: 20, description: '发帖数量超过20篇' },
+        '高产作者': { threshold: 10, description: '发帖数量超过10篇' },
+        '活跃分子': { threshold: 5, description: '发帖数量超过5篇' }
+    },
+    // 精华帖相关
+    ESSENCE: {
+        '精华大师': { threshold: 5, description: '精华帖数量超过5篇' },
+        '优质创作者': { threshold: 3, description: '精华帖数量超过3篇' },
+        '潜力新人': { threshold: 1, description: '拥有至少1篇精华帖' }
+    },
+    // 点赞相关
+    LIKES: {
+        '人气之王': { threshold: 200, description: '总点赞数超过200' },
+        '热门作者': { threshold: 100, description: '总点赞数超过100' },
+        '受欢迎作者': { threshold: 50, description: '总点赞数超过50' }
+    },
+    // 平均点赞相关
+    AVG_LIKES: {
+        '质量标杆': { threshold: 15, description: '平均每帖点赞超过15' },
+        '内容优质': { threshold: 10, description: '平均每帖点赞超过10' },
+        '互动良好': { threshold: 8, description: '平均每帖点赞超过8' }
+    },
+    // 近期活跃
+    RECENT_ACTIVE: {
+        '近期之星': { threshold: 3, description: '最近7天内有发帖' },
+        '持续输出': { threshold: 5, description: '最近3天内有发帖' }
+    },
+    // 特殊成就
+    SPECIAL: {
+        '稳定输出': { condition: (user) => user.postCount >= 8 && (user.totalLikes / user.postCount) >= 5 },
+        '爆文制造机': { condition: (user) => user.postCount >= 3 && user.totalLikes >= 150 },
+        '新秀崛起': { condition: (user) => user.postCount <= 5 && (user.totalLikes / user.postCount) >= 12 }
+    }
+};
+
 // 全局变量
 let userScoreData = {};
 let globalStats = {
@@ -144,6 +183,90 @@ function initCharts() {
 
 let charts = initCharts();
 
+// 计算用户特色标签
+function calculateUserTags(user) {
+    const tags = [];
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
+    const avgLikes = user.postCount > 0 ? user.totalLikes / user.postCount : 0;
+
+    // 发帖数量标签
+    for (const [tag, config] of Object.entries(TAG_CONFIG.POST_COUNT)) {
+        if (user.postCount >= config.threshold) {
+            tags.push(tag);
+            break; // 只取最高级别的标签
+        }
+    }
+
+    // 精华帖标签
+    for (const [tag, config] of Object.entries(TAG_CONFIG.ESSENCE)) {
+        if (user.essenceCount >= config.threshold) {
+            tags.push(tag);
+            break;
+        }
+    }
+
+    // 总点赞数标签
+    for (const [tag, config] of Object.entries(TAG_CONFIG.LIKES)) {
+        if (user.totalLikes >= config.threshold) {
+            tags.push(tag);
+            break;
+        }
+    }
+
+    // 平均点赞标签
+    for (const [tag, config] of Object.entries(TAG_CONFIG.AVG_LIKES)) {
+        if (avgLikes >= config.threshold) {
+            tags.push(tag);
+            break;
+        }
+    }
+
+    // 近期活跃标签
+    if (user.lastPostTime >= sevenDaysAgo) {
+        tags.push('近期之星');
+    }
+    if (user.lastPostTime >= threeDaysAgo) {
+        tags.push('持续输出');
+    }
+
+    // 特殊成就标签
+    for (const [tag, config] of Object.entries(TAG_CONFIG.SPECIAL)) {
+        if (config.condition(user)) {
+            tags.push(tag);
+        }
+    }
+
+    // 确保标签唯一性并限制数量
+    return [...new Set(tags)].slice(0, 3); // 最多显示3个标签
+}
+
+// 获取标签样式
+function getTagStyle(tag) {
+    const tagStyles = {
+        '更帖达人': { bg: '#e6f7ff', color: '#1890ff', border: '#91d5ff' },
+        '高产作者': { bg: '#f6ffed', color: '#52c41a', border: '#b7eb8f' },
+        '活跃分子': { bg: '#fff2e8', color: '#fa8c16', border: '#ffd591' },
+        '精华大师': { bg: '#f9f0ff', color: '#722ed1', border: '#d3adf7' },
+        '优质创作者': { bg: '#fff0f6', color: '#eb2f96', border: '#ffadd2' },
+        '潜力新人': { bg: '#fcffe6', color: '#a0d911', border: '#eaff8f' },
+        '人气之王': { bg: '#fffbe6', color: '#faad14', border: '#ffe58f' },
+        '热门作者': { bg: '#e6fffb', color: '#13c2c2', border: '#87e8de' },
+        '受欢迎作者': { bg: '#f0f5ff', color: '#2f54eb', border: '#adc6ff' },
+        '质量标杆': { bg: '#fff2e8', color: '#fa541c', border: '#ffbb96' },
+        '内容优质': { bg: '#f6ffed', color: '#389e0d', border: '#b7eb8f' },
+        '互动良好': { bg: '#e6f7ff', color: '#096dd9', border: '#91d5ff' },
+        '近期之星': { bg: '#f0f5ff', color: '#1d39c4', border: '#adc6ff' },
+        '持续输出': { bg: '#f6ffed', color: '#237804', border: '#b7eb8f' },
+        '稳定输出': { bg: '#fcffe6', color: '#5b8c00', border: '#eaff8f' },
+        '爆文制造机': { bg: '#fff2e8', color: '#d46b08', border: '#ffbb96' },
+        '新秀崛起': { bg: '#fff0f6', color: '#c41d7f', border: '#ffadd2' }
+    };
+
+    return tagStyles[tag] || { bg: '#f0f0f0', color: '#666', border: '#d9d9d9' };
+}
+
 // 显示更新指示器
 function showUpdateIndicator() {
     if (updateIndicator) {
@@ -161,7 +284,6 @@ function hideUpdateIndicator() {
 
 // 显示轻微提示
 function showSubtleNotification(message) {
-    // 创建临时提示
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;
@@ -181,12 +303,10 @@ function showSubtleNotification(message) {
     notification.textContent = message;
     document.body.appendChild(notification);
     
-    // 显示动画
     setTimeout(() => {
         notification.style.transform = 'translateX(0)';
     }, 100);
     
-    // 自动隐藏
     setTimeout(() => {
         notification.style.transform = 'translateX(100%)';
         setTimeout(() => {
@@ -358,7 +478,8 @@ function processPageData(data, avgLikes) {
                 postCount: 0,
                 essenceCount: 0,
                 totalLikes: 0,
-                lastPostTime: 0
+                lastPostTime: 0,
+                tags: []
             };
         }
         
@@ -407,29 +528,33 @@ async function fetchAllPosts() {
                 totalQualifiedPosts += qualifiedPosts;
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
-                await new Promise(resolve => setTimeout(resolve, 17));
+                await new Promise(resolve => setTimeout(resolve, 13));
             } catch (error) {
                 console.warn(`第 ${page} 页获取失败:`, error);
             }
         }
         
         globalStats.qualifiedPosts = totalQualifiedPosts;
+        
+        // 为所有用户计算标签
+        Object.values(userScoreData).forEach(user => {
+            user.tags = calculateUserTags(user);
+        });
+        
         processData();
         
-        // 显示更新成功的轻微提示
         const userCount = Object.keys(userScoreData).length;
         showSubtleNotification(`数据更新完成！${userCount}位创作者，${totalQualifiedPosts}篇优质内容`);
         
     } catch (error) {
         console.error('数据获取失败:', error);
-        // 恢复旧数据
         userScoreData = oldUserScoreData;
         globalStats = oldGlobalStats;
         showSubtleNotification('数据更新失败，保持原有数据');
     } finally {
         isUpdating = false;
         hideUpdateIndicator();
-        startUpdateTimer(); // 重新启动定时器
+        startUpdateTimer();
     }
 }
 
@@ -473,9 +598,11 @@ function updateTable(users) {
     users.slice(0, 50).forEach((user, index) => {
         const row = document.createElement('tr');
         
-        // 计算影响力等级
-        const influenceLevel = Math.min(5, Math.ceil(user.totalScore / 50));
-        const influenceStars = '⭐'.repeat(influenceLevel);
+        // 生成标签HTML
+        const tagsHtml = user.tags.map(tag => {
+            const style = getTagStyle(tag);
+            return `<span class="user-tag" style="background:${style.bg};color:${style.color};border:1px solid ${style.border}">${tag}</span>`;
+        }).join(' ');
         
         row.innerHTML = `
             <td><strong>${index + 1}</strong></td>
@@ -485,7 +612,7 @@ function updateTable(users) {
             <td>${user.essenceCount}</td>
             <td>${user.totalLikes}</td>
             <td>${new Date(user.lastPostTime).toLocaleDateString()}</td>
-            <td>${influenceStars}</td>
+            <td>${tagsHtml || '<span style="color:#999;font-style:italic">暂无标签</span>'}</td>
         `;
         
         dataTableBody.appendChild(row);
@@ -525,7 +652,7 @@ function updateCharts(users) {
 function init() {
     initDOMElements();
     startUpdateTimer();
-    fetchAllPosts(); // 立即开始第一次数据获取
+    fetchAllPosts();
 }
 
 // 页面加载完成后初始化
