@@ -24,9 +24,9 @@ const TAG_CONFIG = {
     },
     // 精华帖相关
     ESSENCE: {
-        '精华大师': { threshold: 5, description: '精华帖数量超过5篇' },
-        '优质创作者': { threshold: 3, description: '精华帖数量超过3篇' },
-        '潜力新人': { threshold: 1, description: '拥有至少1篇精华帖' }
+        '精华大师': { threshold: 3, description: '精华帖数量超过3篇' },
+        '宝藏作者': { threshold: 2, description: '精华帖数量超过2篇' },
+        '发光写手': { threshold: 1, description: '拥有至少1篇精华帖' }
     },
     // 点赞相关
     LIKES: {
@@ -36,8 +36,8 @@ const TAG_CONFIG = {
     },
     // 平均点赞相关
     AVG_LIKES: {
-        '质量标杆': { threshold: 15, description: '平均每帖点赞超过15' },
-        '内容优质': { threshold: 10, description: '平均每帖点赞超过10' },
+        '质量标杆': { threshold: 20, description: '平均每帖点赞超过20' },
+        '内容优质': { threshold: 14, description: '平均每帖点赞超过14' },
         '互动良好': { threshold: 8, description: '平均每帖点赞超过8' }
     },
     // 近期活跃
@@ -47,9 +47,9 @@ const TAG_CONFIG = {
     },
     // 特殊成就
     SPECIAL: {
-        '稳定输出': { condition: (user) => user.postCount >= 8 && (user.totalLikes / user.postCount) >= 5 },
-        '爆文制造机': { condition: (user) => user.postCount >= 3 && user.totalLikes >= 150 },
-        '新秀崛起': { condition: (user) => user.postCount <= 5 && (user.totalLikes / user.postCount) >= 12 }
+        '稳定输出': { condition: (user) => user.postCount >= 10 && (user.totalLikes / user.postCount) >= 10 },
+        '明星作家': { condition: (user) => user.postCount >= 3 && user.totalLikes >= 200 },
+        '新秀鹤立': { condition: (user) => user.postCount < 2 && (user.totalLikes / user.postCount) >= 20 }
     }
 };
 
@@ -243,25 +243,37 @@ function calculateUserTags(user) {
 }
 
 // 获取标签样式
+// 获取标签样式
 function getTagStyle(tag) {
     const tagStyles = {
-        '更帖达人': { bg: '#e6f7ff', color: '#1890ff', border: '#91d5ff' },
-        '高产作者': { bg: '#f6ffed', color: '#52c41a', border: '#b7eb8f' },
-        '活跃分子': { bg: '#fff2e8', color: '#fa8c16', border: '#ffd591' },
-        '精华大师': { bg: '#f9f0ff', color: '#722ed1', border: '#d3adf7' },
-        '优质创作者': { bg: '#fff0f6', color: '#eb2f96', border: '#ffadd2' },
-        '潜力新人': { bg: '#fcffe6', color: '#a0d911', border: '#eaff8f' },
-        '人气之王': { bg: '#fffbe6', color: '#faad14', border: '#ffe58f' },
-        '热门作者': { bg: '#e6fffb', color: '#13c2c2', border: '#87e8de' },
-        '受欢迎作者': { bg: '#f0f5ff', color: '#2f54eb', border: '#adc6ff' },
-        '质量标杆': { bg: '#fff2e8', color: '#fa541c', border: '#ffbb96' },
-        '内容优质': { bg: '#f6ffed', color: '#389e0d', border: '#b7eb8f' },
-        '互动良好': { bg: '#e6f7ff', color: '#096dd9', border: '#91d5ff' },
-        '近期之星': { bg: '#f0f5ff', color: '#1d39c4', border: '#adc6ff' },
-        '持续输出': { bg: '#f6ffed', color: '#237804', border: '#b7eb8f' },
-        '稳定输出': { bg: '#fcffe6', color: '#5b8c00', border: '#eaff8f' },
-        '爆文制造机': { bg: '#fff2e8', color: '#d46b08', border: '#ffbb96' },
-        '新秀崛起': { bg: '#fff0f6', color: '#c41d7f', border: '#ffadd2' }
+        // 发帖数量类 - 橙色系（最高级）
+        '更帖达人': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
+        '高产作者': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
+        '活跃分子': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
+        
+        // 精华帖类 - 橙色系（最高级）
+        '精华大师': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
+        '优质创作者': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
+        '潜力新人': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
+        
+        // 点赞总数类 - 橙色系（最高级）
+        '人气之王': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
+        '热门作者': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
+        '受欢迎作者': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
+        
+        // 平均点赞类 - 橙色系（最高级）
+        '质量标杆': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
+        '内容优质': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
+        '互动良好': { bg: '#f4ffb8', color: '#a0d911', border: '#eaff8f' },
+        
+        // 近期活跃类 - 橙色系（最高级）
+        '近期之星': { bg: '#fff7e6', color: '#fa8c16', border: '#ffd591' },
+        '持续输出': { bg: '#fff1b8', color: '#faad14', border: '#ffe58f' },
+        
+        // 特殊成就类 - 红色系
+        '稳定输出': { bg: '#fff1f0', color: '#f5222d', border: '#ffa39e' },
+        '爆文制造机': { bg: '#fff1f0', color: '#f5222d', border: '#ffa39e' },
+        '新秀崛起': { bg: '#fff1f0', color: '#f5222d', border: '#ffa39e' }
     };
 
     return tagStyles[tag] || { bg: '#f0f0f0', color: '#666', border: '#d9d9d9' };
