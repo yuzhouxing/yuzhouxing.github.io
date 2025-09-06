@@ -3,70 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>喜马拉雅雅圈发帖统计</title>
+    <title>雅圈优质发帖者排行榜</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>喜马拉雅雅圈发帖统计</h1>
-            <p>最近一个月用户发帖数量排名</p>
+        <!-- 头部横幅 -->
+        <header class="header-banner">
+            <div class="banner-content">
+                <h1>🎉 雅圈优质发帖者排行榜</h1>
+                <p>实时展示圈子内最受欢迎的内容创作者</p>
+                <div class="live-badge">
+                    <span class="live-dot"></span>
+                    实时更新
+                </div>
+            </div>
         </header>
-        
-        <div class="controls">
-            <button id="refreshBtn">刷新数据</button>
-            <span id="lastUpdate">上次更新: 从未</span>
-            <button id="toggleDebug" style="margin-left: 20px; padding: 5px 10px; font-size: 12px;">显示调试</button>
-        </div>
-        
-        <!-- 调试面板 -->
-        <div id="debugPanel" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #ddd;">
-            <h3>调试信息</h3>
-            <div>
-                <button id="testProxyBtn">测试代理连接</button>
-                <button id="testDirectBtn">测试直接连接</button>
-                <button id="clearStorageBtn">清除本地数据</button>
+
+        <!-- 数据概览 -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-icon">👑</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="topUser">--</span>
+                    <span class="stat-label">今日榜首</span>
+                </div>
             </div>
-            <pre id="debugInfo" style="background: white; padding: 10px; border-radius: 3px; max-height: 300px; overflow: auto;"></pre>
-        </div>
-        
-        <div class="loading" id="loading">
-            正在获取数据，请稍候...
-            <div class="progress-bar">
-                <div class="progress"></div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="totalUsers">--</span>
+                    <span class="stat-label">上榜用户</span>
+                </div>
             </div>
-            <div id="progressText">准备中...</div>
+            <div class="stat-card">
+                <div class="stat-icon">💫</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="totalPosts">--</span>
+                    <span class="stat-label">优质帖子</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🕒</div>
+                <div class="stat-content">
+                    <span class="stat-number" id="lastUpdate">--</span>
+                    <span class="stat-label">最后更新</span>
+                </div>
+            </div>
         </div>
-        
-        <div class="charts">
-            <div id="userRankChart" class="chart"></div>
-            <div id="postDistributionChart" class="chart"></div>
+
+        <!-- 排行榜内容 -->
+        <div class="rankings-section">
+            <div class="section-header">
+                <h2>🏆 综合积分排行榜</h2>
+                <span class="update-timer" id="updateTimer">60秒后更新</span>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="charts-container">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>TOP20 创作者排名</h3>
+                        <span class="chart-subtitle">基于内容质量和受欢迎程度</span>
+                    </div>
+                    <div id="userRankChart" class="chart"></div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>积分构成分析</h3>
+                        <span class="chart-subtitle">优质内容的得分分布</span>
+                    </div>
+                    <div id="scoreDistributionChart" class="chart"></div>
+                </div>
+            </div>
+
+            <!-- 详细排名表格 -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3>详细排名数据</h3>
+                    <div class="table-filters">
+                        <span class="active">全部</span>
+                        <span>前50</span>
+                        <span>新秀榜</span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>创作者</th>
+                                <th>综合积分</th>
+                                <th>优质内容</th>
+                                <th>精华帖</th>
+                                <th>获赞数</th>
+                                <th>最近活跃</th>
+                                <th>影响力</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8" class="loading-row">数据加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        
-        <div class="data-table">
-            <h2>详细数据</h2>
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>排名</th>
-                        <th>用户名</th>
-                        <th>总积分</th>
-                        <th>基础分</th>
-                        <th>质量加成</th>
-                        <th>精华奖励</th>
-                        <th>近期加成</th>
-                        <th>优质帖数</th>
-                        <th>精华帖数</th>
-                        <th>总点赞数</th>
-                        <th>最后发帖时间</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+
+        <!-- 底部信息 -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>✨ 本排行榜每60秒自动更新，展示最近30天优质内容创作者</p>
+                <p>📝 积分算法：点赞数 + 质量加成 + 精华奖励 + 近期活跃奖励</p>
+                <p>💝 感谢每一位为雅圈贡献优质内容的创作者！</p>
+            </div>
+        </footer>
     </div>
-    
+
+    <!-- 加载动画 -->
+    <div class="global-loading" id="globalLoading">
+        <div class="loading-spinner"></div>
+        <p>正在更新排行榜数据...</p>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
