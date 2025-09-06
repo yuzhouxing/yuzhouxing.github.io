@@ -4,7 +4,7 @@ const MAX_PAGES = 30;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_LIKES = 5; // 最小点赞数要求
 const ESSENCE_BONUS = 10; // 精华帖奖励
-const RECENT_DAYS = 30; // 近期帖子天数
+const RECENT_DAYS = 10; // 近期帖子天数
 
 // 代理服务列表
 const PROXY_SERVICES = [
@@ -372,7 +372,7 @@ async function fetchAllPosts() {
             totalQualifiedPosts += qualifiedPosts;
             debugLog(`第 ${currentPage} 页找到 ${qualifiedPosts} 篇优质帖子`);
             
-            if (qualifiedPosts === 0 || !data.data?.list || data.data.list.length === 0) {
+            if (!data.data?.list || data.data.list.length === 0) {
                 hasMore = false;
             }
             
