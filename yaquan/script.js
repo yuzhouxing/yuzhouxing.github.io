@@ -227,7 +227,7 @@ function calculateUserTags(user) {
     if (user.lastPostTime >= oneDaysAgo) {
         tags.push('闪耀新星');
     }
-    if (user.lastPostTime >= twoDaysAgo) {
+    else if (user.lastPostTime >= twoDaysAgo) {
         tags.push('活跃作家');
     }
 
