@@ -3,7 +3,7 @@ const COMMUNITY_ID = 4353;
 const MAX_PAGES = 25;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_LIKES = 5;
-const ESSENCE_BONUS = 10;
+const ESSENCE_BONUS = 25;
 const RECENT_DAYS = 10;
 const UPDATE_INTERVAL = 300 * 1000; // 1分钟更新一次
 
