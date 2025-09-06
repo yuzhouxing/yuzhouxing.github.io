@@ -18,6 +18,7 @@
                 <div class="live-badge">
                     <span class="live-dot"></span>
                     实时更新
+                    <span id="updateIndicator" style="display:none; margin-left:10px;"></span>
                 </div>
             </div>
         </header>
@@ -117,17 +118,11 @@
         <!-- 底部信息 -->
         <footer class="footer">
             <div class="footer-content">
-                <p>✨ 本排行榜每60秒自动更新，展示最近30天优质内容创作者</p>
+                <p>✨ 本排行榜在打开状态下每5分钟自动更新，展示最近600篇帖子中的优质内容创作者</p>
                 <p>📝 积分算法：点赞数 + 质量加成 + 精华奖励 + 近期活跃奖励</p>
                 <p>💝 感谢每一位为雅圈贡献优质内容的创作者！</p>
             </div>
         </footer>
-    </div>
-
-    <!-- 加载动画 -->
-    <div class="global-loading" id="globalLoading">
-        <div class="loading-spinner"></div>
-        <p>正在更新排行榜数据...</p>
     </div>
 
     <script src="script.js"></script>
