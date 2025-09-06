@@ -20,7 +20,7 @@ const TAG_CONFIG = {
     POST_COUNT: {
         '更帖达人': { threshold: 20, description: '发帖数量超过20篇' },
         '高产作者': { threshold: 10, description: '发帖数量超过10篇' },
-        '活跃分子': { threshold: 5, description: '发帖数量超过5篇' }
+        '灵感之星': { threshold: 5, description: '发帖数量超过5篇' }
     },
     // 精华帖相关
     ESSENCE: {
