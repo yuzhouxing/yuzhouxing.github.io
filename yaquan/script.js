@@ -36,9 +36,9 @@ const TAG_CONFIG = {
     },
     // 平均点赞相关
     AVG_LIKES: {
-        '质量标杆': { threshold: 30, description: '平均每帖点赞超过30' },
-        '内容优质': { threshold: 20, description: '平均每帖点赞超过20' },
-        '互动良好': { threshold: 10, description: '平均每帖点赞超过10' }
+        '质量标杆': { threshold: 36, description: '平均每帖点赞超过30' },
+        '内容优质': { threshold: 24, description: '平均每帖点赞超过20' },
+        '互动良好': { threshold: 12, description: '平均每帖点赞超过10' }
     },
     // 近期活跃
     RECENT_ACTIVE: {
@@ -187,8 +187,8 @@ let charts = initCharts();
 function calculateUserTags(user) {
     const tags = [];
     const now = Date.now();
-    const twoDaysAgo = now - 2 * 24 * 60 * 60 * 1000;
-    const oneDaysAgo = now - 1 * 24 * 60 * 60 * 1000;
+    const twoDaysAgo = now - 1 * 24 * 60 * 60 * 1000;
+    const oneDaysAgo = now - 1 * 12 * 60 * 60 * 1000;
     const avgLikes = user.postCount > 0 ? user.totalLikes / user.postCount : 0;
 
     // 发帖数量标签
