@@ -18,7 +18,7 @@ const PROXY_SERVICES = [
 const TAG_CONFIG = {
     // 发帖数量相关
     POST_COUNT: {
-        '更帖达人': { threshold: 20, description: '发帖数量超过20篇' },
+        '更帖达人': { threshold: 15, description: '发帖数量超过15篇' },
         '高产作者': { threshold: 10, description: '发帖数量超过10篇' },
         '灵感之源': { threshold: 5, description: '发帖数量超过5篇' }
     },
@@ -30,9 +30,9 @@ const TAG_CONFIG = {
     },
     // 点赞相关
     LIKES: {
-        '爆款作者': { threshold: 200, description: '总点赞数超过200' },
-        '热门作者': { threshold: 100, description: '总点赞数超过100' },
-        '优秀作者': { threshold: 50, description: '总点赞数超过50' }
+        '爆款作者': { threshold: 160, description: '总点赞数超过160' },
+        '热门作者': { threshold: 90, description: '总点赞数超过90' },
+        '优秀作者': { threshold: 40, description: '总点赞数超过40' }
     },
     // 平均点赞相关
     AVG_LIKES: {
