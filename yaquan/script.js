@@ -30,7 +30,7 @@ const TAG_CONFIG = {
     },
     // 点赞相关
     LIKES: {
-        '爆款作者': { threshold: 160, description: '总点赞数超过160' },
+        '爆款作者': { threshold: 150, description: '总点赞数超过160' },
         '热门作者': { threshold: 90, description: '总点赞数超过90' },
         '优秀作者': { threshold: 40, description: '总点赞数超过40' }
     },
@@ -47,8 +47,8 @@ const TAG_CONFIG = {
     },
     // 特殊成就
     SPECIAL: {
-        '稳定输出': { condition: (user) => user.postCount >= 10 && (user.totalLikes / user.postCount) >= 10 },
-        '人气之王': { condition: (user) => user.totalLikes >= 300 },
+        '稳定输出': { condition: (user) => user.postCount >= 8 && (user.totalLikes / user.postCount) >= 10 },
+        '人气之王': { condition: (user) => user.totalLikes >= 20 },
         '一帖傲群': { condition: (user) => (user.totalLikes / user.postCount) >= 50 }
     }
 };
