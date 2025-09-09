@@ -8,10 +8,12 @@ const RECENT_DAYS = 10;
 const UPDATE_INTERVAL = 300 * 1000; // 1分钟更新一次
 
 // 代理服务列表
+// 更新代理服务列表（使用更稳定的服务）
 const PROXY_SERVICES = [
-    { name: 'CorsProxy', url: 'https://corsproxy.io/?' },
+    { name: 'CorsHub', url: 'https://corshub.io/' },
+    { name: 'CorsProxy', url: 'https://corsproxy.cn/?' },
     { name: 'AllOrigins', url: 'https://api.allorigins.win/raw?url=' },
-    { name: 'CorsAnywhere', url: 'https://cors-anywhere.herokuapp.com/' }
+    { name: 'MyProxy', url: 'https://yuzhouxing-yaquan-proxy.vercel.app/api/proxy?url=' }
 ];
 
 // 特色标签配置
