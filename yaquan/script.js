@@ -6,7 +6,7 @@ const MIN_LIKES = 5;
 const ESSENCE_BONUS = 25;
 const RECENT_DAYS = 10;
 const UPDATE_INTERVAL = 300 * 1000; // 1分钟更新一次
-
+const VERCEL_PROXY_URL = "https://yuzhouxing-yaquan.vercel.app/api/proxy";
 // 代理服务列表
 // 更新代理服务列表（使用更稳定的服务）
 const PROXY_SERVICES = [
