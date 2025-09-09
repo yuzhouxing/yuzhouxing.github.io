@@ -480,7 +480,7 @@ async function calculateAverageLikes() {
                 }
             }
             
-            await new Promise(resolve => setTimeout(resolve, 13));
+            await new Promise(resolve => setTimeout(resolve, 31));
         } catch (error) {
             console.warn('计算平均点赞数时出错:', error);
         }
@@ -576,7 +576,7 @@ async function fetchAllPosts() {
                 totalQualifiedPosts += qualifiedPosts;
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
-                await new Promise(resolve => setTimeout(resolve, 13));
+                await new Promise(resolve => setTimeout(resolve, 31));
             } catch (error) {
                 console.warn(`第 ${page} 页获取失败:`, error);
             }
