@@ -462,6 +462,7 @@ async function calculateAverageLikes() {
     let totalPosts = 0;
     
     for (let page = 1; page <= 5; page++) {
+        updateProgressDisplay(page, 5, 0, 0, 'calculating');
         try {
             const data = await fetchPosts(page);
             if (!data?.data?.list) continue;
@@ -557,6 +558,7 @@ async function fetchAllPosts() {
     if (isUpdating) return;
     
     isUpdating = true;
+    showProgressBar();
     showUpdateIndicator();
     
     const oldUserScoreData = { ...userScoreData };
@@ -566,14 +568,19 @@ async function fetchAllPosts() {
     globalStats = { totalPosts: 0, qualifiedPosts: 0, avgLikes: 0, totalLikes: 0 };
     
     try {
+        updateProgressDisplay(0, 3, 0, 0, 'calculating');
         globalStats.avgLikes = await calculateAverageLikes();
         let totalQualifiedPosts = 0;
         
         for (let page = 1; page <= MAX_PAGES; page++) {
+            updateProgressDisplay(page, MAX_PAGES, totalQualifiedPosts, 0, 'fetching');
             try {
                 const data = await fetchPosts(page);
                 const qualifiedPosts = processPageData(data, globalStats.avgLikes);
                 totalQualifiedPosts += qualifiedPosts;
+
+                // 更新总帖子数显示
+                updateProgressDisplay(page, MAX_PAGES, totalQualifiedPosts, globalStats.totalPosts, 'fetching');
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
                 await new Promise(resolve => setTimeout(resolve, 31));
@@ -588,6 +595,8 @@ async function fetchAllPosts() {
         Object.values(userScoreData).forEach(user => {
             user.tags = calculateUserTags(user);
         });
+
+        updateProgressDisplay(MAX_PAGES, MAX_PAGES, totalQualifiedPosts, globalStats.totalPosts, 'processing');
         
         processData();
         
@@ -602,6 +611,7 @@ async function fetchAllPosts() {
     } finally {
         isUpdating = false;
         hideUpdateIndicator();
+        hideProgressBar();
         startUpdateTimer();
     }
 }
@@ -703,6 +713,101 @@ function updateCharts(users) {
                 ]
             }]
         });
+    }
+}
+// 添加进度显示函数
+function updateProgressDisplay(page, totalPages, currentPosts, totalPosts, stage) {
+    const progressStages = {
+        'calculating': '计算平均点赞数...',
+        'fetching': '获取帖子数据...',
+        'processing': '处理数据中...'
+    };
+    
+    const percent = Math.min(100, Math.max(0, (page / totalPages) * 100));
+    
+    // 更新进度条
+    if (window.progressBar) {
+        window.progressBar.style.width = `${percent}%`;
+    }
+    
+    // 更新进度文本
+    if (window.progressText) {
+        let text = `${progressStages[stage] || '处理中...'} `;
+        text += `(${page}/${totalPages}页) `;
+        text += `已找到 ${currentPosts} 篇优质帖子`;
+        if (totalPosts > 0) {
+            text += `，共 ${totalPosts} 篇`;
+        }
+        window.progressText.textContent = text;
+    }
+}
+
+// 显示进度条
+function showProgressBar() {
+    // 创建或显示进度条容器
+    let progressContainer = document.getElementById('progressContainer');
+    if (!progressContainer) {
+        progressContainer = document.createElement('div');
+        progressContainer.id = 'progressContainer';
+        progressContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            padding: 10px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        `;
+        
+        const progressBar = document.createElement('div');
+        progressBar.style.cssText = `
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        `;
+        
+        const progressInner = document.createElement('div');
+        progressInner.id = 'progressBar';
+        progressInner.style.cssText = `
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        `;
+        
+        const progressText = document.createElement('div');
+        progressText.id = 'progressText';
+        progressText.style.cssText = `
+            font-size: 14px;
+            color: #4a5568;
+            text-align: center;
+        `;
+        
+        progressBar.appendChild(progressInner);
+        progressContainer.appendChild(progressBar);
+        progressContainer.appendChild(progressText);
+        document.body.appendChild(progressContainer);
+        
+        // 保存到全局变量
+        window.progressBar = progressInner;
+        window.progressText = progressText;
+    } else {
+        progressContainer.style.display = 'flex';
+    }
+}
+
+// 隐藏进度条
+function hideProgressBar() {
+    const progressContainer = document.getElementById('progressContainer');
+    if (progressContainer) {
+        progressContainer.style.display = 'none';
     }
 }
 
