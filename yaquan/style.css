@@ -460,7 +460,10 @@ tbody tr:hover {
     margin-right: 6px;
     border: 1px solid;
 }
-
+.legend-purple { 
+    background: linear-gradient(135deg, #f9f0ff 0%, #efdbff 100%); 
+    border-color: #d3adf7; 
+}
 .legend-orange { background: linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%); border-color: #ffbb96; }
 .legend-yellow { background: linear-gradient(135deg, #feffe6 0%, #ffffb8 100%); border-color: #ffe58f; }
 .legend-green { background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%); border-color: #b7eb8f; }
