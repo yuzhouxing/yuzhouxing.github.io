@@ -249,12 +249,12 @@ function calculateUserTags(user) {
 function getTagStyle(tag) {
     // 定义精美的颜色方案
     const colorScheme = {
-        // 橙色 - 最高级别（温暖、醒目）
+        // 浅紫色 - 最高级别（优雅、尊贵）
         '最高级': { 
-            bg: 'linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%)', 
-            color: '#d46b08', 
-            border: '#ffbb96',
-            shadow: '0 2px 4px rgba(250, 140, 22, 0.2)'
+            bg: 'linear-gradient(135deg, #f9f0ff 0%, #efdbff 100%)', 
+            color: '#722ed1', 
+            border: '#d3adf7',
+            shadow: '0 2px 4px rgba(114, 46, 209, 0.2)'
         },
         // 黄色 - 次高级别（明亮、积极）
         '次高级': { 
