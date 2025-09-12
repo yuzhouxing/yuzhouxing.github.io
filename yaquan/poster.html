@@ -396,8 +396,24 @@
                 // 绘制标签背景
                 const xPos = canvas.width / 2 - tagWidth / 2;
                 
-                // 绘制标签
-                ctx.fillStyle = style.bg;
+                // 绘制
+                const tagGradient = ctx.createLinearGradient(xPos, tagY - 30, xPos + tagWidth, tagY + 20);
+                if (level === '最高级') {
+                    tagGradient.addColorStop(0, '#f9f0ff');
+                    tagGradient.addColorStop(1, '#efdbff');
+                } else if (level === '次高级') {
+                    tagGradient.addColorStop(0, '#feffe6');
+                    tagGradient.addColorStop(1, '#ffffb8');
+                } else if (level === '基础级') {
+                    tagGradient.addColorStop(0, '#f6ffed');
+                    tagGradient.addColorStop(1, '#d9f7be');
+
+                } else if (level === '特殊级') {
+                    tagGradient.addColorStop(0, '#fff2e8');
+                    tagGradient.addColorStop(1, '#ffbb96');
+                }
+
+                ctx.fillStyle = tagGradient;
                 roundRect(ctx, xPos, tagY - 30, tagWidth, 50, 25);
                 ctx.fill();
                 
