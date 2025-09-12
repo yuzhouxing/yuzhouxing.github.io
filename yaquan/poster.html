@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>生成我的成就海报 - 雅圈优质创作者</title>
     <style>
-        /* 样式代码将在这里 */
         body {
             font-family: 'Noto Sans SC', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -119,6 +118,12 @@
             margin-top: 15px;
             display: none;
         }
+        
+        .no-data-message {
+            text-align: center;
+            color: #e53e3e;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -127,32 +132,47 @@
         
         <h1>🎨 生成我的成就海报</h1>
         
-        <div class="input-section">
-            <input type="text" id="usernameInput" placeholder="请输入您在雅圈的用户名">
-            <button id="generateBtn">生成海报</button>
-            <div class="user-not-found" id="userNotFound">未找到该用户，请检查用户名是否正确</div>
+        <div id="dataWarning" class="no-data-message" style="display: none;">
+            <p>请先返回排行榜页面加载数据后再生成海报</p>
+            <button onclick="window.history.back()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                返回排行榜
+            </button>
         </div>
         
-        <div class="poster-container" id="posterContainer">
-            <canvas id="posterCanvas" width="800" height="1200"></canvas>
+        <div id="mainContent">
+            <div class="input-section">
+                <input type="text" id="usernameInput" placeholder="请输入您在雅圈的用户名">
+                <button id="generateBtn">生成海报</button>
+                <div class="user-not-found" id="userNotFound">未找到该用户，请检查用户名是否正确</div>
+            </div>
             
-            <div class="actions">
-                <button class="download-btn" id="downloadBtn">⬇️ 下载海报</button>
-                <button class="share-btn" id="shareBtn">📱 分享到雅圈</button>
+            <div class="poster-container" id="posterContainer">
+                <canvas id="posterCanvas" width="800" height="1200"></canvas>
+                
+                <div class="actions">
+                    <button class="download-btn" id="downloadBtn">⬇️ 下载海报</button>
+                    <button class="share-btn" id="shareBtn">📱 分享到雅圈</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 从URL获取排行榜数据
-        const urlParams = new URLSearchParams(window.location.search);
-        const rankingsData = JSON.parse(decodeURIComponent(urlParams.get('data') || '{}'));
+        // 从localStorage获取排行榜数据
+        const rankingsData = JSON.parse(localStorage.getItem('yaquanUserData') || '{}');
+        const lastUpdate = localStorage.getItem('yaquanLastUpdate');
+        
+        // 如果没有数据，显示警告
+        if (Object.keys(rankingsData).length === 0) {
+            document.getElementById('dataWarning').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+        }
         
         document.getElementById('generateBtn').addEventListener('click', function() {
             const username = document.getElementById('usernameInput').value.trim();
             if (!username) return;
             
-            // 查找用户数据
+            // 查找用户数据（不区分大小写）
             const userData = Object.values(rankingsData).find(user => 
                 user.name.toLowerCase() === username.toLowerCase());
                 
@@ -229,6 +249,12 @@
             ctx.fillStyle = '#718096';
             ctx.font = '18px "Noto Sans SC"';
             ctx.fillText(`生成时间: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, canvas.width / 2, tagY + 40);
+            
+            // 绘制数据更新时间
+            if (lastUpdate) {
+                const updateDate = new Date(lastUpdate);
+                ctx.fillText(`数据更新: ${updateDate.toLocaleDateString()}`, canvas.width / 2, tagY + 70);
+            }
             
             // 绘制分享提示
             ctx.fillStyle = '#4a5568';
