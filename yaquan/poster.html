@@ -35,12 +35,23 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: #e2e8f0;
+            transform: translateX(-3px);
         }
         
         h1 {
             color: #2d3748;
             text-align: center;
             margin-bottom: 30px;
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
         }
         
         .input-section {
@@ -55,22 +66,32 @@
             font-size: 16px;
             width: 300px;
             max-width: 100%;
+            transition: all 0.3s;
+        }
+        
+        .input-section input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
         
         .input-section button {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
             padding: 12px 25px;
             border-radius: 10px;
             font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             margin-left: 10px;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
         .input-section button:hover {
-            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
         
         .poster-container {
@@ -81,14 +102,16 @@
         #posterCanvas {
             max-width: 100%;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid #e2e8f0;
         }
         
         .actions {
-            margin-top: 20px;
+            margin-top: 25px;
             display: flex;
             justify-content: center;
             gap: 15px;
+            flex-wrap: wrap;
         }
         
         .actions button {
@@ -96,20 +119,34 @@
             border: none;
             border-radius: 10px;
             font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
+            transition: all 0.3s;
         }
         
         .download-btn {
-            background: #48bb78;
+            background: linear-gradient(135deg, #48bb78, #38a169);
             color: white;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.6);
         }
         
         .share-btn {
-            background: #4299e1;
+            background: linear-gradient(135deg, #4299e1, #3182ce);
             color: white;
+            box-shadow: 0 4px 15px rgba(66, 153, 225, 0.4);
+        }
+        
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 153, 225, 0.6);
         }
         
         .user-not-found {
@@ -117,12 +154,21 @@
             text-align: center;
             margin-top: 15px;
             display: none;
+            font-weight: 500;
         }
         
         .no-data-message {
             text-align: center;
             color: #e53e3e;
             margin: 20px 0;
+            font-weight: 500;
+        }
+        
+        .hint-text {
+            color: #718096;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
         }
     </style>
 </head>
@@ -134,7 +180,7 @@
         
         <div id="dataWarning" class="no-data-message" style="display: none;">
             <p>请先返回排行榜页面加载数据后再生成海报</p>
-            <button onclick="window.history.back()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            <button onclick="window.history.back()" style="margin-top: 10px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                 返回排行榜
             </button>
         </div>
@@ -144,10 +190,11 @@
                 <input type="text" id="usernameInput" placeholder="请输入您在雅圈的用户名">
                 <button id="generateBtn">生成海报</button>
                 <div class="user-not-found" id="userNotFound">未找到该用户，请检查用户名是否正确</div>
+                <div class="hint-text">提示：请输入您在雅圈显示的用户名（区分大小写）</div>
             </div>
             
             <div class="poster-container" id="posterContainer">
-                <canvas id="posterCanvas" width="800" height="1200"></canvas>
+                <canvas id="posterCanvas" width="800" height="1400"></canvas>
                 
                 <div class="actions">
                     <button class="download-btn" id="downloadBtn">⬇️ 下载海报</button>
@@ -158,6 +205,66 @@
     </div>
 
     <script>
+        // 标签颜色配置（与主页面保持一致）
+        const TAG_STYLES = {
+            // 最高级 - 紫色
+            '最高级': { 
+                bg: 'linear-gradient(135deg, #f9f0ff 0%, #efdbff 100%)', 
+                color: '#722ed1', 
+                border: '#d3adf7'
+            },
+            // 次高级 - 黄色
+            '次高级': { 
+                bg: 'linear-gradient(135deg, #feffe6 0%, #ffffb8 100%)', 
+                color: '#ad8b00', 
+                border: '#ffe58f'
+            },
+            // 基础级 - 绿色
+            '基础级': { 
+                bg: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', 
+                color: '#389e0d', 
+                border: '#b7eb8f'
+            },
+            // 特殊级 - 红色
+            '特殊级': { 
+                bg: 'linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%)', 
+                color: '#cf1322', 
+                border: '#ffa39e'
+            }
+        };
+
+        // 标签级别映射
+        const TAG_LEVELS = {
+            // 发帖数量类
+            '更帖达人': '最高级',
+            '高产作者': '次高级', 
+            '灵感之源': '基础级',
+            
+            // 精华帖类
+            '精华大师': '最高级',
+            '宝藏作者': '次高级',
+            '发光写手': '基础级',
+            
+            // 点赞总数类
+            '爆款作者': '最高级',
+            '热门作者': '次高级',
+            '优秀作者': '基础级',
+            
+            // 平均点赞类
+            '质量标杆': '最高级',
+            '内容优质': '次高级',
+            '互动良好': '基础级',
+            
+            // 近期活跃类
+            '闪耀新星': '次高级',
+            '活跃作家': '基础级',
+            
+            // 特殊成就类
+            '人气之王': '特殊级',
+            '稳定输出': '特殊级',
+            '一帖傲群': '特殊级'
+        };
+
         // 从localStorage获取排行榜数据
         const rankingsData = JSON.parse(localStorage.getItem('yaquanUserData') || '{}');
         const lastUpdate = localStorage.getItem('yaquanLastUpdate');
@@ -172,10 +279,10 @@
             const username = document.getElementById('usernameInput').value.trim();
             if (!username) return;
             
-            // 查找用户数据（不区分大小写）
+            // 查找用户数据
             const userData = Object.values(rankingsData).find(user => 
-                user.name.toLowerCase() === username.toLowerCase());
-                
+                user.name === username); // 精确匹配
+            
             if (!userData) {
                 document.getElementById('userNotFound').style.display = 'block';
                 return;
@@ -184,6 +291,9 @@
             document.getElementById('userNotFound').style.display = 'none';
             generatePoster(userData);
             document.getElementById('posterContainer').style.display = 'block';
+            
+            // 滚动到海报区域
+            document.getElementById('posterContainer').scrollIntoView({ behavior: 'smooth' });
         });
         
         function generatePoster(userData) {
@@ -193,92 +303,241 @@
             // 清空画布
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 绘制背景
-            ctx.fillStyle = '#ffffff';
+            // 绘制背景 - 渐变底色
+            const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            bgGradient.addColorStop(0, 'rgba(102, 126, 234, 0.1)');
+            bgGradient.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
+            ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 绘制渐变背景
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(1, '#764ba2');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.3);
+            // 绘制装饰性背景元素
+            drawDecorativeBackground(ctx, canvas.width, canvas.height);
+            
+            // 绘制顶部横幅
+            const headerGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            headerGradient.addColorStop(0, '#667eea');
+            headerGradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = headerGradient;
+            ctx.fillRect(0, 0, canvas.width, 200);
             
             // 绘制标题
             ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 40px "Noto Sans SC"';
+            ctx.textAlign = 'center';
+            ctx.fillText('雅圈优质创作者', canvas.width / 2, 70);
+            
+            ctx.font = 'bold 32px "Noto Sans SC"';
+            ctx.fillText('成就海报', canvas.width / 2, 110);
+            
+            // 绘制用户头像区域
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, 200, 60, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // 绘制用户首字母头像
+            const initial = userData.name.charAt(0).toUpperCase();
+            ctx.fillStyle = '#667eea';
             ctx.font = 'bold 36px "Noto Sans SC"';
             ctx.textAlign = 'center';
-            ctx.fillText('雅圈优质创作者成就海报', canvas.width / 2, 80);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(initial, canvas.width / 2, 200);
             
-            // 绘制用户信息
+            // 绘制用户信息卡片
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 4;
+            roundRect(ctx, 50, 280, canvas.width - 100, 200, 15);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+            
+            // 用户名字
             ctx.fillStyle = '#2d3748';
-            ctx.font = 'bold 32px "Noto Sans SC"';
-            ctx.fillText(userData.name, canvas.width / 2, 180);
+            ctx.font = 'bold 36px "Noto Sans SC"';
+            ctx.textAlign = 'center';
+            ctx.fillText(userData.name, canvas.width / 2, 320);
             
+            // 用户数据
             ctx.fillStyle = '#4a5568';
-            ctx.font = '24px "Noto Sans SC"';
-            ctx.fillText(`综合积分: ${userData.totalScore.toFixed(1)}`, canvas.width / 2, 240);
-            ctx.fillText(`优质内容: ${userData.postCount}篇`, canvas.width / 2, 290);
-            ctx.fillText(`精华帖子: ${userData.essenceCount}篇`, canvas.width / 2, 340);
-            ctx.fillText(`总获赞数: ${userData.totalLikes}`, canvas.width / 2, 390);
+            ctx.font = '20px "Noto Sans SC"';
             
-            // 绘制成就标签
-            ctx.fillStyle = '#2d3748';
-            ctx.font = 'bold 28px "Noto Sans SC"';
-            ctx.fillText('我的成就', canvas.width / 2, 470);
+            const metrics = [
+                { text: `综合积分: ${userData.totalScore.toFixed(1)}`, x: canvas.width / 2 - 120, y: 370 },
+                { text: `优质内容: ${userData.postCount}篇`, x: canvas.width / 2 + 120, y: 370 },
+                { text: `精华帖子: ${userData.essenceCount}篇`, x: canvas.width / 2 - 120, y: 410 },
+                { text: `总获赞数: ${userData.totalLikes}`, x: canvas.width / 2 + 120, y: 410 }
+            ];
             
-            let tagY = 530;
-            userData.tags.forEach(tag => {
-                ctx.fillStyle = '#667eea';
-                ctx.font = '20px "Noto Sans SC"';
-                
-                // 绘制标签背景
-                const tagWidth = ctx.measureText(tag).width + 30;
-                ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
-                ctx.fillRect(canvas.width / 2 - tagWidth / 2, tagY - 25, tagWidth, 40);
-                
-                // 绘制标签文字
-                ctx.fillStyle = '#667eea';
-                ctx.fillText(tag, canvas.width / 2, tagY);
-                
-                tagY += 60;
+            metrics.forEach(metric => {
+                ctx.fillText(metric.text, metric.x, metric.y);
             });
             
-            // 绘制时间
-            const now = new Date();
+            // 绘制成就区域标题
+            ctx.fillStyle = '#2d3748';
+            ctx.font = 'bold 32px "Noto Sans SC"';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎖️ 我的成就', canvas.width / 2, 520);
+            
+            // 绘制成就标签
+            let tagY = 580;
+            userData.tags.forEach(tag => {
+                const level = TAG_LEVELS[tag] || '基础级';
+                const style = TAG_STYLES[level];
+                
+                // 测量文本宽度
+                ctx.font = 'bold 22px "Noto Sans SC"';
+                const tagWidth = ctx.measureText(tag).width + 40;
+                
+                // 绘制标签背景
+                const xPos = canvas.width / 2 - tagWidth / 2;
+                
+                // 绘制标签
+                ctx.fillStyle = style.bg;
+                roundRect(ctx, xPos, tagY - 30, tagWidth, 50, 25);
+                ctx.fill();
+                
+                // 绘制边框
+                ctx.strokeStyle = style.border;
+                ctx.lineWidth = 2;
+                roundRect(ctx, xPos, tagY - 30, tagWidth, 50, 25);
+                ctx.stroke();
+                
+                // 绘制标签文字
+                ctx.fillStyle = style.color;
+                ctx.font = 'bold 22px "Noto Sans SC"';
+                ctx.fillText(tag, canvas.width / 2, tagY);
+                
+                tagY += 70;
+            });
+            
+            // 绘制底部信息区域
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            roundRect(ctx, 40, canvas.height - 180, canvas.width - 80, 140, 15);
+            ctx.fill();
+            
+            // 绘制时间和二维码提示
             ctx.fillStyle = '#718096';
             ctx.font = '18px "Noto Sans SC"';
-            ctx.fillText(`生成时间: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, canvas.width / 2, tagY + 40);
+            ctx.textAlign = 'center';
             
-            // 绘制数据更新时间
+            const now = new Date();
+            ctx.fillText(`海报生成时间: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, canvas.width / 2, canvas.height - 130);
+            
             if (lastUpdate) {
                 const updateDate = new Date(lastUpdate);
-                ctx.fillText(`数据更新: ${updateDate.toLocaleDateString()}`, canvas.width / 2, tagY + 70);
+                ctx.fillText(`数据更新时间: ${updateDate.toLocaleDateString()}`, canvas.width / 2, canvas.height - 100);
             }
             
             // 绘制分享提示
             ctx.fillStyle = '#4a5568';
-            ctx.font = 'bold 22px "Noto Sans SC"';
-            ctx.fillText('分享我的成就，一起建设更活跃的雅圈！', canvas.width / 2, canvas.height - 100);
+            ctx.font = 'bold 20px "Noto Sans SC"';
+            ctx.fillText('分享我的成就，一起建设更活跃的雅圈！', canvas.width / 2, canvas.height - 60);
             
-            // 绘制二维码提示
-            ctx.fillStyle = '#718096';
-            ctx.font = '16px "Noto Sans SC"';
-            ctx.fillText('扫描二维码加入雅圈，一起创作优质内容', canvas.width / 2, canvas.height - 60);
+            // 绘制装饰性元素
+            drawDecorations(ctx, canvas.width, canvas.height);
+        }
+        
+        // 绘制圆角矩形函数
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+        
+        // 绘制装饰性背景
+        function drawDecorativeBackground(ctx, width, height) {
+            // 绘制一些装饰性圆圈
+            ctx.save();
+            ctx.globalAlpha = 0.05;
+            
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const radius = 20 + Math.random() * 80;
+                
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, 'rgba(102, 126, 234, 0.3)');
+                gradient.addColorStop(1, 'rgba(102, 126, 234, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // 绘制装饰性元素
+        function drawDecorations(ctx, width, height) {
+            // 绘制一些装饰性星星
+            ctx.save();
+            ctx.fillStyle = '#FFD700';
+            ctx.globalAlpha = 0.3;
+            
+            for (let i = 0; i < 15; i++) {
+                const x = 30 + Math.random() * (width - 60);
+                const y = 220 + Math.random() * (height - 400);
+                const size = 2 + Math.random() * 4;
+                
+                drawStar(ctx, x, y, 5, size, size / 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // 绘制星星函数
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
         }
         
         // 下载功能
         document.getElementById('downloadBtn').addEventListener('click', function() {
             const canvas = document.getElementById('posterCanvas');
             const link = document.createElement('a');
-            link.download = '雅圈成就海报.png';
+            link.download = `雅圈成就海报-${new Date().getTime()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         });
         
         // 分享功能
         document.getElementById('shareBtn').addEventListener('click', function() {
-            alert('请将海报保存后，打开雅圈APP分享您的美图！\n\n让更多圈友看到您的成就！');
+            alert('请将海报保存后，打开雅圈APP分享您的美图！\n\n让更多圈友看到您的成就！\n\n💝 感谢您为雅圈贡献优质内容！');
         });
     </script>
 </body>
