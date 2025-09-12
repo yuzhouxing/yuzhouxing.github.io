@@ -583,7 +583,7 @@ async function fetchAllPosts() {
                 updateProgressDisplay(page, MAX_PAGES, totalQualifiedPosts, globalStats.totalPosts, 'fetching');
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
-                await new Promise(resolve => setTimeout(resolve, 910 + Math.random() * 117));
+                await new Promise(resolve => setTimeout(resolve, 310 + Math.random() * 67));
             } catch (error) {
                 console.warn(`第 ${page} 页获取失败:`, error);
             }
