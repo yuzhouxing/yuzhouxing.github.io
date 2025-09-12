@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成我的成就海报 - 雅圈优质创作者</title>
+    <style>
+        /* 样式代码将在这里 */
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .back-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .input-section input {
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            width: 300px;
+            max-width: 100%;
+        }
+        
+        .input-section button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+        
+        .input-section button:hover {
+            background: #5a67d8;
+        }
+        
+        .poster-container {
+            display: none;
+            text-align: center;
+        }
+        
+        #posterCanvas {
+            max-width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .actions button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-btn {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .share-btn {
+            background: #4299e1;
+            color: white;
+        }
+        
+        .user-not-found {
+            color: #e53e3e;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.history.back()">← 返回排行榜</button>
+        
+        <h1>🎨 生成我的成就海报</h1>
+        
+        <div class="input-section">
+            <input type="text" id="usernameInput" placeholder="请输入您在雅圈的用户名">
+            <button id="generateBtn">生成海报</button>
+            <div class="user-not-found" id="userNotFound">未找到该用户，请检查用户名是否正确</div>
+        </div>
+        
+        <div class="poster-container" id="posterContainer">
+            <canvas id="posterCanvas" width="800" height="1200"></canvas>
+            
+            <div class="actions">
+                <button class="download-btn" id="downloadBtn">⬇️ 下载海报</button>
+                <button class="share-btn" id="shareBtn">📱 分享到雅圈</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 从URL获取排行榜数据
+        const urlParams = new URLSearchParams(window.location.search);
+        const rankingsData = JSON.parse(decodeURIComponent(urlParams.get('data') || '{}'));
+        
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) return;
+            
+            // 查找用户数据
+            const userData = Object.values(rankingsData).find(user => 
+                user.name.toLowerCase() === username.toLowerCase());
+                
+            if (!userData) {
+                document.getElementById('userNotFound').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('userNotFound').style.display = 'none';
+            generatePoster(userData);
+            document.getElementById('posterContainer').style.display = 'block';
+        });
+        
+        function generatePoster(userData) {
+            const canvas = document.getElementById('posterCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制渐变背景
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.3);
+            
+            // 绘制标题
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 36px "Noto Sans SC"';
+            ctx.textAlign = 'center';
+            ctx.fillText('雅圈优质创作者成就海报', canvas.width / 2, 80);
+            
+            // 绘制用户信息
+            ctx.fillStyle = '#2d3748';
+            ctx.font = 'bold 32px "Noto Sans SC"';
+            ctx.fillText(userData.name, canvas.width / 2, 180);
+            
+            ctx.fillStyle = '#4a5568';
+            ctx.font = '24px "Noto Sans SC"';
+            ctx.fillText(`综合积分: ${userData.totalScore.toFixed(1)}`, canvas.width / 2, 240);
+            ctx.fillText(`优质内容: ${userData.postCount}篇`, canvas.width / 2, 290);
+            ctx.fillText(`精华帖子: ${userData.essenceCount}篇`, canvas.width / 2, 340);
+            ctx.fillText(`总获赞数: ${userData.totalLikes}`, canvas.width / 2, 390);
+            
+            // 绘制成就标签
+            ctx.fillStyle = '#2d3748';
+            ctx.font = 'bold 28px "Noto Sans SC"';
+            ctx.fillText('我的成就', canvas.width / 2, 470);
+            
+            let tagY = 530;
+            userData.tags.forEach(tag => {
+                ctx.fillStyle = '#667eea';
+                ctx.font = '20px "Noto Sans SC"';
+                
+                // 绘制标签背景
+                const tagWidth = ctx.measureText(tag).width + 30;
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+                ctx.fillRect(canvas.width / 2 - tagWidth / 2, tagY - 25, tagWidth, 40);
+                
+                // 绘制标签文字
+                ctx.fillStyle = '#667eea';
+                ctx.fillText(tag, canvas.width / 2, tagY);
+                
+                tagY += 60;
+            });
+            
+            // 绘制时间
+            const now = new Date();
+            ctx.fillStyle = '#718096';
+            ctx.font = '18px "Noto Sans SC"';
+            ctx.fillText(`生成时间: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, canvas.width / 2, tagY + 40);
+            
+            // 绘制分享提示
+            ctx.fillStyle = '#4a5568';
+            ctx.font = 'bold 22px "Noto Sans SC"';
+            ctx.fillText('分享我的成就，一起建设更活跃的雅圈！', canvas.width / 2, canvas.height - 100);
+            
+            // 绘制二维码提示
+            ctx.fillStyle = '#718096';
+            ctx.font = '16px "Noto Sans SC"';
+            ctx.fillText('扫描二维码加入雅圈，一起创作优质内容', canvas.width / 2, canvas.height - 60);
+        }
+        
+        // 下载功能
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const canvas = document.getElementById('posterCanvas');
+            const link = document.createElement('a');
+            link.download = '雅圈成就海报.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+        
+        // 分享功能
+        document.getElementById('shareBtn').addEventListener('click', function() {
+            alert('请将海报保存后，打开雅圈APP分享您的美图！\n\n让更多圈友看到您的成就！');
+        });
+    </script>
+</body>
+</html>
