@@ -21,12 +21,6 @@
                     <span id="updateIndicator" style="display:none; margin-left:10px;"></span>
                 </div>
             </div>
-            <!-- 在头部横幅区域添加按钮 -->
-            <div class="banner-actions">
-                <button id="generatePosterBtn" class="poster-btn" style="display:none; margin-left:10px;">
-                    🎨 生成我的成就海报
-                </button>
-            </div>
         </header>
 
         <!-- 数据概览 -->
@@ -59,120 +53,6 @@
             <div class="section-header">
                 <h2>🏆 综合积分排行榜</h2>
                 <span class="update-timer" id="updateTimer">60秒后更新</span>
-            </div>
-
-            <!-- 图表区域 -->
-            <div class="charts-container">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>TOP20 创作者排名</h3>
-                        <span class="chart-subtitle">基于内容质量和受欢迎程度</span>
-                    </div>
-                    <div id="userRankChart" class="chart"></div>
-                </div>
-                
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>积分构成分析</h3>
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雅圈优质发帖者排行榜</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        /* 海报生成按钮样式 */
-        .banner-actions {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .poster-btn {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .poster-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-        }
-
-        /* 响应式调整 */
-        @media (max-width: 768px) {
-            .poster-btn {
-                padding: 10px 20px;
-                font-size: 14px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- 头部横幅 -->
-        <header class="header-banner">
-            <div class="banner-content">
-                <h1>🎉 雅圈优质发帖者实时排行榜</h1>
-                <p>实时展示圈子内最受欢迎的内容创作者</p>
-                <div class="live-badge">
-                    <span class="live-dot"></span>
-                    实时更新
-                    <span id="updateIndicator" style="display:none; margin-left:10px;"></span>
-                </div>
-                
-                <!-- 生成海报按钮 -->
-                <div class="banner-actions">
-                    <button id="generatePosterBtn" class="poster-btn">
-                        🎨 生成我的成就海报
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- 数据概览 -->
-        <div class="stats-overview">
-            <div class="stat-card">
-                <div class="stat-icon">📊</div>
-                <div class="stat-content">
-                    <span class="stat-number" id="totalUsers">--</span>
-                    <span class="stat-label">上榜用户</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">💫</div>
-                <div class="stat-content">
-                    <span class="stat-number" id="totalPosts">--</span>
-                    <span class="stat-label">优质帖子</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🕒</div>
-                <div class="stat-content">
-                    <span class="stat-number" id="lastUpdate">--</span>
-                    <span class="stat-label">最后更新</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 排行榜内容 -->
-        <div class="rankings-section">
-            <div class="section-header">
-                <h2>🏆 综合积分排行榜</h2>
-                <span class="update-timer" id="updateTimer">5分钟后更新</span>
             </div>
 
             <!-- 图表区域 -->
