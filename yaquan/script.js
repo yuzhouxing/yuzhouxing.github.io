@@ -811,16 +811,21 @@ function hideProgressBar() {
     }
 }
 
+// 替换原有的initPosterButton函数
 function initPosterButton() {
     const posterBtn = document.getElementById('generatePosterBtn');
     if (posterBtn) {
         posterBtn.addEventListener('click', function() {
-            // 将当前用户数据传递到海报页面
-            const dataStr = encodeURIComponent(JSON.stringify(userScoreData));
-            window.open(`poster.html?data=${dataStr}`, '_blank');
+            // 存储用户数据到localStorage
+            localStorage.setItem('yaquanUserData', JSON.stringify(userScoreData));
+            localStorage.setItem('yaquanLastUpdate', new Date().toISOString());
+            
+            // 打开海报生成页面
+            window.open('poster.html', '_blank');
         });
     }
 }
+
 // 主初始化函数
 function init() {
     initDOMElements();
