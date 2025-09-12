@@ -819,6 +819,7 @@ function initPosterButton() {
             // 存储用户数据到localStorage
             localStorage.setItem('yaquanUserData', JSON.stringify(userScoreData));
             localStorage.setItem('yaquanLastUpdate', new Date().toISOString());
+            localStorage.setItem('yaquanSaveTime', new Date().toISOString());
             
             // 打开海报生成页面
             window.open('poster.html', '_blank');
@@ -832,6 +833,18 @@ function init() {
     initPosterButton();
     startUpdateTimer();
     fetchAllPosts();
+        // 清理过期的localStorage数据
+    const lastSave = localStorage.getItem('yaquanSaveTime');
+    if (lastSave) {
+        const saveTime = new Date(lastSave);
+        const now = new Date();
+        // 如果数据保存时间超过1小时，清理它
+        if (now - saveTime > 60 * 60 * 1000) {
+            localStorage.removeItem('yaquanUserData');
+            localStorage.removeItem('yaquanLastUpdate');
+            localStorage.removeItem('yaquanSaveTime');
+        }
+    }
 }
 
 // 页面加载完成后初始化
