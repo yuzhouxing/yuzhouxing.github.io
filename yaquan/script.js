@@ -583,7 +583,7 @@ async function fetchAllPosts() {
                 updateProgressDisplay(page, MAX_PAGES, totalQualifiedPosts, globalStats.totalPosts, 'fetching');
                 
                 if (!data?.data?.list || data.data.list.length === 0) break;
-                await new Promise(resolve => setTimeout(resolve, 310 + Math.random() * 17));
+                await new Promise(resolve => setTimeout(resolve, 910 + Math.random() * 117));
             } catch (error) {
                 console.warn(`第 ${page} 页获取失败:`, error);
             }
@@ -811,9 +811,20 @@ function hideProgressBar() {
     }
 }
 
+function initPosterButton() {
+    const posterBtn = document.getElementById('generatePosterBtn');
+    if (posterBtn) {
+        posterBtn.addEventListener('click', function() {
+            // 将当前用户数据传递到海报页面
+            const dataStr = encodeURIComponent(JSON.stringify(userScoreData));
+            window.open(`poster.html?data=${dataStr}`, '_blank');
+        });
+    }
+}
 // 主初始化函数
 function init() {
     initDOMElements();
+    initPosterButton();
     startUpdateTimer();
     fetchAllPosts();
 }
