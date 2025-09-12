@@ -526,3 +526,25 @@ body {
 .container {
     margin-top: 20px;
 }
+/* 海报生成按钮样式 */
+.banner-actions {
+    margin-top: 20px;
+}
+
+.poster-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.poster-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+}
