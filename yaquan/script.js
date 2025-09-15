@@ -48,7 +48,7 @@ const TAG_CONFIG = {
     },
     // 特殊成就
     SPECIAL: {
-        '稳定输出': { condition: (user) => user.postCount >= 8 && (user.totalLikes / user.postCount) >= 10 },
+        '稳定输出': { condition: (user) => user.postCount >= 8 && (user.totalLikes / user.postCount) >= 15 },
         '人气之王': { condition: (user) => user.totalLikes >= 200 },
         '一帖傲群': { condition: (user) => (user.totalLikes / user.postCount) >= 50 }
     }
