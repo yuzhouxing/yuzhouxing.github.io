@@ -46,6 +46,7 @@ const TAG_CONFIG = {
         '闪耀新星': { threshold: 3, description: '最近7天内有发帖' },
         '活跃作家': { threshold: 5, description: '最近3天内有发帖' }
     },
+    
     // 特殊成就
     SPECIAL: {
         '稳定输出': { condition: (user) => user.postCount >= 5 && user.minLikes >= 15 },
