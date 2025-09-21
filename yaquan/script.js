@@ -48,9 +48,9 @@ const TAG_CONFIG = {
     },
     // 特殊成就
     SPECIAL: {
-        '稳定输出': { condition: (user) => user.postCount >= 8 && (user.totalLikes / user.postCount) >= 15 },
+        '稳定输出': { condition: (user) => user.postCount >= 5 && user.minLikes >= 15 },
         '人气之王': { condition: (user) => user.totalLikes >= 200 },
-        '一帖傲群': { condition: (user) => (user.totalLikes / user.postCount) >= 50 }
+        '一帖傲群': { condition: (user) => user.maxLikes >= 50 }
     }
 };
 
@@ -528,6 +528,9 @@ function processPageData(data, avgLikes) {
                 essenceCount: 0,
                 totalLikes: 0,
                 lastPostTime: 0,
+                maxLikes: 0,        // 单篇最高点赞数
+                minLikes: Infinity, // 单篇最低点赞数
+                popularPosts: 0,
                 tags: []
             };
         }
@@ -547,6 +550,18 @@ function processPageData(data, avgLikes) {
         
         if (createdTime > user.lastPostTime) {
             user.lastPostTime = createdTime;
+        }
+        
+        if (postScore.likeCount > user.maxLikes) {
+            user.maxLikes = postScore.likeCount;
+        }
+
+        if (postScore.likeCount < user.minLikes) {
+            user.minLikes = postScore.likeCount;
+        }
+
+        if (postScore.likeCount > 20) {
+            user.popularPosts += 1;
         }
     }
     
@@ -593,6 +608,12 @@ async function fetchAllPosts() {
         
         // 为所有用户计算标签
         Object.values(userScoreData).forEach(user => {
+            if (user.postCount > 0) {
+                  // 如果没有帖子获得点赞，将minLikes设为0
+                  if (user.minLikes === Infinity) {
+                        user.minLikes = 0;
+                  }
+            }
             user.tags = calculateUserTags(user);
         });
 
