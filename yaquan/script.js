@@ -64,8 +64,12 @@ class HistoricalRanking {
 
     async saveHistoricalData(currentData) {
         try {
+            console.log('开始保存历史数据，数据量:', currentData.length);
+            
             const historicalData = await this.getHistoricalData();
             const mergedData = this.mergeHistoricalData(historicalData, currentData);
+            
+            console.log('合并后的数据:', mergedData);
             
             const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}`, {
                 method: 'POST',
@@ -83,6 +87,10 @@ class HistoricalRanking {
             
             if (response.ok) {
                 console.log('历史数据保存成功');
+            } else {
+                console.error('保存失败，状态码:', response.status);
+                const errorText = await response.text();
+                console.error('错误信息:', errorText);
             }
         } catch (error) {
             console.error('保存历史数据出错:', error);
@@ -114,10 +122,12 @@ class HistoricalRanking {
     mergeHistoricalData(historicalData, currentData) {
         const userMap = new Map();
         
+        // 添加历史数据
         historicalData.forEach(user => {
             userMap.set(user.name, { ...user });
         });
         
+        // 合并当前数据，保留最高分
         currentData.forEach(user => {
             const existingUser = userMap.get(user.name);
             if (!existingUser || user.score > existingUser.score) {
@@ -125,12 +135,15 @@ class HistoricalRanking {
             }
         });
         
-        return Array.from(userMap.values())
+        // 转换为数组并按分数排序
+        const result = Array.from(userMap.values())
             .sort((a, b) => b.score - a.score)
             .slice(0, 50);
+            
+        console.log('合并结果:', result);
+        return result;
     }
 }
-
 const historicalRanking = new HistoricalRanking();
 
 // 全局变量
@@ -725,6 +738,21 @@ function processData() {
     updateTable(userArray);
     updateCharts(userArray);
     updateLastUpdateTime();
+     // 在这里保存历史数据
+    if (userArray.length > 0) {
+        // 转换数据结构以匹配历史榜需求
+        const historicalData = userArray.map(user => ({
+            name: user.name,
+            score: user.totalScore,
+            highQualityPosts: user.postCount,
+            featuredPosts: user.essenceCount,
+            likes: user.totalLikes,
+            lastActive: user.lastPostTime,
+            tags: user.tags
+        }));
+        
+        historicalRanking.saveHistoricalData(historicalData);
+    }
 }
 
 // 更新统计信息
@@ -784,13 +812,10 @@ function updateTable(users) {
         `;
         
         dataTableBody.appendChild(row);
-    
     });
-    // 保存当前数据到全局变量
-    window.currentRankingData = data;
     
-    // 保存历史数据（异步，不阻塞界面）
-    historicalRanking.saveHistoricalData(data);
+    // 保存当前数据到全局变量（用于历史榜切换）
+    window.currentRankingData = users;
 }
 
 // 更新图表
@@ -983,23 +1008,55 @@ function updateTableWithHistoricalData(data) {
     let html = '';
     data.forEach((user, index) => {
         const rank = index + 1;
-        const rankClass = getRankClass(rank);
+        
+        // 生成标签HTML（使用历史数据中的tags）
+        const tagsHtml = (user.tags || []).map(tag => {
+            const style = getTagStyle(tag);
+            return `
+                <span class="user-tag" 
+                    style="background: ${style.bg}; 
+                           color: ${style.color}; 
+                           border: 1px solid ${style.border};
+                           box-shadow: ${style.shadow};
+                           font-weight: 500;">
+                    ${tag}
+                </span>
+            `;
+        }).join(' ');
         
         html += `
             <tr>
-                <td><span class="rank-badge ${rankClass}">${rank}</span></td>
-                <td>${escapeHtml(user.name)}</td>
-                <td><strong>${user.score}</strong></td>
+                <td><strong>${rank}</strong></td>
+                <td><strong>${escapeHtml(user.name)}</strong></td>
+                <td><span style="color:#667eea;font-weight:bold">${user.score.toFixed(1)}</span></td>
                 <td>${user.highQualityPosts || 0}</td>
                 <td>${user.featuredPosts || 0}</td>
                 <td>${user.likes || 0}</td>
-                <td>${formatDate(user.lastActive)}</td>
-                <td>${generateUserTags(user)}</td>
+                <td>${new Date(user.lastActive).toLocaleDateString()}</td>
+                <td>${tagsHtml || '<span style="color:#999;font-style:italic">暂无标签</span>'}</td>
             </tr>
         `;
     });
     
     tbody.innerHTML = html;
+}
+
+// 添加缺失的工具函数
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatDate(timestamp) {
+    return new Date(timestamp).toLocaleDateString();
+}
+
+function getRankClass(rank) {
+    if (rank === 1) return 'rank-gold';
+    if (rank <= 3) return 'rank-silver';
+    if (rank <= 10) return 'rank-bronze';
+    return '';
 }
 
 // 主初始化函数
