@@ -1,4 +1,6 @@
 // 配置
+const SUPABASE_URL = 'https://pwluzvlyglcfdparnavw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3bHV6dmx5Z2xjZmRwYXJuYXZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4OTUzNDIsImV4cCI6MjA3NDQ3MTM0Mn0.9eF5KQsiRrsun8wD3EZ5SAAmLtY3FO6byJhivT_Vxys';
 const COMMUNITY_ID = 4353;
 const MAX_PAGES = 25;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
@@ -54,6 +56,82 @@ const TAG_CONFIG = {
         '一帖傲群': { condition: (user) => user.maxLikes >= 50 }
     }
 };
+
+class HistoricalRanking {
+    constructor() {
+        this.tableName = 'historical_rankings';
+    }
+
+    async saveHistoricalData(currentData) {
+        try {
+            const historicalData = await this.getHistoricalData();
+            const mergedData = this.mergeHistoricalData(historicalData, currentData);
+            
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    data: JSON.stringify(mergedData.slice(0, 50)),
+                    updated_at: new Date().toISOString()
+                })
+            });
+            
+            if (response.ok) {
+                console.log('历史数据保存成功');
+            }
+        } catch (error) {
+            console.error('保存历史数据出错:', error);
+        }
+    }
+
+    async getHistoricalData() {
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}?select=*&order=updated_at.desc&limit=1`, {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    return JSON.parse(data[0].data);
+                }
+            }
+            return [];
+        } catch (error) {
+            console.error('获取历史数据出错:', error);
+            return [];
+        }
+    }
+
+    mergeHistoricalData(historicalData, currentData) {
+        const userMap = new Map();
+        
+        historicalData.forEach(user => {
+            userMap.set(user.name, { ...user });
+        });
+        
+        currentData.forEach(user => {
+            const existingUser = userMap.get(user.name);
+            if (!existingUser || user.score > existingUser.score) {
+                userMap.set(user.name, { ...user });
+            }
+        });
+        
+        return Array.from(userMap.values())
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 50);
+    }
+}
+
+const historicalRanking = new HistoricalRanking();
 
 // 全局变量
 let userScoreData = {};
@@ -706,7 +784,13 @@ function updateTable(users) {
         `;
         
         dataTableBody.appendChild(row);
+    
     });
+    // 保存当前数据到全局变量
+    window.currentRankingData = data;
+    
+    // 保存历史数据（异步，不阻塞界面）
+    historicalRanking.saveHistoricalData(data);
 }
 
 // 更新图表
@@ -849,12 +933,82 @@ function initPosterButton() {
     }
 }
 
+function initHistoricalRankingToggle() {
+    const filters = document.querySelectorAll('.table-filters span');
+    
+    filters.forEach(filter => {
+        filter.addEventListener('click', async () => {
+            filters.forEach(f => f.classList.remove('active'));
+            filter.classList.add('active');
+            
+            const type = filter.getAttribute('data-type');
+            
+            if (type === 'historical') {
+                await showHistoricalRanking();
+            } else {
+                showCurrentRanking();
+            }
+        });
+    });
+}
+
+async function showHistoricalRanking() {
+    const historicalData = await historicalRanking.getHistoricalData();
+    
+    if (historicalData.length === 0) {
+        alert('暂无历史数据');
+        document.querySelector('.table-filters span[data-type="current"]').click();
+        return;
+    }
+    
+    updateTableWithHistoricalData(historicalData);
+    document.querySelector('.table-header h3').textContent = '历史最高分排行榜';
+}
+
+function showCurrentRanking() {
+    if (window.currentRankingData) {
+        updateTable(window.currentRankingData);
+    }
+    document.querySelector('.table-header h3').textContent = '详细排名数据';
+}
+
+function updateTableWithHistoricalData(data) {
+    const tbody = document.querySelector('#dataTable tbody');
+    
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">暂无历史数据</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    data.forEach((user, index) => {
+        const rank = index + 1;
+        const rankClass = getRankClass(rank);
+        
+        html += `
+            <tr>
+                <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+                <td>${escapeHtml(user.name)}</td>
+                <td><strong>${user.score}</strong></td>
+                <td>${user.highQualityPosts || 0}</td>
+                <td>${user.featuredPosts || 0}</td>
+                <td>${user.likes || 0}</td>
+                <td>${formatDate(user.lastActive)}</td>
+                <td>${generateUserTags(user)}</td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
 // 主初始化函数
 function init() {
     initDOMElements();
     initPosterButton();
     startUpdateTimer();
     fetchAllPosts();
+    initHistoricalRankingToggle();
         // 清理过期的localStorage数据
     const lastSave = localStorage.getItem('yaquanSaveTime');
     if (lastSave) {
