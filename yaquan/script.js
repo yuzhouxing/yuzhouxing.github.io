@@ -71,47 +71,122 @@ class HistoricalRanking {
             const userMap = new Map(existingData.map(user => [user.user_name, user]));
             
             // 合并数据，只保留最高分
-            const updates = [];
-            const inserts = [];
+            const operations = [];
             
             currentData.forEach(user => {
                 const existingUser = userMap.get(user.name);
+                const newScore = user.totalScore;
                 
                 if (existingUser) {
                     // 如果新分数更高，则更新
-                    if (user.totalScore > existingUser.max_score) {
-                        updates.push({
+                    if (newScore > existingUser.max_score) {
+                        operations.push({
+                            type: 'update',
+                            data: {
+                                user_name: user.name,
+                                max_score: newScore,
+                                high_quality_posts: user.postCount,
+                                featured_posts: user.essenceCount,
+                                total_likes: user.totalLikes,
+                                last_active: new Date(user.lastPostTime).toISOString(),
+                                tags: JSON.stringify(user.tags || []),
+                                updated_at: new Date().toISOString()
+                            }
+                        });
+                        console.log(`用户 ${user.name} 需要更新: ${existingUser.max_score} -> ${newScore}`);
+                    } else {
+                        console.log(`用户 ${user.name} 无需更新: ${existingUser.max_score} >= ${newScore}`);
+                    }
+                } else {
+                    // 新用户，插入
+                    operations.push({
+                        type: 'insert', 
+                        data: {
                             user_name: user.name,
-                            max_score: user.totalScore,
+                            max_score: newScore,
                             high_quality_posts: user.postCount,
                             featured_posts: user.essenceCount,
                             total_likes: user.totalLikes,
                             last_active: new Date(user.lastPostTime).toISOString(),
                             tags: JSON.stringify(user.tags || []),
                             updated_at: new Date().toISOString()
-                        });
-                    }
-                } else {
-                    // 新用户，插入
-                    inserts.push({
-                        user_name: user.name,
-                        max_score: user.totalScore,
-                        high_quality_posts: user.postCount,
-                        featured_posts: user.essenceCount,
-                        total_likes: user.totalLikes,
-                        last_active: new Date(user.lastPostTime).toISOString(),
-                        tags: JSON.stringify(user.tags || []),
-                        updated_at: new Date().toISOString()
+                        }
                     });
+                    console.log(`新用户 ${user.name} 需要插入: ${newScore}`);
                 }
             });
             
             // 执行批量操作
-            await this.batchUpsertUsers([...updates, ...inserts]);
+            await this.batchUpsertUsers(operations);
             console.log('用户最高分数据保存完成');
             
         } catch (error) {
             console.error('保存用户最高分数据出错:', error);
+        }
+    }
+
+    // 修改 batchUpsertUsers 方法
+    async batchUpsertUsers(operations) {
+        if (operations.length === 0) return;
+        
+        try {
+            // 使用 PATCH 方法进行更新，POST 方法进行插入
+            for (const op of operations) {
+                if (op.type === 'update') {
+                    // 使用 PATCH 方法更新特定用户
+                    const response = await fetch(
+                        `${SUPABASE_URL}/rest/v1/${this.tableName}?user_name=eq.${encodeURIComponent(op.data.user_name)}`,
+                        {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify({
+                                max_score: op.data.max_score,
+                                high_quality_posts: op.data.high_quality_posts,
+                                featured_posts: op.data.featured_posts,
+                                total_likes: op.data.total_likes,
+                                last_active: op.data.last_active,
+                                tags: op.data.tags,
+                                updated_at: op.data.updated_at
+                            })
+                        }
+                    );
+                    
+                    if (!response.ok) {
+                        console.error(`用户 ${op.data.user_name} 更新失败:`, response.status);
+                    } else {
+                        console.log(`用户 ${op.data.user_name} 更新成功`);
+                    }
+                    
+                } else if (op.type === 'insert') {
+                    // 使用 POST 方法插入新用户
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify(op.data)
+                    });
+                    
+                    if (!response.ok) {
+                        console.error(`用户 ${op.data.user_name} 插入失败:`, response.status);
+                    } else {
+                        console.log(`用户 ${op.data.user_name} 插入成功`);
+                    }
+                }
+                
+                // 添加短暂延迟避免请求过于频繁
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        } catch (error) {
+            console.error('批量操作出错:', error);
         }
     }
 
@@ -137,43 +212,6 @@ class HistoricalRanking {
             return [];
         }
     }
-
-    // 批量插入/更新用户数据
-    // 修改 batchUpsertUsers 方法
-        async batchUpsertUsers(users) {
-            if (users.length === 0) return;
-    
-            try {
-                // 逐个更新/插入用户数据
-                for (const user of users) {
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Prefer': 'resolution=merge-duplicates'
-                        },
-                        body: JSON.stringify({
-                            user_name: user.user_name,
-                            max_score: user.max_score,
-                            high_quality_posts: user.high_quality_posts,
-                            featured_posts: user.featured_posts,
-                            total_likes: user.total_likes,
-                            last_active: user.last_active,
-                            tags: user.tags,
-                            updated_at: user.updated_at
-                        })
-                    });
-            
-                    if (!response.ok) {
-                        console.error(`用户 ${user.user_name} 更新失败:`, response.status);
-                    }
-                }
-            } catch (error) {
-                console.error('批量操作出错:', error);
-            }
-        }
 
     // 获取历史排行榜数据（前50名）
     async getHistoricalData() {
