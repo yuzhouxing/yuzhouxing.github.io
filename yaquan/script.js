@@ -139,30 +139,41 @@ class HistoricalRanking {
     }
 
     // 批量插入/更新用户数据
-    async batchUpsertUsers(users) {
-        if (users.length === 0) return;
-        
-        try {
-            // 使用 upsert 操作（如果存在则更新，不存在则插入）
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Prefer': 'resolution=merge-duplicates'
-                },
-                body: JSON.stringify(users)
-            });
+    // 修改 batchUpsertUsers 方法
+        async batchUpsertUsers(users) {
+            if (users.length === 0) return;
+    
+            try {
+                // 逐个更新/插入用户数据
+                for (const user of users) {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Prefer': 'resolution=merge-duplicates'
+                        },
+                        body: JSON.stringify({
+                            user_name: user.user_name,
+                            max_score: user.max_score,
+                            high_quality_posts: user.high_quality_posts,
+                            featured_posts: user.featured_posts,
+                            total_likes: user.total_likes,
+                            last_active: user.last_active,
+                            tags: user.tags,
+                            updated_at: user.updated_at
+                        })
+                    });
             
-            if (!response.ok) {
-                throw new Error(`批量操作失败: ${response.status}`);
+                    if (!response.ok) {
+                        console.error(`用户 ${user.user_name} 更新失败:`, response.status);
+                    }
+                }
+            } catch (error) {
+                console.error('批量操作出错:', error);
             }
-        } catch (error) {
-            console.error('批量操作出错:', error);
-            throw error;
         }
-    }
 
     // 获取历史排行榜数据（前50名）
     async getHistoricalData() {
