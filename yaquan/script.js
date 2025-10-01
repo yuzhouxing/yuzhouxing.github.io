@@ -216,17 +216,26 @@ class HistoricalRanking {
     // 获取历史排行榜数据（前50名）
     async getHistoricalData() {
         try {
-            const users = await this.getAllUserScores();
-            // 返回前50名，并转换数据结构
-            return users.slice(0, 50).map(user => ({
-                name: user.user_name,
-                score: user.max_score,
-                highQualityPosts: user.high_quality_posts,
-                featuredPosts: user.featured_posts,
-                likes: user.total_likes,
-                lastActive: user.last_active,
-                tags: typeof user.tags === 'string' ? JSON.parse(user.tags) : (user.tags || [])
-            }));
+            const response = await fetch(
+                `${SUPABASE_URL}/rest/v1/${this.tableName}?select=user_name,max_score,updated_at&order=max_score.desc&limit=50`, 
+                {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+        
+            if (response.ok) {
+                const users = await response.json();
+                // 返回前50名，只包含用户名、分数和更新时间
+                return users.map(user => ({
+                    name: user.user_name,
+                    score: user.max_score,
+                    updatedAt: user.updated_at
+                }));
+            }
+            return [];
         } catch (error) {
             console.error('获取历史数据出错:', error);
             return [];
@@ -1066,12 +1075,42 @@ async function showHistoricalRanking() {
         return;
     }
     
+    // 隐藏不需要的列（第4、5、6、7、8列）
+    const table = document.querySelector('#dataTable');
+    const headers = table.querySelectorAll('th');
+    const rows = table.querySelectorAll('tbody tr');
+    
+    // 显示历史榜需要的列（排名、用户名、分数、更新时间）
+    headers[0].style.display = ''; // 排名
+    headers[1].style.display = ''; // 创作者
+    headers[2].style.display = ''; // 综合积分
+    headers[3].style.display = 'none'; // 优质内容
+    headers[4].style.display = 'none'; // 精华帖
+    headers[5].style.display = 'none'; // 获赞数
+    headers[6].style.display = 'none'; // 最近活跃
+    headers[7].style.display = 'none'; // 成就
+    
+    // 更新时间列标题
+    headers[6].style.display = '';
+    headers[6].textContent = '数据更新时间';
+    
     updateTableWithHistoricalData(historicalData);
     document.querySelector('.table-header h3').textContent = '历史最高分排行榜';
 }
 
 function showCurrentRanking() {
     if (window.currentRankingData) {
+        // 恢复显示所有列
+        const table = document.querySelector('#dataTable');
+        const headers = table.querySelectorAll('th');
+        
+        headers.forEach((header, index) => {
+            header.style.display = '';
+        });
+        
+        // 恢复列标题
+        headers[6].textContent = '最近活跃';
+        
         updateTable(window.currentRankingData);
     }
     document.querySelector('.table-header h3').textContent = '详细排名数据';
@@ -1081,7 +1120,7 @@ function updateTableWithHistoricalData(data) {
     const tbody = document.querySelector('#dataTable tbody');
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="loading-row">暂无历史数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="loading-row">暂无历史数据</td></tr>';
         return;
     }
     
@@ -1089,31 +1128,12 @@ function updateTableWithHistoricalData(data) {
     data.forEach((user, index) => {
         const rank = index + 1;
         
-        // 生成标签HTML
-        const tagsHtml = (user.tags || []).map(tag => {
-            const style = getTagStyle(tag);
-            return `
-                <span class="user-tag" 
-                    style="background: ${style.bg}; 
-                           color: ${style.color}; 
-                           border: 1px solid ${style.border};
-                           box-shadow: ${style.shadow};
-                           font-weight: 500;">
-                    ${tag}
-                </span>
-            `;
-        }).join(' ');
-        
         html += `
             <tr>
                 <td><strong>${rank}</strong></td>
                 <td><strong>${escapeHtml(user.name)}</strong></td>
                 <td><span style="color:#667eea;font-weight:bold">${user.score.toFixed(1)}</span></td>
-                <td>${user.highQualityPosts || 0}</td>
-                <td>${user.featuredPosts || 0}</td>
-                <td>${user.likes || 0}</td>
-                <td>${new Date(user.lastActive).toLocaleDateString()}</td>
-                <td>${tagsHtml || '<span style="color:#999;font-style:italic">暂无标签</span>'}</td>
+                <td>${new Date(user.updatedAt).toLocaleString()}</td>
             </tr>
         `;
     });
