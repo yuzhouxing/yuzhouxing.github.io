@@ -59,91 +59,132 @@ const TAG_CONFIG = {
 
 class HistoricalRanking {
     constructor() {
-        this.tableName = 'historical_rankings';
+        this.tableName = 'user_high_scores'; // 修改表名
     }
 
     async saveHistoricalData(currentData) {
         try {
-            console.log('开始保存历史数据，数据量:', currentData.length);
+            console.log('开始保存用户最高分数据，数据量:', currentData.length);
             
-            const historicalData = await this.getHistoricalData();
-            const mergedData = this.mergeHistoricalData(historicalData, currentData);
+            // 获取现有数据
+            const existingData = await this.getAllUserScores();
+            const userMap = new Map(existingData.map(user => [user.user_name, user]));
             
-            console.log('合并后的数据:', mergedData);
+            // 合并数据，只保留最高分
+            const updates = [];
+            const inserts = [];
             
+            currentData.forEach(user => {
+                const existingUser = userMap.get(user.name);
+                
+                if (existingUser) {
+                    // 如果新分数更高，则更新
+                    if (user.totalScore > existingUser.max_score) {
+                        updates.push({
+                            user_name: user.name,
+                            max_score: user.totalScore,
+                            high_quality_posts: user.postCount,
+                            featured_posts: user.essenceCount,
+                            total_likes: user.totalLikes,
+                            last_active: new Date(user.lastPostTime).toISOString(),
+                            tags: JSON.stringify(user.tags || []),
+                            updated_at: new Date().toISOString()
+                        });
+                    }
+                } else {
+                    // 新用户，插入
+                    inserts.push({
+                        user_name: user.name,
+                        max_score: user.totalScore,
+                        high_quality_posts: user.postCount,
+                        featured_posts: user.essenceCount,
+                        total_likes: user.totalLikes,
+                        last_active: new Date(user.lastPostTime).toISOString(),
+                        tags: JSON.stringify(user.tags || []),
+                        updated_at: new Date().toISOString()
+                    });
+                }
+            });
+            
+            // 执行批量操作
+            await this.batchUpsertUsers([...updates, ...inserts]);
+            console.log('用户最高分数据保存完成');
+            
+        } catch (error) {
+            console.error('保存用户最高分数据出错:', error);
+        }
+    }
+
+    // 获取所有用户分数
+    async getAllUserScores() {
+        try {
+            const response = await fetch(
+                `${SUPABASE_URL}/rest/v1/${this.tableName}?select=*&order=max_score.desc`, 
+                {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            
+            if (response.ok) {
+                return await response.json();
+            }
+            return [];
+        } catch (error) {
+            console.error('获取用户分数出错:', error);
+            return [];
+        }
+    }
+
+    // 批量插入/更新用户数据
+    async batchUpsertUsers(users) {
+        if (users.length === 0) return;
+        
+        try {
+            // 使用 upsert 操作（如果存在则更新，不存在则插入）
             const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_KEY,
                     'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Prefer': 'return=minimal'
+                    'Prefer': 'resolution=merge-duplicates'
                 },
-                body: JSON.stringify({
-                    data: JSON.stringify(mergedData.slice(0, 50)),
-                    updated_at: new Date().toISOString()
-                })
+                body: JSON.stringify(users)
             });
             
-            if (response.ok) {
-                console.log('历史数据保存成功');
-            } else {
-                console.error('保存失败，状态码:', response.status);
-                const errorText = await response.text();
-                console.error('错误信息:', errorText);
+            if (!response.ok) {
+                throw new Error(`批量操作失败: ${response.status}`);
             }
         } catch (error) {
-            console.error('保存历史数据出错:', error);
+            console.error('批量操作出错:', error);
+            throw error;
         }
     }
 
+    // 获取历史排行榜数据（前50名）
     async getHistoricalData() {
         try {
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/${this.tableName}?select=*&order=updated_at.desc&limit=1`, {
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    return JSON.parse(data[0].data);
-                }
-            }
-            return [];
+            const users = await this.getAllUserScores();
+            // 返回前50名，并转换数据结构
+            return users.slice(0, 50).map(user => ({
+                name: user.user_name,
+                score: user.max_score,
+                highQualityPosts: user.high_quality_posts,
+                featuredPosts: user.featured_posts,
+                likes: user.total_likes,
+                lastActive: user.last_active,
+                tags: typeof user.tags === 'string' ? JSON.parse(user.tags) : (user.tags || [])
+            }));
         } catch (error) {
             console.error('获取历史数据出错:', error);
             return [];
         }
     }
-
-    mergeHistoricalData(historicalData, currentData) {
-        const userMap = new Map();
-        
-        // 添加历史数据
-        historicalData.forEach(user => {
-            userMap.set(user.name, { ...user });
-        });
-        
-        // 合并当前数据，保留最高分
-        currentData.forEach(user => {
-            const existingUser = userMap.get(user.name);
-            if (!existingUser || user.score > existingUser.score) {
-                userMap.set(user.name, { ...user });
-            }
-        });
-        
-        // 转换为数组并按分数排序
-        const result = Array.from(userMap.values())
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 50);
-            
-        console.log('合并结果:', result);
-        return result;
-    }
 }
+
 const historicalRanking = new HistoricalRanking();
 
 // 全局变量
@@ -738,20 +779,10 @@ function processData() {
     updateTable(userArray);
     updateCharts(userArray);
     updateLastUpdateTime();
-     // 在这里保存历史数据
+    
+    // 保存用户最高分数据
     if (userArray.length > 0) {
-        // 转换数据结构以匹配历史榜需求
-        const historicalData = userArray.map(user => ({
-            name: user.name,
-            score: user.totalScore,
-            highQualityPosts: user.postCount,
-            featuredPosts: user.essenceCount,
-            likes: user.totalLikes,
-            lastActive: user.lastPostTime,
-            tags: user.tags
-        }));
-        
-        historicalRanking.saveHistoricalData(historicalData);
+        historicalRanking.saveHistoricalData(userArray);
     }
 }
 
@@ -1009,7 +1040,7 @@ function updateTableWithHistoricalData(data) {
     data.forEach((user, index) => {
         const rank = index + 1;
         
-        // 生成标签HTML（使用历史数据中的tags）
+        // 生成标签HTML
         const tagsHtml = (user.tags || []).map(tag => {
             const style = getTagStyle(tag);
             return `
