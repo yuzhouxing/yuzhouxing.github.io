@@ -293,37 +293,45 @@ class RankingAnnouncement {
         
         if (historicalData.length === 0) {
             this.announcements = [{
-                text: '🚀 排行榜正在火热更新中，快来成为第一个登顶的创作者吧！',
+                text: ' 排行榜正在火热更新中，快来成为第一个登顶的创作者吧！',
                 icon: '🚀'
             }];
             return;
         }
 
         // 找出各项第一
-        const scoreChampion = historicalData[0]; // 分数第一
+        const scoreChampion = historicalData[0:3]; // 分数第一、二、三
         const postsChampion = [...historicalData].sort((a, b) => b.high_quality_posts - a.high_quality_posts)[0];
         const likesChampion = [...historicalData].sort((a, b) => b.total_likes - a.total_likes)[0];
         const essenceChampion = [...historicalData].sort((a, b) => b.featured_posts - a.featured_posts)[0];
 
         this.announcements = [
             {
-                text: `🏆 <strong>${scoreChampion.user_name}</strong> 以 <strong>${scoreChampion.max_score.toFixed(1)}</strong> 分登顶综合榜首！${this.getTimeAgo(scoreChampion.updated_at)}`,
-                icon: '🏆'
+                text: ` <strong>${scoreChampion[0].user_name}</strong> 以 <strong>${scoreChampion[0].max_score.toFixed(1)}</strong> 分登顶历史榜首！${this.getTimeAgo(scoreChampion[0].updated_at)}`,
+                icon: '🥇'
             },
             {
-                text: `📝 <strong>${postsChampion.user_name}</strong> 创作了 <strong>${postsChampion.high_quality_posts}</strong> 篇优质内容，是当之无愧的高产王者！${this.getTimeAgo(postsChampion.updated_at)}`,
+                text: ` <strong>${scoreChampion[1].user_name}</strong> 以 <strong>${scoreChampion[1].max_score.toFixed(1)}</strong> 分傲立历史第二！${this.getTimeAgo(scoreChampion[1].updated_at)}`,
+                icon: '🥈'
+            },
+            {
+                text: ` <strong>${scoreChampion[2].user_name}</strong> 以 <strong>${scoreChampion[2].max_score.toFixed(1)}</strong> 分勇夺历史第三！${this.getTimeAgo(scoreChampion[2].updated_at)}`,
+                icon: '🥉'
+            },
+            {
+                text: ` <strong>${postsChampion.user_name}</strong> 创作了 <strong>${postsChampion.high_quality_posts}</strong> 篇优质内容，是当之无愧的高产王者！`,
                 icon: '📝'
             },
             {
-                text: `❤️ <strong>${likesChampion.user_name}</strong> 收获 <strong>${likesChampion.total_likes}</strong> 个点赞，人气爆棚无人能及！${this.getTimeAgo(likesChampion.updated_at)}`,
+                text: ` <strong>${likesChampion.user_name}</strong> 收获 <strong>${likesChampion.total_likes}</strong> 个点赞，人气爆棚无人能及！`,
                 icon: '❤️'
             },
             {
-                text: `💎 <strong>${essenceChampion.user_name}</strong> 拥有 <strong>${essenceChampion.featured_posts}</strong> 篇精华神作，质量标杆实至名归！${this.getTimeAgo(essenceChampion.updated_at)}`,
+                text: ` <strong>${essenceChampion.user_name}</strong> 拥有 <strong>${essenceChampion.featured_posts}</strong> 篇精华神作，质量标杆实至名归！`,
                 icon: '💎'
             },
             {
-                text: `🌟 历史榜单已收录 ${historicalData.length} 位优秀创作者，下一个传奇会是你吗？`,
+                text: ` 历史榜单已收录 ${historicalData.length} 位优秀创作者，下一个传奇会是你吗？`,
                 icon: '🌟'
             }
         ];
