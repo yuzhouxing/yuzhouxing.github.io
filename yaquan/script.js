@@ -97,7 +97,7 @@ class HistoricalRanking {
                     } else {
                         console.log(`用户 ${user.name} 无需更新: ${existingUser.max_score} >= ${newScore}`);
                     }
-                } else {
+                } else if (newScore > 27){
                     // 新用户，插入
                     operations.push({
                         type: 'insert', 
