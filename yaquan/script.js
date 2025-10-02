@@ -1290,6 +1290,104 @@ function updateTableWithHistoricalData(data) {
     tbody.innerHTML = html;
 }
 
+const announcementStyles = `
+.announcement-carousel {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+}
+
+.announcement-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.announcement-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.announcement-text {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: #2d3748;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.announcement-text strong {
+    color: #667eea;
+    font-weight: 700;
+}
+
+.announcement-controls {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.announcement-prev,
+.announcement-next {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    color: #667eea;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.announcement-prev:hover,
+.announcement-next:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .announcement-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .announcement-text {
+        font-size: 14px;
+        order: 2;
+    }
+    
+    .announcement-icon {
+        order: 1;
+    }
+    
+    .announcement-controls {
+        order: 3;
+    }
+}
+`;
+
+// 添加样式到页面
+function addAnnouncementStyles() {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = announcementStyles;
+    document.head.appendChild(styleSheet);
+}
+
 // 添加缺失的工具函数
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -1315,6 +1413,10 @@ function init() {
     startUpdateTimer();
     fetchAllPosts();
     initHistoricalRankingToggle();
+    // 添加新功能初始化
+    addAnnouncementStyles();
+    rankingAnnouncement.initAnnouncements();
+    
         // 清理过期的localStorage数据
     const lastSave = localStorage.getItem('yaquanSaveTime');
     if (lastSave) {
