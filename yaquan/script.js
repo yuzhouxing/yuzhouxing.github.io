@@ -271,9 +271,8 @@ class RankingAnnouncement {
         `;
 
         // 插入到排行榜区域上方
-        const rankingsSection = document.querySelector('.rankings-section');
-        rankingsSection.parentNode.insertBefore(announcementContainer, rankingsSection);
-
+        const tableCard = document.querySelector('.table-card');
+        tableCard.parentNode.insertBefore(announcementContainer, tableCard);
         this.announcementEl = document.getElementById('announcementText');
         this.initControls();
     }
