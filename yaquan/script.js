@@ -245,6 +245,155 @@ class HistoricalRanking {
 
 const historicalRanking = new HistoricalRanking();
 
+// 轮播播报系统
+class RankingAnnouncement {
+    constructor() {
+        this.announcementEl = null;
+        this.currentIndex = 0;
+        this.announcements = [];
+        this.interval = null;
+    }
+
+    // 初始化轮播元素
+    init() {
+        // 创建轮播容器
+        const announcementContainer = document.createElement('div');
+        announcementContainer.className = 'announcement-carousel';
+        announcementContainer.innerHTML = `
+            <div class="announcement-content">
+                <span class="announcement-icon">🎉</span>
+                <span class="announcement-text" id="announcementText"></span>
+                <div class="announcement-controls">
+                    <button class="announcement-prev">‹</button>
+                    <button class="announcement-next">›</button>
+                </div>
+            </div>
+        `;
+
+        // 插入到排行榜区域上方
+        const rankingsSection = document.querySelector('.rankings-section');
+        rankingsSection.parentNode.insertBefore(announcementContainer, rankingsSection);
+
+        this.announcementEl = document.getElementById('announcementText');
+        this.initControls();
+    }
+
+    // 初始化控制按钮
+    initControls() {
+        const prevBtn = document.querySelector('.announcement-prev');
+        const nextBtn = document.querySelector('.announcement-next');
+
+        prevBtn.addEventListener('click', () => this.prevAnnouncement());
+        nextBtn.addEventListener('click', () => this.nextAnnouncement());
+    }
+
+    // 生成播报内容
+    async generateAnnouncements() {
+        const historicalData = await historicalRanking.getAllUserScores();
+        
+        if (historicalData.length === 0) {
+            this.announcements = [{
+                text: '🚀 排行榜正在火热更新中，快来成为第一个登顶的创作者吧！',
+                icon: '🚀'
+            }];
+            return;
+        }
+
+        // 找出各项第一
+        const scoreChampion = historicalData[0]; // 分数第一
+        const postsChampion = [...historicalData].sort((a, b) => b.high_quality_posts - a.high_quality_posts)[0];
+        const likesChampion = [...historicalData].sort((a, b) => b.total_likes - a.total_likes)[0];
+        const essenceChampion = [...historicalData].sort((a, b) => b.featured_posts - a.featured_posts)[0];
+
+        this.announcements = [
+            {
+                text: `🏆 <strong>${scoreChampion.user_name}</strong> 以 <strong>${scoreChampion.max_score.toFixed(1)}</strong> 分登顶综合榜首！${this.getTimeAgo(scoreChampion.updated_at)}`,
+                icon: '🏆'
+            },
+            {
+                text: `📝 <strong>${postsChampion.user_name}</strong> 创作了 <strong>${postsChampion.high_quality_posts}</strong> 篇优质内容，是当之无愧的高产王者！${this.getTimeAgo(postsChampion.updated_at)}`,
+                icon: '📝'
+            },
+            {
+                text: `❤️ <strong>${likesChampion.user_name}</strong> 收获 <strong>${likesChampion.total_likes}</strong> 个点赞，人气爆棚无人能及！${this.getTimeAgo(likesChampion.updated_at)}`,
+                icon: '❤️'
+            },
+            {
+                text: `💎 <strong>${essenceChampion.user_name}</strong> 拥有 <strong>${essenceChampion.featured_posts}</strong> 篇精华神作，质量标杆实至名归！${this.getTimeAgo(essenceChampion.updated_at)}`,
+                icon: '💎'
+            },
+            {
+                text: `🌟 历史榜单已收录 ${historicalData.length} 位优秀创作者，下一个传奇会是你吗？`,
+                icon: '🌟'
+            }
+        ];
+    }
+
+    // 获取时间描述
+    getTimeAgo(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffMs = now - time;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return '<span style="color:#48bb78">今日刚刷新纪录！</span>';
+        if (diffDays === 1) return '<span style="color:#48bb78">昨日创造辉煌！</span>';
+        if (diffDays <= 7) return `<span style="color:#4299e1">${diffDays}天前闪耀登顶！</span>`;
+        return `<span style="color:#a0aec0">${diffDays}天前铸就传奇</span>`;
+    }
+
+    // 显示当前播报
+    showCurrentAnnouncement() {
+        if (!this.announcements.length) return;
+
+        const current = this.announcements[this.currentIndex];
+        const iconEl = document.querySelector('.announcement-icon');
+        
+        iconEl.textContent = current.icon;
+        this.announcementEl.innerHTML = current.text;
+    }
+
+    // 下一个播报
+    nextAnnouncement() {
+        this.currentIndex = (this.currentIndex + 1) % this.announcements.length;
+        this.showCurrentAnnouncement();
+        this.resetAutoPlay();
+    }
+
+    // 上一个播报
+    prevAnnouncement() {
+        this.currentIndex = (this.currentIndex - 1 + this.announcements.length) % this.announcements.length;
+        this.showCurrentAnnouncement();
+        this.resetAutoPlay();
+    }
+
+    // 开始自动轮播
+    startAutoPlay() {
+        this.interval = setInterval(() => {
+            this.nextAnnouncement();
+        }, 5000); // 5秒切换一次
+    }
+
+    // 重置自动播放
+    resetAutoPlay() {
+        if (this.interval) {
+            clearInterval(this.interval);
+            this.startAutoPlay();
+        }
+    }
+
+    // 初始化播报系统
+    async initAnnouncements() {
+        this.init();
+        await this.generateAnnouncements();
+        this.showCurrentAnnouncement();
+        this.startAutoPlay();
+    }
+}
+
+// 初始化轮播播报
+const rankingAnnouncement = new RankingAnnouncement();
+
 // 全局变量
 let userScoreData = {};
 let globalStats = {
