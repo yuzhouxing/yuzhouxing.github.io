@@ -300,22 +300,24 @@ class RankingAnnouncement {
         }
 
         // 找出各项第一
-        const scoreChampion = historicalData[0:3]; // 分数第一、二、三
+        const scoreChampion1 = historicalData[0]; // 分数第一、二、三
+        const scoreChampion2 = historicalData[1]; // 分数第一、二、三
+        const scoreChampion3 = historicalData[2]; // 分数第一、二、三
         const postsChampion = [...historicalData].sort((a, b) => b.high_quality_posts - a.high_quality_posts)[0];
         const likesChampion = [...historicalData].sort((a, b) => b.total_likes - a.total_likes)[0];
         const essenceChampion = [...historicalData].sort((a, b) => b.featured_posts - a.featured_posts)[0];
 
         this.announcements = [
             {
-                text: ` <strong>${scoreChampion[0].user_name}</strong> 以 <strong>${scoreChampion[0].max_score.toFixed(1)}</strong> 分登顶历史榜首！${this.getTimeAgo(scoreChampion[0].updated_at)}`,
+                text: ` <strong>${scoreChampion1.user_name}</strong> 以 <strong>${scoreChampion1.max_score.toFixed(1)}</strong> 分登顶历史榜首！${this.getTimeAgo(scoreChampion1.updated_at)}`,
                 icon: '🥇'
             },
             {
-                text: ` <strong>${scoreChampion[1].user_name}</strong> 以 <strong>${scoreChampion[1].max_score.toFixed(1)}</strong> 分傲立历史第二！${this.getTimeAgo(scoreChampion[1].updated_at)}`,
+                text: ` <strong>${scoreChampion2.user_name}</strong> 以 <strong>${scoreChampion2.max_score.toFixed(1)}</strong> 分傲立历史第二！${this.getTimeAgo(scoreChampion2.updated_at)}`,
                 icon: '🥈'
             },
             {
-                text: ` <strong>${scoreChampion[2].user_name}</strong> 以 <strong>${scoreChampion[2].max_score.toFixed(1)}</strong> 分勇夺历史第三！${this.getTimeAgo(scoreChampion[2].updated_at)}`,
+                text: ` <strong>${scoreChampion3.user_name}</strong> 以 <strong>${scoreChampion3.max_score.toFixed(1)}</strong> 分勇夺历史第三！${this.getTimeAgo(scoreChampion3.updated_at)}`,
                 icon: '🥉'
             },
             {
