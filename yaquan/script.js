@@ -836,7 +836,7 @@ async function calculateAverageLikes() {
         }
     }
     
-    return totalPosts > 0 ? totalLikes / totalPosts : 3;
+    return totalLikes / totalPosts > 2 ? totalLikes / totalPosts : 2;
 }
 
 // 处理单页数据
