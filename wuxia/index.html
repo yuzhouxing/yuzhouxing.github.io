@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武侠世界 - 文字探索游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-header">
+        <h1>武侠世界</h1>
+        <p>文字半开放世界探索游戏</p>
+    </div>
+    
+    <div class="game-container">
+        <div class="map-container">
+            <div class="location-name" id="location-name">加载中...</div>
+            <div class="location-description" id="location-description">
+                游戏正在加载，请稍候...
+            </div>
+            <div class="navigation" id="navigation">
+                <!-- 导航按钮将由JS动态生成 -->
+            </div>
+            <div class="location-actions" id="location-actions">
+                <!-- 地点特定行动将由JS动态生成 -->
+            </div>
+        </div>
+        
+        <div class="player-panel">
+            <div class="panel-title">玩家信息</div>
+            <div class="player-stats" id="player-stats">
+                <!-- 玩家状态将由JS动态生成 -->
+            </div>
+            
+            <div class="player-inventory">
+                <div class="inventory-title">随身物品</div>
+                <div class="inventory-items" id="inventory-items">
+                    <div class="empty-inventory">空空如也</div>
+                </div>
+            </div>
+            
+            <div class="player-skills">
+                <div class="skills-title">武学技能</div>
+                <div class="skills-list" id="skills-list">
+                    <div class="empty-skills">尚未习得任何武学</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-footer">
+        <p>武侠世界 - 文字探索游戏 | 托管于 yuzhouxing.github.io/wuxia</p>
+    </div>
+
+    <!-- 加载游戏脚本 -->
+    <script src="js/utils.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
