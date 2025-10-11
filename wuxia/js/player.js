@@ -106,16 +106,46 @@ class Player {
         return this.internal.current >= amount;
     }
 
-    // 添加物品
-    addItem(item) {
-        this.inventory.push(item);
-        
+    // 添加物品（数据驱动版本）
+    addItem(itemId) {
+        const gameData = window.game?.map?.getGameData();
+        if (!gameData) {
+            console.warn('游戏数据未加载，无法添加物品');
+            return false;
+        }
+
+        const itemData = window.game.map.getItem(itemId);
+        if (!itemData) {
+            console.warn(`物品 ${itemId} 不存在`);
+            return false;
+        }
+
+        // 检查是否可堆叠
+        if (itemData.stackable) {
+            const existingItem = this.inventory.find(item => item.id === itemId);
+            if (existingItem && existingItem.count < (itemData.maxStack || 999)) {
+                existingItem.count++;
+            } else {
+                this.inventory.push({
+                    ...itemData,
+                    count: 1
+                });
+            }
+        } else {
+            this.inventory.push({
+                ...itemData,
+                count: 1
+            });
+        }
+
         if (window.game && window.game.eventSystem) {
             window.game.eventSystem.emit('playerItemAdded', {
-                item: item,
+                item: itemData,
                 player: this
             });
         }
+
+        return true;
     }
 
     // 移除物品
@@ -136,14 +166,27 @@ class Player {
         return null;
     }
 
-    // 学习技能
-    learnSkill(skill) {
-        if (!this.skills.find(s => s.id === skill.id)) {
-            this.skills.push(skill);
+    // 学习技能（数据驱动版本）
+    learnSkill(skillId) {
+        const gameData = window.game?.map?.getGameData();
+        if (!gameData) {
+            console.warn('游戏数据未加载，无法学习技能');
+            return false;
+        }
+
+        const skillData = window.game.map.getSkill(skillId);
+        if (!skillData) {
+            console.warn(`技能 ${skillId} 不存在`);
+            return false;
+        }
+
+        // 检查是否已学习
+        if (!this.skills.find(s => s.id === skillId)) {
+            this.skills.push(skillData);
             
             if (window.game && window.game.eventSystem) {
                 window.game.eventSystem.emit('playerSkillLearned', {
-                    skill: skill,
+                    skill: skillData,
                     player: this
                 });
             }
@@ -151,6 +194,49 @@ class Player {
             return true;
         }
         return false;
+    }
+
+    // 使用物品
+    useItem(itemId) {
+        const itemIndex = this.inventory.findIndex(item => item.id === itemId);
+        if (itemIndex === -1) return false;
+
+        const item = this.inventory[itemIndex];
+        const itemData = window.game.map.getItem(itemId);
+        
+        if (!itemData || !itemData.effect) return false;
+
+        // 应用物品效果
+        let success = false;
+        switch (itemData.effect.type) {
+            case 'heal':
+                this.heal(itemData.effect.amount);
+                success = true;
+                break;
+            case 'restore_internal':
+                this.restoreInternal(itemData.effect.amount);
+                success = true;
+                break;
+            case 'learn_skill':
+                success = this.learnSkill(itemData.effect.skill);
+                break;
+            case 'full_restore':
+                this.health.current = this.health.max;
+                this.internal.current = this.internal.max;
+                success = true;
+                break;
+        }
+
+        if (success) {
+            // 减少物品数量或移除
+            if (item.count > 1) {
+                item.count--;
+            } else {
+                this.inventory.splice(itemIndex, 1);
+            }
+        }
+
+        return success;
     }
 
     // 装备物品
