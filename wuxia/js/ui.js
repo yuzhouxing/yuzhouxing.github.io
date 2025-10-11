@@ -28,7 +28,11 @@ class UI {
     // 更新地点显示
     updateLocationDisplay() {
         const currentLocation = this.game.map.getCurrentLocation();
-        if (!currentLocation) return;
+        if (!currentLocation) {
+            document.getElementById('location-name').textContent = '未知地点';
+            document.getElementById('location-description').textContent = '无法加载地点信息。';
+            return;
+        }
 
         // 更新地点名称和描述
         document.getElementById('location-name').textContent = currentLocation.name;
@@ -48,7 +52,9 @@ class UI {
             north: '北',
             south: '南',
             east: '东',
-            west: '西'
+            west: '西',
+            up: '上',
+            down: '下'
         };
 
         let navigationHTML = '';
@@ -57,19 +63,20 @@ class UI {
             const targetLocationId = location.connections[dir];
             if (targetLocationId) {
                 const targetLocation = this.game.map.getLocationById(targetLocationId);
-                navigationHTML += `
-                    <button class="nav-btn" data-direction="${dir}">
-                        ${name}：${targetLocation.name}
-                    </button>
-                `;
-            } else {
-                navigationHTML += `
-                    <button class="nav-btn" disabled>
-                        ${name}：无路可通
-                    </button>
-                `;
+                if (targetLocation) {
+                    navigationHTML += `
+                        <button class="nav-btn" data-direction="${dir}">
+                            ${name}：${targetLocation.name}
+                        </button>
+                    `;
+                }
             }
         });
+
+        // 如果没有可用的方向，显示提示
+        if (!navigationHTML) {
+            navigationHTML = '<div style="text-align: center; color: #888; padding: 10px;">此路不通</div>';
+        }
 
         navigationElement.innerHTML = navigationHTML;
 
@@ -107,33 +114,91 @@ class UI {
                 });
             });
         } else {
-            actionsElement.innerHTML = '';
+            actionsElement.innerHTML = '<div style="text-align: center; color: #888; padding: 10px;">此处暂无特殊行动</div>';
         }
     }
 
-    // 执行行动
+    // 执行行动（数据驱动版本）
     performAction(actionId) {
         const currentLocation = this.game.map.getCurrentLocation();
         const action = currentLocation.actions.find(a => a.id === actionId);
         
-        if (action && action.effect) {
-            const result = action.effect(this.game.player);
-            
-            // 显示行动结果
-            this.showMessage(result);
-            
-            // 更新玩家面板
-            this.updatePlayerPanel();
-            
-            // 触发行动完成事件
-            if (this.game && this.game.eventSystem) {
-                this.game.eventSystem.emit('actionPerformed', {
-                    action: action,
-                    result: result,
-                    player: this.game.player
-                });
+        if (!action) {
+            console.warn(`行动 ${actionId} 不存在`);
+            return;
+        }
+
+        let result = '';
+        
+        // 根据行动效果类型处理
+        if (action.effect) {
+            switch (action.effect.type) {
+                case 'heal':
+                    this.game.player.heal(action.effect.amount);
+                    result = `你休息了一会儿，恢复了 ${action.effect.amount} 点生命值。`;
+                    break;
+                case 'gain_exp':
+                    this.game.player.addExp(action.effect.amount);
+                    result = `你通过练习获得了 ${action.effect.amount} 点经验值。`;
+                    break;
+                case 'random_event':
+                    result = Utils.randomFromArray(action.effect.events);
+                    break;
+                case 'fixed_event':
+                    result = action.effect.message;
+                    break;
+                case 'random_item':
+                    const randomItem = this.getRandomItem(action.effect.items);
+                    if (randomItem) {
+                        this.game.player.addItem(randomItem);
+                        const itemData = this.game.map.getItem(randomItem);
+                        result = `你找到了：${itemData ? itemData.name : randomItem}`;
+                    } else {
+                        result = '你仔细寻找了一番，但什么都没有找到。';
+                    }
+                    break;
+                case 'add_item':
+                    this.game.player.addItem(action.effect.item);
+                    const addedItemData = this.game.map.getItem(action.effect.item);
+                    result = `你获得了：${addedItemData ? addedItemData.name : action.effect.item}`;
+                    break;
+                default:
+                    result = '你完成了这个行动。';
+            }
+        } else {
+            result = '你完成了这个行动。';
+        }
+
+        // 显示行动结果
+        this.showMessage(result);
+        
+        // 更新玩家面板
+        this.updatePlayerPanel();
+        
+        // 触发行动完成事件
+        if (this.game && this.game.eventSystem) {
+            this.game.eventSystem.emit('actionPerformed', {
+                action: action,
+                result: result,
+                player: this.game.player
+            });
+        }
+    }
+
+    // 辅助方法：根据概率获取随机物品
+    getRandomItem(itemConfigs) {
+        const totalChance = itemConfigs.reduce((sum, config) => sum + config.chance, 0);
+        const random = Math.random() * totalChance;
+        
+        let currentChance = 0;
+        for (const config of itemConfigs) {
+            currentChance += config.chance;
+            if (random <= currentChance) {
+                return config.id;
             }
         }
+        
+        return null;
     }
 
     // 更新玩家面板
@@ -199,7 +264,7 @@ class UI {
         this.updateSkillsDisplay();
     }
 
-    // 更新物品栏显示
+    // 更新物品栏显示（支持堆叠）
     updateInventoryDisplay() {
         const inventoryElement = document.getElementById('inventory-items');
         const player = this.game.player;
@@ -207,9 +272,12 @@ class UI {
         if (player.inventory.length > 0) {
             let inventoryHTML = '';
             player.inventory.forEach(item => {
+                const itemData = this.game.map.getItem(item.id);
+                const displayName = itemData ? itemData.name : item.id;
+                const countText = item.count > 1 ? ` x${item.count}` : '';
                 inventoryHTML += `
                     <div class="inventory-item">
-                        ${item.name || item.id}
+                        ${displayName}${countText}
                     </div>
                 `;
             });
@@ -227,9 +295,11 @@ class UI {
         if (player.skills.length > 0) {
             let skillsHTML = '';
             player.skills.forEach(skill => {
+                const skillData = this.game.map.getSkill(skill.id);
+                const displayName = skillData ? skillData.name : skill.id;
                 skillsHTML += `
                     <div class="skill-item">
-                        ${skill.name || skill.id}
+                        ${displayName}
                     </div>
                 `;
             });
@@ -241,16 +311,28 @@ class UI {
 
     // 显示消息
     showMessage(message, type = 'info') {
-        // 在实际项目中，这里可以实现一个消息系统
+        // 简单实现：在控制台显示消息
         console.log(`[${type}] ${message}`);
         
-        // 简单实现：在控制台显示消息
-        // 可以扩展为在游戏界面显示消息框
+        // 在实际项目中，这里可以实现一个消息系统
+        // 临时在页面顶部显示消息
         const messageElement = document.createElement('div');
-        messageElement.className = `game-message ${type}`;
+        messageElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(139, 35, 35, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            max-width: 80%;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        `;
         messageElement.textContent = message;
         
-        // 添加到页面（需要相应的CSS样式）
         document.body.appendChild(messageElement);
         
         // 3秒后移除
