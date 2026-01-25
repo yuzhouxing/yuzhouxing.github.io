@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工具箱简介</title>
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .intro-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .intro-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .intro-header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .intro-header p {
+            color: #718096;
+            font-size: 1.2em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .feature-title {
+            font-size: 1.5em;
+            color: #2d3748;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .feature-desc {
+            color: #718096;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        .cta-section {
+            text-align: center;
+            margin-top: 60px;
+            padding: 40px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .intro-header h1 {
+                font-size: 2.5em;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="intro-container">
+        <div class="intro-header">
+            <h1>🎯 雅圈工具箱</h1>
+            <p>专为雅圈创作者打造的一站式效率平台，赋能内容创作，激发创作灵感</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3 class="feature-title">创作者排行榜</h3>
+                <p class="feature-desc">实时追踪创作者表现，通过多维度的评分系统，展示优质内容创造者的成就和成长轨迹。</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">数据分析</h3>
+                <p class="feature-desc">深度分析内容趋势，提供互动数据洞察，帮助创作者了解受众喜好，优化创作策略。</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3 class="feature-title">智能辅助</h3>
+                <p class="feature-desc">基于AI的内容建议和优化推荐，为创作者提供个性化的创作指导和灵感启发。</p>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <h2>🌟 开启你的创作之旅</h2>
+            <p>无论你是刚起步的新手还是经验丰富的内容创作者，雅圈工具箱都将助你一臂之力。</p>
+            <button class="cta-button" onclick="parent.document.querySelector('[data-target=\"index.html\"]').click()">
+                立即体验排行榜 →
+            </button>
+        </div>
+    </div>
+</body>
+</html>
