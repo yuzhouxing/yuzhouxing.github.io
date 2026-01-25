@@ -548,3 +548,16 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
 }
+
+/* 适配iframe内显示 */
+@media (max-width: 768px) {
+    body {
+        padding-top: 0 !important; /* 移除进度条留出的空间 */
+    }
+}
+
+/* 如果是在工具箱内加载，隐藏一些重复元素 */
+body.in-toolbox .header-banner {
+    margin-top: 0;
+    border-radius: 0 0 20px 20px;
+}
