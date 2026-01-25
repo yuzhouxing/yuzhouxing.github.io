@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雅圈工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        /* 左侧目录 */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .logo h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .logo p {
+            color: #718096;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .menu {
+            flex: 1;
+        }
+
+        .menu-item {
+            padding: 16px 20px;
+            margin: 8px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .menu-icon {
+            font-size: 20px;
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .coming-soon {
+            margin-top: auto;
+            text-align: center;
+            color: #a0aec0;
+            font-size: 14px;
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .content-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+            .main-content {
+                margin-left: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 20px;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            .menu {
+                display: flex;
+                overflow-x: auto;
+                gap: 10px;
+            }
+            .menu-item {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 左侧目录 -->
+    <div class="sidebar">
+        <div class="logo">
+            <h1>🔧 雅圈工具箱</h1>
+            <p>助力创作者，赋能内容生态</p>
+        </div>
+        
+        <div class="menu">
+            <a href="#intro" class="menu-item active" data-target="intro.html">
+                <span class="menu-icon">📚</span>
+                <span>工具箱简介</span>
+            </a>
+            <a href="#rankings" class="menu-item" data-target="index.html">
+                <span class="menu-icon">🏆</span>
+                <span>创作者排行榜</span>
+            </a>
+            <a href="#coming" class="menu-item" data-target="coming.html">
+                <span class="menu-icon">🚀</span>
+                <span>敬请期待</span>
+            </a>
+        </div>
+        
+        <div class="coming-soon">
+            更多功能开发中...
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <iframe id="contentFrame" class="content-frame" src="intro.html"></iframe>
+    </div>
+
+    <script>
+        // 菜单切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            const contentFrame = document.getElementById('contentFrame');
+            
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 更新菜单激活状态
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 加载对应页面
+                    const target = this.getAttribute('data-target');
+                    contentFrame.src = target;
+                    
+                    // 更新URL hash（可选）
+                    window.location.hash = this.getAttribute('href');
+                });
+            });
+            
+            // 处理iframe加载状态
+            contentFrame.addEventListener('load', function() {
+                // 可以在这里添加加载完成后的处理
+                console.log('页面加载完成');
+            });
+            
+            // 初始加载
+            contentFrame.src = 'intro.html';
+        });
+    </script>
+</body>
+</html>
