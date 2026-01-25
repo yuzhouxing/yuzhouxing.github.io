@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>敬请期待</title>
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .coming-container {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .rocket {
+            font-size: 120px;
+            margin-bottom: 30px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3.5em;
+            margin-bottom: 20px;
+        }
+        
+        p {
+            color: #718096;
+            font-size: 1.3em;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+        
+        .features-list {
+            text-align: left;
+            display: inline-block;
+            margin: 30px 0;
+        }
+        
+        .feature-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateX(10px);
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .coming-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2.5em;
+            }
+            
+            .rocket {
+                font-size: 80px;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="coming-container">
+        <div class="rocket">🚀</div>
+        <h1>敬请期待</h1>
+        <p>我们正在全力开发更多实用功能，为雅圈创作者带来更丰富的工具体验。</p>
+        
+        <div class="features-list">
+            <div class="feature-item">
+                <span class="feature-icon">🤖</span>
+                <span>AI内容助手 - 智能生成和优化建议</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📈</span>
+                <span>成长轨迹分析 - 个人数据深度洞察</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">👥</span>
+                <span>创作者社群 - 合作与交流平台</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🏅</span>
+                <span>成就系统 - 解锁专属荣誉徽章</span>
+            </div>
+        </div>
+        
+        <p style="margin-top: 30px;">
+            <strong>敬请期待！</strong><br>
+            更多精彩功能即将上线，让你的创作之路更加顺畅。
+        </p>
+    </div>
+</body>
+</html>
