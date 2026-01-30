@@ -145,6 +145,11 @@
             display: block;
         }
 
+        /* 隐藏其他iframe - 关键修改 */
+        .hidden-iframe {
+            display: none !important;
+        }
+
         /* 移动端遮罩 */
         .sidebar-overlay {
             display: none;
@@ -272,11 +277,11 @@
         </div>
         
         <div class="menu">
-            <button class="menu-item active" data-target="intro.html">
+            <button class="menu-item" data-target="intro.html">
                 <span class="menu-icon">📚</span>
                 <span>工具箱简介</span>
             </button>
-            <button class="menu-item" data-target="index.html">
+            <button class="menu-item active" data-target="index.html">
                 <span class="menu-icon">🏆</span>
                 <span>创作者排行榜</span>
             </button>
@@ -291,10 +296,20 @@
         </div>
     </div>
 
-    <!-- 主内容区 -->
+    <!-- 主内容区 - 始终显示排行榜 -->
     <div class="main-content">
-        <iframe id="contentFrame" class="content-frame" 
-                title="雅圈工具箱内容"
+        <!-- 所有iframe都加载，但只显示排行榜 -->
+        <iframe id="contentFrameRankings" class="content-frame" 
+                title="创作者排行榜"
+                src="index.html"
+                allowfullscreen></iframe>
+        
+        <iframe id="contentFrameIntro" class="content-frame hidden-iframe" 
+                title="工具箱简介"
+                allowfullscreen></iframe>
+        
+        <iframe id="contentFrameComing" class="content-frame hidden-iframe" 
+                title="敬请期待"
                 allowfullscreen></iframe>
     </div>
 
@@ -304,7 +319,21 @@
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
             const menuItems = document.querySelectorAll('.menu-item');
-            const contentFrame = document.getElementById('contentFrame');
+            
+            // 获取所有iframe
+            const frameRankings = document.getElementById('contentFrameRankings');
+            const frameIntro = document.getElementById('contentFrameIntro');
+            const frameComing = document.getElementById('contentFrameComing');
+            
+            // iframe映射
+            const frameMap = {
+                'intro.html': frameIntro,
+                'index.html': frameRankings,
+                'coming.html': frameComing
+            };
+            
+            // 当前显示的iframe
+            let currentFrame = frameRankings;
             
             // 移动端菜单切换
             function toggleMobileMenu() {
@@ -325,8 +354,8 @@
                     menuItems.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
                     
-                    // 加载对应页面
-                    contentFrame.src = target;
+                    // 切换到对应的iframe
+                    switchToFrame(target);
                     
                     // 移动端点击后关闭菜单
                     if (window.innerWidth <= 768) {
@@ -337,6 +366,31 @@
                     updatePageTitle(target);
                 });
             });
+            
+            // 切换iframe显示
+            function switchToFrame(target) {
+                // 隐藏当前iframe
+                if (currentFrame) {
+                    currentFrame.classList.add('hidden-iframe');
+                }
+                
+                // 显示目标iframe
+                const targetFrame = frameMap[target];
+                if (targetFrame) {
+                    // 如果iframe还没有src，设置它
+                    if (!targetFrame.src || targetFrame.src === '') {
+                        targetFrame.src = target;
+                    }
+                    
+                    targetFrame.classList.remove('hidden-iframe');
+                    currentFrame = targetFrame;
+                    
+                    // 触发iframe的load事件（如果需要）
+                    if (targetFrame.contentDocument) {
+                        targetFrame.contentWindow.dispatchEvent(new Event('resize'));
+                    }
+                }
+            }
             
             // 更新页面标题
             function updatePageTitle(target) {
@@ -349,51 +403,52 @@
                 document.title = `${title} - 雅圈工具箱`;
             }
             
-            // iframe加载处理
-            contentFrame.addEventListener('load', function() {
-                try {
-                    // 尝试调整iframe内容以适应移动端
-                    const iframeDoc = contentFrame.contentDocument || contentFrame.contentWindow.document;
-                    if (iframeDoc && iframeDoc.body) {
-                        // 给iframe中的body添加标识类
-                        iframeDoc.body.classList.add('in-toolbox');
-                        
-                        // 调整iframe内部内容的间距
-                        const style = document.createElement('style');
-                        style.textContent = `
-                            body.in-toolbox {
-                                padding-top: 0 !important;
-                            }
-                            body.in-toolbox .header-banner {
-                                margin-top: 0;
-                                border-radius: 0;
-                            }
-                            body.in-toolbox .container {
-                                padding: 15px;
-                            }
-                            @media (max-width: 768px) {
+            // 所有iframe的加载处理
+            [frameRankings, frameIntro, frameComing].forEach(frame => {
+                frame.addEventListener('load', function() {
+                    try {
+                        // 尝试调整iframe内容以适应移动端
+                        const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+                        if (iframeDoc && iframeDoc.body) {
+                            // 给iframe中的body添加标识类
+                            iframeDoc.body.classList.add('in-toolbox');
+                            
+                            // 调整iframe内部内容的间距
+                            const style = document.createElement('style');
+                            style.textContent = `
+                                body.in-toolbox {
+                                    padding-top: 0 !important;
+                                }
+                                body.in-toolbox .header-banner {
+                                    margin-top: 0;
+                                    border-radius: 0;
+                                }
                                 body.in-toolbox .container {
-                                    padding: 10px;
+                                    padding: 15px;
                                 }
-                                body.in-toolbox .charts-container {
-                                    grid-template-columns: 1fr;
-                                    gap: 15px;
+                                @media (max-width: 768px) {
+                                    body.in-toolbox .container {
+                                        padding: 10px;
+                                    }
+                                    body.in-toolbox .charts-container {
+                                        grid-template-columns: 1fr;
+                                        gap: 15px;
+                                    }
+                                    body.in-toolbox .chart {
+                                        height: 300px;
+                                    }
                                 }
-                                body.in-toolbox .chart {
-                                    height: 300px;
-                                }
-                            }
-                        `;
-                        iframeDoc.head.appendChild(style);
+                            `;
+                            iframeDoc.head.appendChild(style);
+                        }
+                    } catch (e) {
+                        // 跨域限制，无法访问iframe内容
                     }
-                } catch (e) {
-                    console.log('无法访问iframe内容:', e.message);
-                }
+                });
             });
             
-            // 初始加载
-            contentFrame.src = 'intro.html';
-            updatePageTitle('intro.html');
+            // 初始状态
+            updatePageTitle('index.html');
             
             // 监听窗口大小变化
             window.addEventListener('resize', function() {
@@ -403,26 +458,28 @@
                 }
             });
             
-            // 阻止iframe内链接跳出
-            contentFrame.addEventListener('load', function() {
-                try {
-                    const iframeWindow = contentFrame.contentWindow;
-                    iframeWindow.addEventListener('click', function(e) {
-                        if (e.target.tagName === 'A' && e.target.href) {
-                            const href = e.target.href;
-                            // 如果是站内链接，在iframe内加载
-                            if (href.includes(window.location.hostname) || 
-                                href.startsWith('/') || 
-                                href.startsWith('./') || 
-                                href.startsWith('../')) {
-                                e.preventDefault();
-                                contentFrame.src = href;
+            // 阻止iframe内链接跳出（为所有iframe添加）
+            [frameRankings, frameIntro, frameComing].forEach(frame => {
+                frame.addEventListener('load', function() {
+                    try {
+                        const iframeWindow = frame.contentWindow;
+                        iframeWindow.addEventListener('click', function(e) {
+                            if (e.target.tagName === 'A' && e.target.href) {
+                                const href = e.target.href;
+                                // 如果是站内链接，在当前iframe内加载
+                                if (href.includes(window.location.hostname) || 
+                                    href.startsWith('/') || 
+                                    href.startsWith('./') || 
+                                    href.startsWith('../')) {
+                                    e.preventDefault();
+                                    frame.src = href;
+                                }
                             }
-                        }
-                    }, true);
-                } catch (e) {
-                    // 跨域限制，无法访问iframe内容
-                }
+                        }, true);
+                    } catch (e) {
+                        // 跨域限制，无法访问iframe内容
+                    }
+                });
             });
         });
     </script>
