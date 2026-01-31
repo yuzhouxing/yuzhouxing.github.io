@@ -726,17 +726,25 @@
                 document.getElementById('modalCancelBtn').addEventListener('click', () => this.closeModal());
                 document.getElementById('modalSaveBtn').addEventListener('click', () => this.saveEntry());
 
-                // 标签输入
-                document.getElementById('entryTags').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const tag = e.target.value.trim();
-                        if (tag && !this.tags.includes(tag)) {
-                            this.addTag(tag);
-                            e.target.value = '';
-                        }
+                // 标签输入 - 改为使用事件委托
+                document.getElementById('tagContainer').addEventListener('keypress', (e) => {
+                if (e.target.classList.contains('tag-input') && e.key === 'Enter') {
+                    e.preventDefault();
+                    const tag = e.target.value.trim();
+                    if (tag && !this.tags.includes(tag)) {
+                        this.addTag(tag);
+                        e.target.value = '';
                     }
-                });
+                }
+            });
+
+            // 点击标签删除按钮 - 事件委托
+            document.getElementById('tagContainer').addEventListener('click', (e) => {
+                if (e.target.classList.contains('tag-remove')) {
+                    const tag = e.target.parentElement.textContent.slice(0, -1).trim(); // 移除 × 符号
+                    this.removeTag(tag);
+                }
+            });
 
                 // 点击遮罩关闭模态框
                 document.getElementById('entryModal').addEventListener('click', (e) => {
@@ -1141,31 +1149,33 @@
             }
 
             updateTagDisplay() {
-                const container = document.getElementById('tagContainer');
-                const tagInput = document.getElementById('entryTags');
-                
-                container.innerHTML = `
-                    ${this.tags.map(tag => `
-                        <span class="tag">
-                            ${tag}
-                            <span class="tag-remove" onclick="wiki.removeTag('${tag}')">×</span>
-                        </span>
-                    `).join('')}
-                    <input type="text" id="entryTags" class="tag-input" placeholder="输入标签后按回车">
-                `;
-
-                // 重新绑定事件
-                document.getElementById('entryTags').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const tag = e.target.value.trim();
-                        if (tag && !this.tags.includes(tag)) {
-                            this.addTag(tag);
-                            e.target.value = '';
-                        }
-                    }
-                });
-            }
+                    const container = document.getElementById('tagContainer');
+    
+                    // 清空容器
+                    container.innerHTML = '';
+    
+                   // 添加标签
+                    this.tags.forEach(tag => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = 'tag';
+                        tagSpan.innerHTML = `
+                            ${this.escapeHtml(tag)}
+                            <span class="tag-remove">×</span>
+                        `;
+                        container.appendChild(tagSpan);
+                    });
+    
+                    // 添加输入框
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'tag-input';
+                    input.placeholder = '输入标签后按回车';
+                    input.id = 'tagInput';
+                    container.appendChild(input);
+    
+                    // 聚焦到输入框
+                    input.focus();
+             }
 
             getUsername() {
                 // 尝试从localStorage获取用户名
