@@ -277,11 +277,11 @@
         </div>
         
         <div class="menu">
-            <button class="menu-item" data-target="intro.html">
+            <button class="menu-item" data-target="index.html">
                 <span class="menu-icon">📚</span>
                 <span>工具箱简介</span>
             </button>
-            <button class="menu-item active" data-target="index.html">
+            <button class="menu-item active" data-target="rankings.html">
                 <span class="menu-icon">🏆</span>
                 <span>创作者排行榜</span>
             </button>
@@ -301,7 +301,7 @@
         <!-- 所有iframe都加载，但只显示排行榜 -->
         <iframe id="contentFrameRankings" class="content-frame" 
                 title="创作者排行榜"
-                src="index.html"
+                src="rankings.html"
                 allowfullscreen></iframe>
         
         <iframe id="contentFrameIntro" class="content-frame hidden-iframe" 
@@ -327,8 +327,8 @@
             
             // iframe映射
             const frameMap = {
-                'intro.html': frameIntro,
-                'index.html': frameRankings,
+                'index.html': frameIntro,
+                'rankings.html': frameRankings,
                 'coming.html': frameComing
             };
             
@@ -395,8 +395,8 @@
             // 更新页面标题
             function updatePageTitle(target) {
                 const titles = {
-                    'intro.html': '工具箱简介',
-                    'index.html': '创作者排行榜',
+                    'index.html': '工具箱简介',
+                    'rankings.html': '创作者排行榜',
                     'coming.html': '敬请期待'
                 };
                 const title = titles[target] || '雅圈工具箱';
