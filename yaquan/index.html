@@ -285,6 +285,10 @@
                 <span class="menu-icon">🏆</span>
                 <span>创作者排行榜</span>
             </button>
+            <button class="menu-item" data-target="wiki.html">
+                <span class="menu-icon">🚀</span>
+                <span>雅圈大事祭</span>
+            </button>
             <button class="menu-item" data-target="coming.html">
                 <span class="menu-icon">🚀</span>
                 <span>敬请期待</span>
@@ -306,6 +310,10 @@
         
         <iframe id="contentFrameIntro" class="content-frame hidden-iframe" 
                 title="工具箱简介"
+                allowfullscreen></iframe>
+
+        <iframe id="contentFrameIntro" class="content-frame hidden-iframe" 
+                title="雅圈大事祭"
                 allowfullscreen></iframe>
         
         <iframe id="contentFrameComing" class="content-frame hidden-iframe" 
@@ -329,6 +337,7 @@
             const frameMap = {
                 'intro.html': frameIntro,
                 'rankings.html': frameRankings,
+                'wiki.html': frameWiki,
                 'coming.html': frameComing
             };
             
@@ -397,6 +406,7 @@
                 const titles = {
                     'intro.html': '工具箱简介',
                     'rankings.html': '创作者排行榜',
+                    'wiki.html': '雅圈大事祭',
                     'coming.html': '敬请期待'
                 };
                 const title = titles[target] || '雅圈工具箱';
@@ -459,7 +469,7 @@
             });
             
             // 阻止iframe内链接跳出（为所有iframe添加）
-            [frameRankings, frameIntro, frameComing].forEach(frame => {
+            [frameRankings, frameIntro, frameWiki,frameComing].forEach(frame => {
                 frame.addEventListener('load', function() {
                     try {
                         const iframeWindow = frame.contentWindow;
