@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雅圈维基 - 雅圈工具箱</title>
+    <title>雅圈大事祭 - 雅圈工具箱</title>
     <style>
         /* 样式保持不变 */
         * {
@@ -817,7 +817,7 @@
         <!-- 列表视图 -->
         <div id="listView">
             <div class="wiki-header">
-                <h1>📜 雅圈大事祭</h1>
+                <h1>📜 雅圈大事祭（公测）</h1>
                 <p>记录雅圈的精彩人物与重要事件，共同书写属于我们的历史</p>
             </div>
 
@@ -1008,65 +1008,39 @@
             async loadEntries() {
                 const grid = document.getElementById('entriesGrid');
                 grid.innerHTML = `
-                <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>加载词条中...</p>
-                </div>
-            `;
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>加载词条中...</p>
+                    </div>
+                `;
 
-            try {
-                // 修改这里：先获取所有根词条（版本一），然后为每个根词条获取最新版本
-                let rootUrl = `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&previous_version_id=is.null`;
-                
-                if (this.currentCategory !== 'all') {
-                    rootUrl += `&category=eq.${this.currentCategory}`;
-                }
-
-                const rootResponse = await fetch(rootUrl, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-
-                if (rootResponse.ok) {
-                    const rootEntries = await rootResponse.json();
-            
-                    // 为每个根词条获取最新版本
-                    const latestEntries = await Promise.all(
-                        rootEntries.map(async (root) => {
-                            // 查询所有版本
-                            const versionsResponse = await fetch(
-                                `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&or=(id.eq.${root.id},previous_version_id.eq.${root.id})&order=version.desc`,
-                                {
-                                    headers: {
-                                        'apikey': SUPABASE_KEY,
-                                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                                    }
-                                }
-                           );
+                try {
+                    // 只加载最新版本（没有 previous_version_id 的词条）
+                    let url = `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&previous_version_id=is.null&order=updated_at.desc`;
                     
-                            if (versionsResponse.ok) {
-                                const versions = await versionsResponse.json();
-                                // 返回版本号最大的（最新版本）
-                                return versions.sort((a, b) => (b.version || 1) - (a.version || 1))[0];
-                            }
-                            return root;
-                        })
-                    );
-            
-                    // 按更新时间排序
-                    latestEntries.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-                    this.renderEntries(latestEntries);
-                } else {
-                    throw new Error('加载失败');
+                    if (this.currentCategory !== 'all') {
+                        url += `&category=eq.${this.currentCategory}`;
+                    }
+
+                    const response = await fetch(url, {
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const entries = await response.json();
+                        this.renderEntries(entries);
+                    } else {
+                        throw new Error('加载失败');
+                    }
+                } catch (error) {
+                    grid.innerHTML = '<div class="loading"><p>加载失败，请刷新重试</p></div>';
+                    this.showToast('加载失败，请检查网络连接', 'error');
+                    console.error('加载词条失败:', error);
                 }
-            } catch (error) {
-                grid.innerHTML = '<div class="loading"><p>加载失败，请刷新重试</p></div>';
-                this.showToast('加载失败，请检查网络连接', 'error');
-                console.error('加载词条失败:', error);
             }
-        }
 
             renderEntries(entries) {
                 const grid = document.getElementById('entriesGrid');
@@ -1085,35 +1059,30 @@
                     return;
                 }
 
-                grid.innerHTML = entries.map(entry =>{
-        // 找到根ID（如果没有 previous_version_id，则自身就是根）
-        const rootId = entry.previous_version_id ? entry.id : entry.id;
-        
-        return `
-            <div class="entry-card" data-id="${entry.id}" data-root-id="${rootId}">
-                <div class="entry-category category-${entry.category}">
-                    ${entry.category}
-                </div>
-                <h3 class="entry-title">
-                    ${this.escapeHtml(entry.title)}
-                    <span class="entry-version-badge">v${entry.version || 1}</span>
-                </h3>
-                <div class="entry-preview">${this.truncateText(this.escapeHtml(entry.content), 150)}</div>
-                <div class="entry-footer">
-                    <div class="entry-stats">
-                        <span>👁 ${entry.views || 0}</span>
-                        <span>📅 ${new Date(entry.updated_at).toLocaleDateString()}</span>
+                grid.innerHTML = entries.map(entry => `
+                    <div class="entry-card" data-id="${entry.id}">
+                        <div class="entry-category category-${entry.category}">
+                            ${entry.category}
+                        </div>
+                        <h3 class="entry-title">
+                            ${this.escapeHtml(entry.title)}
+                            <span class="entry-version-badge">v${entry.version || 1}</span>
+                        </h3>
+                        <div class="entry-preview">${this.truncateText(this.escapeHtml(entry.content), 150)}</div>
+                        <div class="entry-footer">
+                            <div class="entry-stats">
+                                <span>👁 ${entry.views || 0}</span>
+                                <span>📅 ${new Date(entry.updated_at).toLocaleDateString()}</span>
+                            </div>
+                            <span>✍ ${this.escapeHtml(entry.created_by || '匿名用户')}</span>
+                        </div>
                     </div>
-                    <span>✍ ${this.escapeHtml(entry.created_by || '匿名用户')}</span>
-                </div>
-            </div>
-        `;
-    }`).join('');
+                `).join('');
 
                 grid.querySelectorAll('.entry-card').forEach(card => {
                     card.addEventListener('click', (e) => {
-                        const rootId = e.currentTarget.dataset.rootId;
-                        this.showEntryDetail(rootId);
+                        const id = e.currentTarget.dataset.id;
+                        this.showEntryDetail(id);
                     });
                 });
             }
