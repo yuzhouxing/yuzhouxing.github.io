@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>雅圈维基 - 雅圈工具箱</title>
     <style>
+        /* 样式保持不变 */
         * {
             margin: 0;
             padding: 0;
@@ -25,7 +26,6 @@
             padding: 20px;
         }
 
-        /* 头部 */
         .wiki-header {
             text-align: center;
             margin-bottom: 40px;
@@ -51,7 +51,6 @@
             margin: 0 auto;
         }
 
-        /* 控制面板 */
         .control-panel {
             display: grid;
             grid-template-columns: 1fr auto;
@@ -110,7 +109,6 @@
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        /* 分类筛选 */
         .category-filter {
             display: flex;
             gap: 15px;
@@ -140,7 +138,6 @@
             border-color: #667eea;
         }
 
-        /* 词条网格 */
         .entries-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -190,6 +187,10 @@
             margin-bottom: 12px;
             color: #2d3748;
             line-height: 1.3;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .entry-preview {
@@ -218,7 +219,14 @@
             gap: 15px;
         }
 
-        /* 模态框 */
+        .entry-version-badge {
+            background: #e9ecef;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -326,43 +334,6 @@
             line-height: 1.6;
         }
 
-        .tag-input-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            min-height: 56px;
-            align-items: center;
-        }
-
-        .tag-input {
-            border: none;
-            outline: none;
-            flex: 1;
-            min-width: 100px;
-            font-size: 16px;
-            font-family: inherit;
-        }
-
-        .tag {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tag-remove {
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 1;
-        }
-
         .modal-footer {
             padding: 20px 30px;
             border-top: 1px solid #e9ecef;
@@ -401,7 +372,6 @@
             background: #e9ecef;
         }
 
-        /* 词条详情页 */
         .entry-detail {
             background: white;
             border-radius: 20px;
@@ -433,6 +403,19 @@
             margin-bottom: 20px;
             color: #2d3748;
             line-height: 1.2;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .version-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.4em;
+            font-weight: 500;
         }
 
         .entry-detail-meta {
@@ -441,6 +424,7 @@
             color: #718096;
             font-size: 0.9em;
             margin-bottom: 10px;
+            flex-wrap: wrap;
         }
 
         .entry-detail-content {
@@ -455,6 +439,12 @@
             font-size: 1.5em;
         }
 
+        .entry-detail-content h3 {
+            margin: 25px 0 12px 0;
+            color: #2d3748;
+            font-size: 1.3em;
+        }
+
         .entry-detail-content p {
             margin-bottom: 20px;
         }
@@ -463,6 +453,27 @@
         .entry-detail-content ol {
             margin-left: 30px;
             margin-bottom: 20px;
+        }
+
+        .entry-detail-content li {
+            margin-bottom: 5px;
+        }
+
+        .entry-detail-content pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .entry-detail-content code {
+            background: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
         }
 
         .back-btn {
@@ -496,7 +507,6 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s;
-            margin-left: 10px;
         }
 
         .edit-btn:hover {
@@ -504,27 +514,254 @@
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        /* 历史版本 */
         .history-section {
             background: white;
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .history-header h3 {
+            color: #2d3748;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-stats {
+            color: #718096;
+            font-size: 0.9em;
+            background: #f8f9fa;
+            padding: 8px 16px;
+            border-radius: 30px;
         }
 
         .history-item {
             padding: 20px;
             border: 1px solid #e9ecef;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 15px;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .history-item:hover {
             border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
         }
 
-        /* 响应式设计 */
+        .history-item.current {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border-color: #667eea;
+            border-width: 2px;
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .version-number {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .version-date {
+            color: #718096;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .version-editor {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .version-editor-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .version-preview {
+            color: #718096;
+            font-size: 0.95em;
+            margin: 12px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+            max-height: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .version-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .version-btn {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e9ecef;
+            background: white;
+            color: #495057;
+        }
+
+        .version-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+
+        .toast.error {
+            border-left-color: #e53e3e;
+        }
+
+        .toast.success {
+            border-left-color: #38a169;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .confirm-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            z-index: 2001;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .confirm-dialog h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 25px;
+            color: #718096;
+        }
+
+        .confirm-dialog .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .empty-state {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .empty-state .emoji {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            grid-column: 1/-1;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .wiki-container {
                 padding: 15px;
@@ -562,29 +799,15 @@
                 padding: 20px;
                 max-height: calc(90vh - 120px);
             }
-        }
 
-        /* 加载状态 */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #718096;
-        }
+            .history-item-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            .version-actions {
+                flex-wrap: wrap;
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -626,10 +849,7 @@
         <div id="detailView" style="display: none;">
             <button class="back-btn" id="backToListBtn">← 返回词条列表</button>
             <div class="entry-detail" id="entryDetail"></div>
-            <div class="history-section" id="historySection" style="display: none;">
-                <h3>📜 编辑历史</h3>
-                <div id="historyList"></div>
-            </div>
+            <div class="history-section" id="historySection"></div>
         </div>
 
         <!-- 编辑/创建模态框 -->
@@ -656,15 +876,13 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="entryTags">标签</label>
-                            <div class="tag-input-container" id="tagContainer">
-                                <input type="text" id="entryTags" class="tag-input" placeholder="输入标签后按回车">
-                            </div>
+                            <label for="entryContent">内容 *</label>
+                            <textarea id="entryContent" required placeholder="请输入词条内容（支持Markdown格式）"></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label for="entryContent">内容 *</label>
-                            <textarea id="entryContent" required placeholder="请输入词条内容（支持Markdown格式）"></textarea>
+                            <label>编辑备注 (可选)</label>
+                            <input type="text" id="editComment" placeholder="例如：修正错别字、补充新内容等">
                         </div>
                     </form>
                 </div>
@@ -677,7 +895,6 @@
     </div>
 
     <script>
-        // 配置
         const SUPABASE_URL = 'https://pwluzvlyglcfdparnavw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3bHV6dmx5Z2xjZmRwYXJuYXZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4OTUzNDIsImV4cCI6MjA3NDQ3MTM0Mn0.9eF5KQsiRrsun8wD3EZ5SAAmLtY3FO6byJhivT_Vxys';
 
@@ -685,8 +902,11 @@
             constructor() {
                 this.currentView = 'list';
                 this.currentCategory = 'all';
-                this.currentEntryId = null;
-                this.tags = [];
+                this.currentEntryId = null; // 当前词条的根ID（版本一的ID）
+                this.currentEntryData = null; // 当前显示的版本数据
+                this.allVersions = []; // 存储当前词条的所有版本
+                this.searchDebounceTimer = null;
+                this.currentUsername = this.getUsername();
                 this.init();
             }
 
@@ -696,12 +916,13 @@
             }
 
             bindEvents() {
-                // 搜索
                 document.getElementById('searchInput').addEventListener('input', (e) => {
-                    this.searchEntries(e.target.value);
+                    clearTimeout(this.searchDebounceTimer);
+                    this.searchDebounceTimer = setTimeout(() => {
+                        this.searchEntries(e.target.value);
+                    }, 300);
                 });
 
-                // 分类筛选
                 document.querySelectorAll('.category-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         this.currentCategory = e.target.dataset.category;
@@ -711,46 +932,76 @@
                     });
                 });
 
-                // 创建按钮
                 document.getElementById('createEntryBtn').addEventListener('click', () => {
                     this.openCreateModal();
                 });
 
-                // 返回按钮
                 document.getElementById('backToListBtn').addEventListener('click', () => {
                     this.showListView();
                 });
 
-                // 模态框
                 document.getElementById('modalCloseBtn').addEventListener('click', () => this.closeModal());
                 document.getElementById('modalCancelBtn').addEventListener('click', () => this.closeModal());
                 document.getElementById('modalSaveBtn').addEventListener('click', () => this.saveEntry());
 
-                // 标签输入 - 改为使用事件委托
-                document.getElementById('tagContainer').addEventListener('keypress', (e) => {
-                if (e.target.classList.contains('tag-input') && e.key === 'Enter') {
-                    e.preventDefault();
-                    const tag = e.target.value.trim();
-                    if (tag && !this.tags.includes(tag)) {
-                        this.addTag(tag);
-                        e.target.value = '';
-                    }
-                }
-            });
-
-            // 点击标签删除按钮 - 事件委托
-            document.getElementById('tagContainer').addEventListener('click', (e) => {
-                if (e.target.classList.contains('tag-remove')) {
-                    const tag = e.target.parentElement.textContent.slice(0, -1).trim(); // 移除 × 符号
-                    this.removeTag(tag);
-                }
-            });
-
-                // 点击遮罩关闭模态框
                 document.getElementById('entryModal').addEventListener('click', (e) => {
                     if (e.target === document.getElementById('entryModal')) {
                         this.closeModal();
                     }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeModal();
+                    }
+                });
+            }
+
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+
+            showConfirm(title, message) {
+                return new Promise((resolve) => {
+                    const dialog = document.createElement('div');
+                    dialog.className = 'confirm-dialog';
+                    dialog.innerHTML = `
+                        <h3>${title}</h3>
+                        <p>${message}</p>
+                        <div class="buttons">
+                            <button class="btn btn-secondary" id="confirmCancel">取消</button>
+                            <button class="btn btn-primary" id="confirmOk">确定</button>
+                        </div>
+                    `;
+
+                    const overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay active';
+                    overlay.appendChild(dialog);
+                    document.body.appendChild(overlay);
+
+                    document.getElementById('confirmOk').addEventListener('click', () => {
+                        document.body.removeChild(overlay);
+                        resolve(true);
+                    });
+
+                    document.getElementById('confirmCancel').addEventListener('click', () => {
+                        document.body.removeChild(overlay);
+                        resolve(false);
+                    });
+
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            document.body.removeChild(overlay);
+                            resolve(false);
+                        }
+                    });
                 });
             }
 
@@ -764,7 +1015,8 @@
                 `;
 
                 try {
-                    let url = `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&order=updated_at.desc`;
+                    // 只加载最新版本（没有 previous_version_id 的词条）
+                    let url = `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&previous_version_id=is.null&order=updated_at.desc`;
                     
                     if (this.currentCategory !== 'all') {
                         url += `&category=eq.${this.currentCategory}`;
@@ -785,6 +1037,7 @@
                     }
                 } catch (error) {
                     grid.innerHTML = '<div class="loading"><p>加载失败，请刷新重试</p></div>';
+                    this.showToast('加载失败，请检查网络连接', 'error');
                     console.error('加载词条失败:', error);
                 }
             }
@@ -794,10 +1047,10 @@
                 
                 if (entries.length === 0) {
                     grid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #718096;">
-                            <div style="font-size: 48px; margin-bottom: 20px;">📝</div>
-                            <h3 style="margin-bottom: 10px;">暂无词条</h3>
-                            <p style="margin-bottom: 30px;">快来创建第一个词条吧！</p>
+                        <div class="empty-state">
+                            <div class="emoji">📝</div>
+                            <h3>暂无词条</h3>
+                            <p>还没有任何词条，快来创建第一个词条吧！</p>
                             <button class="create-btn" onclick="wiki.openCreateModal()">
                                 ✏️ 创建新词条
                             </button>
@@ -811,19 +1064,21 @@
                         <div class="entry-category category-${entry.category}">
                             ${entry.category}
                         </div>
-                        <h3 class="entry-title">${this.escapeHtml(entry.title)}</h3>
+                        <h3 class="entry-title">
+                            ${this.escapeHtml(entry.title)}
+                            <span class="entry-version-badge">v${entry.version || 1}</span>
+                        </h3>
                         <div class="entry-preview">${this.truncateText(this.escapeHtml(entry.content), 150)}</div>
                         <div class="entry-footer">
                             <div class="entry-stats">
                                 <span>👁 ${entry.views || 0}</span>
                                 <span>📅 ${new Date(entry.updated_at).toLocaleDateString()}</span>
                             </div>
-                            <span>✍ ${entry.created_by || '匿名用户'}</span>
+                            <span>✍ ${this.escapeHtml(entry.created_by || '匿名用户')}</span>
                         </div>
                     </div>
                 `).join('');
 
-                // 添加点击事件
                 grid.querySelectorAll('.entry-card').forEach(card => {
                     card.addEventListener('click', (e) => {
                         const id = e.currentTarget.dataset.id;
@@ -839,8 +1094,9 @@
                 }
 
                 try {
+                    // 搜索时也只查询最新版本
                     const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&title=ilike.%25${encodeURIComponent(keyword)}%25&order=updated_at.desc`,
+                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&previous_version_id=is.null&title=ilike.%25${encodeURIComponent(keyword)}%25&order=updated_at.desc`,
                         {
                             headers: {
                                 'apikey': SUPABASE_KEY,
@@ -855,11 +1111,12 @@
                     }
                 } catch (error) {
                     console.error('搜索失败:', error);
+                    this.showToast('搜索失败，请重试', 'error');
                 }
             }
 
             async showEntryDetail(id) {
-                this.currentEntryId = id;
+                this.currentEntryId = id; // 保存根ID（版本一的ID）
                 this.currentView = 'detail';
                 
                 document.getElementById('listView').style.display = 'none';
@@ -874,22 +1131,15 @@
                 `;
 
                 try {
-                    // 获取词条详情
-                    const entryResponse = await fetch(
-                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&id=eq.${id}`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_KEY,
-                                'Authorization': `Bearer ${SUPABASE_KEY}`
-                            }
-                        }
-                    );
-
-                    if (entryResponse.ok) {
-                        const [entry] = await entryResponse.json();
-                        
-                        // 增加浏览量
-                        await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries?id=eq.${id}`, {
+                    // 先获取所有版本
+                    await this.loadAllVersions(id);
+                    
+                    // 找出最新版本（版本号最大的）
+                    const latestVersion = this.getLatestVersion();
+                    
+                    if (latestVersion) {
+                        // 增加浏览量（到最新版本）
+                        await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries?id=eq.${latestVersion.id}`, {
                             method: 'PATCH',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -898,53 +1148,190 @@
                                 'Prefer': 'return=minimal'
                             },
                             body: JSON.stringify({
-                                views: (entry.views || 0) + 1,
-                                updated_at: new Date().toISOString()
+                                views: (latestVersion.views || 0) + 1
                             })
                         });
 
-                        // 渲染详情
-                        detailDiv.innerHTML = `
-                            <div class="entry-detail-header">
-                                <div class="entry-detail-category category-${entry.category}">
-                                    ${entry.category}
-                                </div>
-                                <h1 class="entry-detail-title">${this.escapeHtml(entry.title)}</h1>
-                                <div class="entry-detail-meta">
-                                    <span>✍ 创建者：${entry.created_by || '匿名用户'}</span>
-                                    <span>📅 创建时间：${new Date(entry.created_at).toLocaleString()}</span>
-                                    <span>🔄 最后更新：${new Date(entry.updated_at).toLocaleString()}</span>
-                                    <span>👁 浏览次数：${(entry.views || 0) + 1}</span>
-                                </div>
-                                ${entry.tags && entry.tags.length > 0 ? `
-                                    <div style="margin-top: 15px;">
-                                        ${entry.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="entry-detail-content">
-                                ${this.formatContent(entry.content)}
-                            </div>
-                            <div style="margin-top: 30px;">
-                                <button class="edit-btn" onclick="wiki.openEditModal(${entry.id})">
-                                    ✏️ 编辑此词条
-                                </button>
-                            </div>
-                        `;
-
-                        // 加载编辑历史
-                        this.loadEntryHistory(id);
+                        // 显示最新版本
+                        this.displayVersion(latestVersion);
                     }
                 } catch (error) {
                     detailDiv.innerHTML = '<p class="loading">加载失败，请刷新重试</p>';
+                    this.showToast('加载详情失败', 'error');
                     console.error('加载详情失败:', error);
                 }
             }
 
-            async loadEntryHistory(id) {
+            async loadAllVersions(id) {
+                try {
+                    this.allVersions = [];
+                    
+                    // 先获取根版本（版本一）
+                    const rootResponse = await fetch(
+                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&id=eq.${id}`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`
+                            }
+                        }
+                    );
+                    
+                    if (rootResponse.ok) {
+                        const [root] = await rootResponse.json();
+                        this.allVersions.push(root);
+                        
+                        // 获取所有历史版本（previous_version_id = id）
+                        const historyResponse = await fetch(
+                            `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&previous_version_id=eq.${id}&order=created_at.desc`,
+                            {
+                                headers: {
+                                    'apikey': SUPABASE_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                                }
+                            }
+                        );
+                        
+                        if (historyResponse.ok) {
+                            const history = await historyResponse.json();
+                            this.allVersions = [...this.allVersions, ...history];
+                        }
+                    }
+                } catch (error) {
+                    console.error('加载版本失败:', error);
+                }
+            }
+
+            getLatestVersion() {
+                if (this.allVersions.length === 0) return null;
+                
+                // 按版本号排序，返回版本号最大的
+                return [...this.allVersions].sort((a, b) => {
+                    if (a.version && b.version) {
+                        return b.version - a.version;
+                    }
+                    return new Date(b.created_at) - new Date(a.created_at);
+                })[0];
+            }
+
+            displayVersion(version) {
+                this.currentEntryData = version;
+                
+                const detailDiv = document.getElementById('entryDetail');
+                
+                detailDiv.innerHTML = `
+                    <div class="entry-detail-header">
+                        <div class="entry-detail-category category-${version.category}">
+                            ${version.category}
+                        </div>
+                        <h1 class="entry-detail-title">
+                            ${this.escapeHtml(version.title)}
+                            <span class="version-tag">版本 ${version.version || 1}</span>
+                        </h1>
+                        <div class="entry-detail-meta">
+                            <span>✍ 编辑者：${this.escapeHtml(version.created_by || '匿名用户')}</span>
+                            <span>📅 编辑时间：${new Date(version.created_at).toLocaleString()}</span>
+                            <span>🔄 最后更新：${new Date(version.updated_at).toLocaleString()}</span>
+                            <span>👁 浏览次数：${(version.views || 0)}</span>
+                        </div>
+                        ${version.edit_comment ? `
+                            <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid #667eea;">
+                                <strong>📝 编辑备注：</strong> ${this.escapeHtml(version.edit_comment)}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="entry-detail-content">
+                        ${this.formatContent(version.content)}
+                    </div>
+                    <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="edit-btn" onclick="wiki.openEditModal('${this.currentEntryId}')">
+                            ✏️ 编辑此词条
+                        </button>
+                    </div>
+                `;
+
+                // 显示历史版本列表
+                this.renderVersionHistory();
+            }
+
+            renderVersionHistory() {
+                const historySection = document.getElementById('historySection');
+                
+                if (this.allVersions.length <= 1) {
+                    historySection.style.display = 'none';
+                    return;
+                }
+                
+                // 按版本号排序（版本号越大的越新）
+                const sortedVersions = [...this.allVersions].sort((a, b) => {
+                    if (a.version && b.version) {
+                        return b.version - a.version;
+                    }
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+
+                const latestVersion = sortedVersions[0];
+                const currentVersionId = this.currentEntryData?.id;
+
+                historySection.style.display = 'block';
+                historySection.innerHTML = `
+                    <div class="history-header">
+                        <h3>📜 历史版本 (共 ${this.allVersions.length} 个版本)</h3>
+                        <span class="history-stats">当前显示版本 ${this.currentEntryData?.version || 1}</span>
+                    </div>
+                    <div class="versions-list">
+                        ${sortedVersions.map((version) => {
+                            const isCurrent = version.id === currentVersionId;
+                            const isLatest = version.id === latestVersion.id;
+                            return `
+                                <div class="history-item ${isCurrent ? 'current' : ''}" data-version-id="${version.id}">
+                                    <div class="history-item-header">
+                                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                            <span class="version-number">版本 ${version.version || '?'}</span>
+                                            ${isCurrent ? '<span style="color: #667eea; font-size: 0.85em;">当前显示</span>' : ''}
+                                            ${isLatest ? '<span style="color: #38a169; font-size: 0.85em;">最新版本</span>' : ''}
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                            <span class="version-editor">
+                                                <span class="version-editor-icon">
+                                                    ${(version.created_by || '匿名用户').charAt(0)}
+                                                </span>
+                                                ${this.escapeHtml(version.created_by || '匿名用户')}
+                                            </span>
+                                            <span class="version-date">
+                                                📅 ${new Date(version.created_at).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    ${version.edit_comment ? `
+                                        <div class="version-preview" style="border-left-color: #38a169;">
+                                            💬 ${this.escapeHtml(version.edit_comment)}
+                                        </div>
+                                    ` : ''}
+                                    <div class="version-preview">
+                                        ${this.truncateText(this.escapeHtml(version.content), 150)}
+                                    </div>
+                                    <div class="version-actions">
+                                        <button class="version-btn view" onclick="wiki.viewVersion('${version.id}')">
+                                            👁️ 查看完整内容
+                                        </button>
+                                        ${version.id !== latestVersion.id ? `
+                                            <button class="version-btn restore" onclick="wiki.showRestoreConfirm('${version.id}')">
+                                                ↩️ 恢复到此版本
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            async viewVersion(versionId) {
                 try {
                     const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&previous_version_id=eq.${id}&order=created_at.desc`,
+                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&id=eq.${versionId}`,
                         {
                             headers: {
                                 'apikey': SUPABASE_KEY,
@@ -954,35 +1341,128 @@
                     );
 
                     if (response.ok) {
-                        const history = await response.json();
-                        if (history.length > 0) {
-                            document.getElementById('historySection').style.display = 'block';
-                            document.getElementById('historyList').innerHTML = history.map(item => `
-                                <div class="history-item">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                        <strong>版本 ${item.version}</strong>
-                                        <span style="color: #718096; font-size: 0.9em;">
-                                            ${new Date(item.created_at).toLocaleString()}
-                                        </span>
+                        const [version] = await response.json();
+                        
+                        const modalHtml = `
+                            <div class="modal-overlay active" id="versionModal" style="display: flex;">
+                                <div class="modal" style="max-width: 700px;">
+                                    <div class="modal-header">
+                                        <h2>版本 ${version.version || '?'} - ${this.escapeHtml(version.title)}</h2>
+                                        <button class="modal-close" onclick="document.getElementById('versionModal').remove()">×</button>
                                     </div>
-                                    <div style="color: #718096; font-size: 0.9em;">
-                                        编辑者：${item.created_by || '匿名用户'}
+                                    <div class="modal-body">
+                                        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                                            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px;">
+                                                <span>✍ 编辑者：${this.escapeHtml(version.created_by || '匿名用户')}</span>
+                                                <span>📅 时间：${new Date(version.created_at).toLocaleString()}</span>
+                                            </div>
+                                            ${version.edit_comment ? `
+                                                <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 8px;">
+                                                    <strong>编辑备注：</strong> ${this.escapeHtml(version.edit_comment)}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                        <div style="max-height: 400px; overflow-y: auto; padding: 20px; background: white; border: 1px solid #e9ecef; border-radius: 10px;">
+                                            ${this.formatContent(version.content)}
+                                        </div>
                                     </div>
-                                    <div style="margin-top: 10px; color: #495057;">
-                                        ${this.truncateText(this.escapeHtml(item.content), 100)}
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('versionModal').remove()">关闭</button>
                                     </div>
                                 </div>
-                            `).join('');
+                            </div>
+                        `;
+                        
+                        document.body.insertAdjacentHTML('beforeend', modalHtml);
+                        
+                        const versionModal = document.getElementById('versionModal');
+                        versionModal.addEventListener('click', (e) => {
+                            if (e.target === versionModal) {
+                                versionModal.remove();
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('加载版本失败:', error);
+                    this.showToast('加载版本失败', 'error');
+                }
+            }
+
+            async showRestoreConfirm(versionId) {
+                const confirmed = await this.showConfirm('确认恢复', '确定要恢复到这个历史版本吗？这将创建一个新版本。');
+                
+                if (confirmed) {
+                    await this.restoreVersion(versionId);
+                }
+            }
+
+            async restoreVersion(versionId) {
+                try {
+                    // 获取要恢复的版本数据
+                    const response = await fetch(
+                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&id=eq.${versionId}`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`
+                            }
+                        }
+                    );
+
+                    if (response.ok) {
+                        const [versionToRestore] = await response.json();
+                        
+                        // 重新加载所有版本以获取最新版本号
+                        await this.loadAllVersions(this.currentEntryId);
+                        
+                        const maxVersion = Math.max(...this.allVersions.map(v => v.version || 0));
+                        const newVersion = maxVersion + 1;
+                        
+                        // 创建新版本（基于要恢复的版本）
+                        const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`
+                            },
+                            body: JSON.stringify({
+                                title: versionToRestore.title,
+                                category: versionToRestore.category,
+                                content: versionToRestore.content,
+                                created_by: this.currentUsername,
+                                edit_comment: `恢复到版本 ${versionToRestore.version || '?'}`,
+                                previous_version_id: this.currentEntryId,
+                                version: newVersion
+                            })
+                        });
+
+                        if (!createResponse.ok) {
+                            throw new Error('创建新版本失败');
+                        }
+
+                        this.showToast('版本恢复成功！新版本已创建');
+                        
+                        // 重新加载详情页（这会自动显示最新版本）
+                        await this.showEntryDetail(this.currentEntryId);
+                        
+                        // 关闭版本模态框（如果存在）
+                        const versionModal = document.getElementById('versionModal');
+                        if (versionModal) {
+                            versionModal.remove();
                         }
                     }
                 } catch (error) {
-                    console.error('加载历史失败:', error);
+                    console.error('恢复版本失败:', error);
+                    this.showToast('恢复版本失败: ' + error.message, 'error');
                 }
             }
 
             showListView() {
                 this.currentView = 'list';
                 this.currentEntryId = null;
+                this.currentEntryData = null;
+                this.allVersions = [];
                 
                 document.getElementById('detailView').style.display = 'none';
                 document.getElementById('listView').style.display = 'block';
@@ -994,8 +1474,7 @@
             openCreateModal() {
                 document.getElementById('modalTitle').textContent = '创建新词条';
                 document.getElementById('entryForm').reset();
-                this.tags = [];
-                this.updateTagDisplay();
+                document.getElementById('editComment').value = '';
                 this.currentEntryId = null;
                 document.getElementById('entryModal').classList.add('active');
                 document.getElementById('entryTitle').focus();
@@ -1004,104 +1483,51 @@
             openEditModal(id) {
                 this.currentEntryId = id;
                 
-                // 加载词条数据
-                fetch(`${SUPABASE_URL}/rest/v1/wiki_entries?select=*&id=eq.${id}`, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                })
-                .then(response => response.json())
-                .then(([entry]) => {
+                // 编辑时应该基于最新版本，而不是版本一
+                const latestVersion = this.getLatestVersion();
+                
+                if (latestVersion) {
                     document.getElementById('modalTitle').textContent = '编辑词条';
-                    document.getElementById('entryTitle').value = entry.title;
-                    document.getElementById('entryCategory').value = entry.category;
-                    document.getElementById('entryContent').value = entry.content;
-                    
-                    this.tags = entry.tags || [];
-                    this.updateTagDisplay();
+                    document.getElementById('entryTitle').value = latestVersion.title;
+                    document.getElementById('entryCategory').value = latestVersion.category;
+                    document.getElementById('entryContent').value = latestVersion.content;
+                    document.getElementById('editComment').value = '';
                     
                     document.getElementById('entryModal').classList.add('active');
                     document.getElementById('entryTitle').focus();
-                })
-                .catch(error => {
-                    console.error('加载词条失败:', error);
-                    alert('加载词条失败，请重试');
-                });
+                } else {
+                    this.showToast('加载词条失败', 'error');
+                }
             }
 
             async saveEntry() {
                 const title = document.getElementById('entryTitle').value.trim();
                 const category = document.getElementById('entryCategory').value;
                 const content = document.getElementById('entryContent').value.trim();
+                const editComment = document.getElementById('editComment').value.trim();
 
                 if (!title || !category || !content) {
-                    alert('请填写所有必填项');
+                    this.showToast('请填写所有必填项', 'error');
                     return;
                 }
 
-                // 生成用户名
-                const username = this.getUsername();
+                if (title.length > 100) {
+                    this.showToast('标题不能超过100个字符', 'error');
+                    return;
+                }
 
                 try {
                     if (this.currentEntryId) {
-                        // 编辑现有词条
-                        const entryResponse = await fetch(
-                            `${SUPABASE_URL}/rest/v1/wiki_entries?select=version&id=eq.${this.currentEntryId}`,
-                            {
-                                headers: {
-                                    'apikey': SUPABASE_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                                }
-                            }
-                        );
+                        // 编辑现有词条 - 创建新版本
                         
-                        if (entryResponse.ok) {
-                            const [currentEntry] = await entryResponse.json();
-                            
-                            // 创建新版本
-                            await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'apikey': SUPABASE_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                                },
-                                body: JSON.stringify({
-                                    title,
-                                    category,
-                                    content,
-                                    tags: this.tags,
-                                    created_by: username,
-                                    previous_version_id: this.currentEntryId,
-                                    version: (currentEntry.version || 1) + 1
-                                })
-                            });
-
-                            // 更新原词条为最新状态
-                            await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries?id=eq.${this.currentEntryId}`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'apikey': SUPABASE_KEY,
-                                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                                    'Prefer': 'return=minimal'
-                                },
-                                body: JSON.stringify({
-                                    title,
-                                    category,
-                                    content,
-                                    tags: this.tags,
-                                    updated_at: new Date().toISOString(),
-                                    views: 0 // 重置浏览量，因为这是新版本
-                                })
-                            });
-
-                            alert('词条更新成功！');
-                        }
-                    } else {
-                        // 创建新词条
-                        await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
+                        // 重新加载所有版本以获取最新版本号
+                        await this.loadAllVersions(this.currentEntryId);
+                        
+                        const maxVersion = Math.max(...this.allVersions.map(v => v.version || 0));
+                        const newVersion = maxVersion + 1;
+                        
+                        // 创建新版本
+                        const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1112,12 +1538,56 @@
                                 title,
                                 category,
                                 content,
-                                tags: this.tags,
-                                created_by: username
+                                created_by: this.currentUsername,
+                                edit_comment: editComment || `版本 ${newVersion}`,
+                                previous_version_id: this.currentEntryId,
+                                version: newVersion
                             })
                         });
 
-                        alert('词条创建成功！');
+                        if (!createResponse.ok) {
+                            throw new Error('创建新版本失败');
+                        }
+
+                        // 只更新根版本的时间戳
+                        await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries?id=eq.${this.currentEntryId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify({
+                                updated_at: new Date().toISOString()
+                            })
+                        });
+
+                        this.showToast('编辑成功！新版本已创建');
+                    } else {
+                        // 创建新词条
+                        const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`
+                            },
+                            body: JSON.stringify({
+                                title,
+                                category,
+                                content,
+                                created_by: this.currentUsername,
+                                edit_comment: editComment || '初始版本',
+                                version: 1
+                            })
+                        });
+
+                        if (!createResponse.ok) {
+                            throw new Error('创建词条失败');
+                        }
+
+                        this.showToast('词条创建成功！');
                     }
 
                     this.closeModal();
@@ -1125,104 +1595,117 @@
                     
                 } catch (error) {
                     console.error('保存词条失败:', error);
-                    alert('保存失败，请重试');
+                    this.showToast('保存失败: ' + error.message, 'error');
                 }
             }
 
             closeModal() {
                 document.getElementById('entryModal').classList.remove('active');
                 document.getElementById('entryForm').reset();
-                this.tags = [];
-                this.updateTagDisplay();
             }
-
-            addTag(tag) {
-                if (tag && !this.tags.includes(tag)) {
-                    this.tags.push(tag);
-                    this.updateTagDisplay();
-                }
-            }
-
-            removeTag(tag) {
-                this.tags = this.tags.filter(t => t !== tag);
-                this.updateTagDisplay();
-            }
-
-            updateTagDisplay() {
-                    const container = document.getElementById('tagContainer');
-    
-                    // 清空容器
-                    container.innerHTML = '';
-    
-                   // 添加标签
-                    this.tags.forEach(tag => {
-                        const tagSpan = document.createElement('span');
-                        tagSpan.className = 'tag';
-                        tagSpan.innerHTML = `
-                            ${this.escapeHtml(tag)}
-                            <span class="tag-remove">×</span>
-                        `;
-                        container.appendChild(tagSpan);
-                    });
-    
-                    // 添加输入框
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'tag-input';
-                    input.placeholder = '输入标签后按回车';
-                    input.id = 'tagInput';
-                    container.appendChild(input);
-    
-                    // 聚焦到输入框
-                    input.focus();
-             }
 
             getUsername() {
-                // 尝试从localStorage获取用户名
                 let username = localStorage.getItem('wiki_username');
                 if (!username) {
-                    // 生成随机用户名
-                    const adjectives = ['聪明', '勤奋', '热情', '创意', '细致', '专注', '好奇', '坚持'];
-                    const nouns = ['探索者', '创作者', '记录者', '观察者', '思考者', '学习者', '分享者'];
+                    const adjectives = ['热心', '勤奋', '认真', '细致', '专注', '好奇'];
+                    const nouns = ['网友', '编辑者', '贡献者', '记录者', '参与者'];
                     const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
                     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
                     const randomNum = Math.floor(Math.random() * 999) + 1;
-                    username = `${randomAdjective}的${randomNoun}${randomNum}`;
+                    username = `${randomAdjective}${randomNoun}${randomNum}`;
                     localStorage.setItem('wiki_username', username);
                 }
                 return username;
             }
 
             formatContent(content) {
-                // 简单的Markdown转换
-                return this.escapeHtml(content)
-                    .replace(/\n\n+/g, '</p><p>')
-                    .replace(/\n/g, '<br>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
-                    .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-                    .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-                    .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-                    .replace(/^(\d+)\. (.*?)$/gm, '<li>$2</li>')
-                    .replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>')
-                    .replace(/^\* (.*?)$/gm, '<li>$1</li>')
-                    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+                if (!content) return '';
+                
+                let html = this.escapeHtml(content);
+                
+                // 代码块
+                html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+                html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+                
+                // 标题
+                html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+                html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+                html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+                
+                // 粗体和斜体
+                html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+                html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                
+                // 链接
+                html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+                
+                // 列表
+                const lines = html.split('\n');
+                let inList = false;
+                let listType = '';
+                let processedLines = [];
+                
+                for (let line of lines) {
+                    const olMatch = line.match(/^(\d+)\. (.*)$/);
+                    const ulMatch = line.match(/^\* (.*)$/);
+                    
+                    if (olMatch) {
+                        if (!inList || listType !== 'ol') {
+                            if (inList) processedLines.push(`</${listType}>`);
+                            processedLines.push('<ol>');
+                            inList = true;
+                            listType = 'ol';
+                        }
+                        processedLines.push(`<li value="${olMatch[1]}">${olMatch[2]}</li>`);
+                    } else if (ulMatch) {
+                        if (!inList || listType !== 'ul') {
+                            if (inList) processedLines.push(`</${listType}>`);
+                            processedLines.push('<ul>');
+                            inList = true;
+                            listType = 'ul';
+                        }
+                        processedLines.push(`<li>${ulMatch[1]}</li>`);
+                    } else {
+                        if (inList) {
+                            processedLines.push(`</${listType}>`);
+                            inList = false;
+                        }
+                        processedLines.push(line);
+                    }
+                }
+                if (inList) {
+                    processedLines.push(`</${listType}>`);
+                }
+                
+                html = processedLines.join('\n');
+                
+                // 段落
+                const paragraphs = html.split('\n\n');
+                html = paragraphs.map(p => {
+                    if (p.trim() && !p.startsWith('<')) {
+                        return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+                    }
+                    return p;
+                }).join('\n');
+                
+                return html;
             }
 
             truncateText(text, length) {
+                if (!text) return '';
                 if (text.length <= length) return text;
                 return text.substr(0, length) + '...';
             }
 
             escapeHtml(text) {
+                if (!text) return '';
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
             }
         }
 
-        // 初始化系统
         const wiki = new WikiSystem();
     </script>
 </body>
