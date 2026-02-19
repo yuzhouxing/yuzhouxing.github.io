@@ -1085,30 +1085,35 @@
                     return;
                 }
 
-                grid.innerHTML = entries.map(entry => `
-                    <div class="entry-card" data-id="${entry.id}">
-                        <div class="entry-category category-${entry.category}">
-                            ${entry.category}
-                        </div>
-                        <h3 class="entry-title">
-                            ${this.escapeHtml(entry.title)}
-                            <span class="entry-version-badge">v${entry.version || 1}</span>
-                        </h3>
-                        <div class="entry-preview">${this.truncateText(this.escapeHtml(entry.content), 150)}</div>
-                        <div class="entry-footer">
-                            <div class="entry-stats">
-                                <span>👁 ${entry.views || 0}</span>
-                                <span>📅 ${new Date(entry.updated_at).toLocaleDateString()}</span>
-                            </div>
-                            <span>✍ ${this.escapeHtml(entry.created_by || '匿名用户')}</span>
-                        </div>
+                grid.innerHTML = entries.map(entry =>{
+        // 找到根ID（如果没有 previous_version_id，则自身就是根）
+        const rootId = entry.previous_version_id ? entry.id : entry.id;
+        
+        return `
+            <div class="entry-card" data-id="${entry.id}" data-root-id="${rootId}">
+                <div class="entry-category category-${entry.category}">
+                    ${entry.category}
+                </div>
+                <h3 class="entry-title">
+                    ${this.escapeHtml(entry.title)}
+                    <span class="entry-version-badge">v${entry.version || 1}</span>
+                </h3>
+                <div class="entry-preview">${this.truncateText(this.escapeHtml(entry.content), 150)}</div>
+                <div class="entry-footer">
+                    <div class="entry-stats">
+                        <span>👁 ${entry.views || 0}</span>
+                        <span>📅 ${new Date(entry.updated_at).toLocaleDateString()}</span>
                     </div>
-                `).join('');
+                    <span>✍ ${this.escapeHtml(entry.created_by || '匿名用户')}</span>
+                </div>
+            </div>
+        `;
+    }`).join('');
 
                 grid.querySelectorAll('.entry-card').forEach(card => {
                     card.addEventListener('click', (e) => {
-                        const id = e.currentTarget.dataset.id;
-                        this.showEntryDetail(id);
+                        const rootId = e.currentTarget.dataset.rootId;
+                        this.showEntryDetail(rootId);
                     });
                 });
             }
