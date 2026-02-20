@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雅圈维基 - 雅圈工具箱</title>
+    <title>雅圈大事祭（公测）</title>
     <style>
-        /* 样式保持不变 */
+        /* 样式保持不变，仅在底部增加昵称设置按钮及相关样式 */
         * {
             margin: 0;
             padding: 0;
@@ -53,7 +53,7 @@
 
         .control-panel {
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: 1fr auto auto;
             gap: 20px;
             margin-bottom: 30px;
             align-items: center;
@@ -88,11 +88,10 @@
             font-size: 18px;
         }
 
-        .create-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .create-btn, .nickname-btn {
             color: white;
             border: none;
-            padding: 15px 30px;
+            padding: 15px 25px;
             border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
@@ -104,9 +103,23 @@
             white-space: nowrap;
         }
 
+        .create-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
         .create-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .nickname-btn {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+        }
+        .nickname-btn:hover {
+            background: #1e293b;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
         .category-filter {
@@ -809,6 +822,27 @@
                 flex-wrap: wrap;
             }
         }
+
+        /* 右上角当前昵称小提示 */
+        .current-nickname-tip {
+            font-size: 14px;
+            background: #edf2f7;
+            padding: 6px 14px;
+            border-radius: 40px;
+            color: #2d3748;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid #cbd5e0;
+            white-space: nowrap;
+        }
+        .current-nickname-tip span {
+            font-weight: 600;
+            color: #667eea;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -817,7 +851,7 @@
         <!-- 列表视图 -->
         <div id="listView">
             <div class="wiki-header">
-                <h1>📚 雅圈维基百科</h1>
+                <h1>📜 雅圈大事祭（公测）</h1>
                 <p>记录雅圈的精彩人物与重要事件，共同书写属于我们的历史</p>
             </div>
 
@@ -825,6 +859,15 @@
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
                     <input type="text" id="searchInput" placeholder="搜索词条..." autocomplete="off">
+                </div>
+                <!-- 自定义昵称按钮 + 当前昵称显示 -->
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="current-nickname-tip" id="nicknameDisplay">
+                        👤 <span id="nicknameSpan">加载中</span>
+                    </div>
+                    <button class="nickname-btn" id="nicknameSettingBtn">
+                        ⚙️ 设置昵称
+                    </button>
                 </div>
                 <button class="create-btn" id="createEntryBtn">
                     ✏️ 创建新词条
@@ -892,6 +935,27 @@
                 </div>
             </div>
         </div>
+
+        <!-- 自定义昵称模态框（新增） -->
+        <div class="modal-overlay" id="nicknameModal">
+            <div class="modal" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h2>设置你的昵称</h2>
+                    <button class="modal-close" id="nicknameModalClose">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nicknameInput">昵称</label>
+                        <input type="text" id="nicknameInput" placeholder="输入你希望显示的名字" maxlength="30">
+                        <p style="font-size: 13px; color: #718096; margin-top: 8px;">编辑词条时会使用此昵称记录，可随时更改。</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="nicknameCancelBtn">取消</button>
+                    <button type="button" class="btn btn-primary" id="nicknameSaveBtn">保存昵称</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -906,13 +970,15 @@
                 this.currentEntryData = null; // 当前显示的版本数据
                 this.allVersions = []; // 存储当前词条的所有版本
                 this.searchDebounceTimer = null;
-                this.currentUsername = this.getUsername();
+                // 昵称: 不再自动生成，默认从localStorage读取，若没有则弹窗提示用户输入
+                this.currentUsername = this.loadOrPromptNickname();
                 this.init();
             }
 
             init() {
                 this.bindEvents();
                 this.loadEntries();
+                this.updateNicknameDisplay();
             }
 
             bindEvents() {
@@ -955,6 +1021,70 @@
                         this.closeModal();
                     }
                 });
+
+                // 昵称相关事件
+                document.getElementById('nicknameSettingBtn').addEventListener('click', () => this.openNicknameModal());
+                document.getElementById('nicknameModalClose').addEventListener('click', () => this.closeNicknameModal());
+                document.getElementById('nicknameCancelBtn').addEventListener('click', () => this.closeNicknameModal());
+                document.getElementById('nicknameSaveBtn').addEventListener('click', () => this.saveNickname());
+                document.getElementById('nicknameModal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('nicknameModal')) {
+                        this.closeNicknameModal();
+                    }
+                });
+            }
+
+            // 从localStorage加载昵称，如果没有则使用默认名+弹出提示
+            loadOrPromptNickname() {
+                let stored = localStorage.getItem('wiki_username');
+                if (stored && stored.trim() !== '') {
+                    return stored;
+                }
+                // 不再自动生成随机，而是返回一个临时名，同时打开昵称设置窗口（延迟一下避免被覆盖）
+                const defaultName = '热心网友';
+                localStorage.setItem('wiki_username', defaultName);
+                setTimeout(() => {
+                    this.openNicknameModal(true); // 强制打开设置
+                }, 100);
+                return defaultName;
+            }
+
+            // 更新顶部昵称显示
+            updateNicknameDisplay() {
+                const span = document.getElementById('nicknameSpan');
+                if (span) span.textContent = this.currentUsername;
+            }
+
+            openNicknameModal(force = false) {
+                const input = document.getElementById('nicknameInput');
+                input.value = this.currentUsername; // 预填当前昵称
+                document.getElementById('nicknameModal').classList.add('active');
+                if (force) {
+                    // 可以附加一个提醒样式
+                }
+                input.focus();
+            }
+
+            closeNicknameModal() {
+                document.getElementById('nicknameModal').classList.remove('active');
+            }
+
+            saveNickname() {
+                const input = document.getElementById('nicknameInput');
+                const newName = input.value.trim();
+                if (!newName) {
+                    this.showToast('昵称不能为空', 'error');
+                    return;
+                }
+                if (newName.length > 30) {
+                    this.showToast('昵称不能超过30个字符', 'error');
+                    return;
+                }
+                this.currentUsername = newName;
+                localStorage.setItem('wiki_username', newName);
+                this.updateNicknameDisplay();
+                this.closeNicknameModal();
+                this.showToast(`昵称已修改为「${newName}」`, 'success');
             }
 
             showToast(message, type = 'success') {
@@ -1650,19 +1780,8 @@
                 document.getElementById('entryForm').reset();
             }
 
-            getUsername() {
-                let username = localStorage.getItem('wiki_username');
-                if (!username) {
-                    const adjectives = ['热心', '勤奋', '认真', '细致', '专注', '好奇'];
-                    const nouns = ['网友', '编辑者', '贡献者', '记录者', '参与者'];
-                    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-                    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-                    const randomNum = Math.floor(Math.random() * 999) + 1;
-                    username = `${randomAdjective}${randomNoun}${randomNum}`;
-                    localStorage.setItem('wiki_username', username);
-                }
-                return username;
-            }
+            // 不再需要 getUsername 自动生成，但保留一个兼容
+            // 所有地方用 this.currentUsername
 
             formatContent(content) {
                 if (!content) return '';
