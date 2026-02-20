@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雅圈大事祭 - 雅圈工具箱</title>
+    <title>雅圈维基 - 雅圈工具箱</title>
     <style>
         /* 样式保持不变 */
         * {
@@ -817,7 +817,7 @@
         <!-- 列表视图 -->
         <div id="listView">
             <div class="wiki-header">
-                <h1>📜 雅圈大事祭（公测）</h1>
+                <h1>📚 雅圈维基百科</h1>
                 <p>记录雅圈的精彩人物与重要事件，共同书写属于我们的历史</p>
             </div>
 
@@ -877,7 +877,7 @@
                         
                         <div class="form-group">
                             <label for="entryContent">内容 *</label>
-                            <textarea id="entryContent" required placeholder="请输入词条内容（暂不支持Markdown格式）"></textarea>
+                            <textarea id="entryContent" required placeholder="请输入词条内容（支持Markdown格式）"></textarea>
                         </div>
                         
                         <div class="form-group">
@@ -902,7 +902,7 @@
             constructor() {
                 this.currentView = 'list';
                 this.currentCategory = 'all';
-                this.currentEntryId = null; // 当前词条的根ID（版本一的ID）
+                this.currentRootId = null; // 当前词条的根ID（版本一的ID）
                 this.currentEntryData = null; // 当前显示的版本数据
                 this.allVersions = []; // 存储当前词条的所有版本
                 this.searchDebounceTimer = null;
@@ -1005,6 +1005,7 @@
                 });
             }
 
+            // 主页加载最新版本
             async loadEntries() {
                 const grid = document.getElementById('entriesGrid');
                 grid.innerHTML = `
@@ -1015,22 +1016,49 @@
                 `;
 
                 try {
-                    // 只加载最新版本（没有 previous_version_id 的词条）
-                    let url = `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&previous_version_id=is.null&order=updated_at.desc`;
+                    // 先获取所有根词条（没有 previous_version_id 的）
+                    let rootUrl = `${SUPABASE_URL}/rest/v1/wiki_entries?select=id&is_deleted=eq.false&previous_version_id=is.null`;
                     
                     if (this.currentCategory !== 'all') {
-                        url += `&category=eq.${this.currentCategory}`;
+                        rootUrl += `&category=eq.${this.currentCategory}`;
                     }
 
-                    const response = await fetch(url, {
+                    const rootResponse = await fetch(rootUrl, {
                         headers: {
                             'apikey': SUPABASE_KEY,
                             'Authorization': `Bearer ${SUPABASE_KEY}`
                         }
                     });
 
-                    if (response.ok) {
-                        const entries = await response.json();
+                    if (rootResponse.ok) {
+                        const roots = await rootResponse.json();
+                        
+                        // 对每个根词条，获取其最新版本
+                        const entries = [];
+                        for (const root of roots) {
+                            // 获取这个根词条的所有版本（所有指向这个根的版本）
+                            const versionsResponse = await fetch(
+                                `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&or=(id.eq.${root.id},previous_version_id.eq.${root.id})&order=version.desc`,
+                                {
+                                    headers: {
+                                        'apikey': SUPABASE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                                    }
+                                }
+                            );
+                            
+                            if (versionsResponse.ok) {
+                                const versions = await versionsResponse.json();
+                                // 取版本号最大的（最新版本）
+                                const latestVersion = versions.sort((a, b) => (b.version || 1) - (a.version || 1))[0];
+                                if (latestVersion) {
+                                    entries.push(latestVersion);
+                                }
+                            }
+                        }
+                        
+                        // 按更新时间排序
+                        entries.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
                         this.renderEntries(entries);
                     } else {
                         throw new Error('加载失败');
@@ -1059,34 +1087,39 @@
                     return;
                 }
 
-                grid.innerHTML = entries.map(entry => `
-                    <div class="entry-card" data-id="${entry.id}">
-                        <div class="entry-category category-${entry.category}">
-                            ${entry.category}
-                        </div>
-                        <h3 class="entry-title">
-                            ${this.escapeHtml(entry.title)}
-                            <span class="entry-version-badge">v${entry.version || 1}</span>
-                        </h3>
-                        <div class="entry-preview">${this.truncateText(this.escapeHtml(entry.content), 150)}</div>
-                        <div class="entry-footer">
-                            <div class="entry-stats">
-                                <span>👁 ${entry.views || 0}</span>
-                                <span>📅 ${new Date(entry.updated_at).toLocaleDateString()}</span>
+                grid.innerHTML = entries.map(entry => {
+                    // 找到根ID（如果没有 previous_version_id，说明本身就是根）
+                    const rootId = entry.previous_version_id ? entry.previous_version_id : entry.id;
+                    return `
+                        <div class="entry-card" data-root-id="${rootId}">
+                            <div class="entry-category category-${entry.category}">
+                                ${entry.category}
                             </div>
-                            <span>✍ ${this.escapeHtml(entry.created_by || '匿名用户')}</span>
+                            <h3 class="entry-title">
+                                ${this.escapeHtml(entry.title)}
+                                <span class="entry-version-badge">v${entry.version || 1}</span>
+                            </h3>
+                            <div class="entry-preview">${this.truncateText(this.escapeHtml(entry.content), 150)}</div>
+                            <div class="entry-footer">
+                                <div class="entry-stats">
+                                    <span>👁 ${entry.views || 0}</span>
+                                    <span>📅 ${new Date(entry.updated_at).toLocaleDateString()}</span>
+                                </div>
+                                <span>✍ ${this.escapeHtml(entry.created_by || '匿名用户')}</span>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 grid.querySelectorAll('.entry-card').forEach(card => {
                     card.addEventListener('click', (e) => {
-                        const id = e.currentTarget.dataset.id;
-                        this.showEntryDetail(id);
+                        const rootId = e.currentTarget.dataset.rootId;
+                        this.showEntryDetail(rootId);
                     });
                 });
             }
 
+            // 搜索时也显示最新版本
             async searchEntries(keyword) {
                 if (!keyword.trim()) {
                     this.loadEntries();
@@ -1094,9 +1127,9 @@
                 }
 
                 try {
-                    // 搜索时也只查询最新版本
-                    const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&is_deleted=eq.false&previous_version_id=is.null&title=ilike.%25${encodeURIComponent(keyword)}%25&order=updated_at.desc`,
+                    // 先获取匹配的根词条
+                    const rootResponse = await fetch(
+                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=id&is_deleted=eq.false&previous_version_id=is.null&title=ilike.%25${encodeURIComponent(keyword)}%25`,
                         {
                             headers: {
                                 'apikey': SUPABASE_KEY,
@@ -1105,8 +1138,31 @@
                         }
                     );
 
-                    if (response.ok) {
-                        const entries = await response.json();
+                    if (rootResponse.ok) {
+                        const roots = await rootResponse.json();
+                        
+                        // 对每个根词条，获取其最新版本
+                        const entries = [];
+                        for (const root of roots) {
+                            const versionsResponse = await fetch(
+                                `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&or=(id.eq.${root.id},previous_version_id.eq.${root.id})&order=version.desc`,
+                                {
+                                    headers: {
+                                        'apikey': SUPABASE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                                    }
+                                }
+                            );
+                            
+                            if (versionsResponse.ok) {
+                                const versions = await versionsResponse.json();
+                                const latestVersion = versions.sort((a, b) => (b.version || 1) - (a.version || 1))[0];
+                                if (latestVersion) {
+                                    entries.push(latestVersion);
+                                }
+                            }
+                        }
+                        
                         this.renderEntries(entries);
                     }
                 } catch (error) {
@@ -1115,8 +1171,8 @@
                 }
             }
 
-            async showEntryDetail(id) {
-                this.currentEntryId = id; // 保存根ID（版本一的ID）
+            async showEntryDetail(rootId) {
+                this.currentRootId = rootId; // 保存根ID
                 this.currentView = 'detail';
                 
                 document.getElementById('listView').style.display = 'none';
@@ -1131,8 +1187,8 @@
                 `;
 
                 try {
-                    // 先获取所有版本
-                    await this.loadAllVersions(id);
+                    // 获取所有版本（所有指向这个根的版本 + 根本身）
+                    await this.loadAllVersions(rootId);
                     
                     // 找出最新版本（版本号最大的）
                     const latestVersion = this.getLatestVersion();
@@ -1162,13 +1218,14 @@
                 }
             }
 
-            async loadAllVersions(id) {
+            // 获取所有版本（根版本 + 所有指向根的版本）
+            async loadAllVersions(rootId) {
                 try {
                     this.allVersions = [];
                     
-                    // 先获取根版本（版本一）
+                    // 获取根版本（版本一）
                     const rootResponse = await fetch(
-                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&id=eq.${id}`,
+                        `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&id=eq.${rootId}`,
                         {
                             headers: {
                                 'apikey': SUPABASE_KEY,
@@ -1179,11 +1236,13 @@
                     
                     if (rootResponse.ok) {
                         const [root] = await rootResponse.json();
-                        this.allVersions.push(root);
+                        if (root) {
+                            this.allVersions.push(root);
+                        }
                         
-                        // 获取所有历史版本（previous_version_id = id）
-                        const historyResponse = await fetch(
-                            `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&previous_version_id=eq.${id}&order=created_at.desc`,
+                        // 获取所有指向这个根的版本（previous_version_id = rootId）
+                        const versionsResponse = await fetch(
+                            `${SUPABASE_URL}/rest/v1/wiki_entries?select=*&previous_version_id=eq.${rootId}&order=version.desc`,
                             {
                                 headers: {
                                     'apikey': SUPABASE_KEY,
@@ -1192,9 +1251,9 @@
                             }
                         );
                         
-                        if (historyResponse.ok) {
-                            const history = await historyResponse.json();
-                            this.allVersions = [...this.allVersions, ...history];
+                        if (versionsResponse.ok) {
+                            const versions = await versionsResponse.json();
+                            this.allVersions = [...this.allVersions, ...versions];
                         }
                     }
                 } catch (error) {
@@ -1244,7 +1303,7 @@
                         ${this.formatContent(version.content)}
                     </div>
                     <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end;">
-                        <button class="edit-btn" onclick="wiki.openEditModal('${this.currentEntryId}')">
+                        <button class="edit-btn" onclick="wiki.openEditModal()">
                             ✏️ 编辑此词条
                         </button>
                     </div>
@@ -1283,11 +1342,13 @@
                         ${sortedVersions.map((version) => {
                             const isCurrent = version.id === currentVersionId;
                             const isLatest = version.id === latestVersion.id;
+                            const isRoot = version.id === this.currentRootId;
                             return `
                                 <div class="history-item ${isCurrent ? 'current' : ''}" data-version-id="${version.id}">
                                     <div class="history-item-header">
                                         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                                             <span class="version-number">版本 ${version.version || '?'}</span>
+                                            ${isRoot ? '<span style="color: #e53e3e; font-size: 0.85em;">初始版本</span>' : ''}
                                             ${isCurrent ? '<span style="color: #667eea; font-size: 0.85em;">当前显示</span>' : ''}
                                             ${isLatest ? '<span style="color: #38a169; font-size: 0.85em;">最新版本</span>' : ''}
                                         </div>
@@ -1413,12 +1474,12 @@
                         const [versionToRestore] = await response.json();
                         
                         // 重新加载所有版本以获取最新版本号
-                        await this.loadAllVersions(this.currentEntryId);
+                        await this.loadAllVersions(this.currentRootId);
                         
                         const maxVersion = Math.max(...this.allVersions.map(v => v.version || 0));
                         const newVersion = maxVersion + 1;
                         
-                        // 创建新版本（基于要恢复的版本）
+                        // 创建新版本（基于要恢复的版本），指向根版本
                         const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
                             method: 'POST',
                             headers: {
@@ -1432,7 +1493,7 @@
                                 content: versionToRestore.content,
                                 created_by: this.currentUsername,
                                 edit_comment: `恢复到版本 ${versionToRestore.version || '?'}`,
-                                previous_version_id: this.currentEntryId,
+                                previous_version_id: this.currentRootId, // 始终指向根版本
                                 version: newVersion
                             })
                         });
@@ -1444,7 +1505,7 @@
                         this.showToast('版本恢复成功！新版本已创建');
                         
                         // 重新加载详情页（这会自动显示最新版本）
-                        await this.showEntryDetail(this.currentEntryId);
+                        await this.showEntryDetail(this.currentRootId);
                         
                         // 关闭版本模态框（如果存在）
                         const versionModal = document.getElementById('versionModal');
@@ -1460,7 +1521,7 @@
 
             showListView() {
                 this.currentView = 'list';
-                this.currentEntryId = null;
+                this.currentRootId = null;
                 this.currentEntryData = null;
                 this.allVersions = [];
                 
@@ -1475,15 +1536,13 @@
                 document.getElementById('modalTitle').textContent = '创建新词条';
                 document.getElementById('entryForm').reset();
                 document.getElementById('editComment').value = '';
-                this.currentEntryId = null;
+                this.currentRootId = null;
                 document.getElementById('entryModal').classList.add('active');
                 document.getElementById('entryTitle').focus();
             }
 
-            openEditModal(id) {
-                this.currentEntryId = id;
-                
-                // 编辑时应该基于最新版本，而不是版本一
+            openEditModal() {
+                // 编辑时应该基于最新版本
                 const latestVersion = this.getLatestVersion();
                 
                 if (latestVersion) {
@@ -1517,16 +1576,16 @@
                 }
 
                 try {
-                    if (this.currentEntryId) {
+                    if (this.currentRootId) {
                         // 编辑现有词条 - 创建新版本
                         
                         // 重新加载所有版本以获取最新版本号
-                        await this.loadAllVersions(this.currentEntryId);
+                        await this.loadAllVersions(this.currentRootId);
                         
                         const maxVersion = Math.max(...this.allVersions.map(v => v.version || 0));
                         const newVersion = maxVersion + 1;
                         
-                        // 创建新版本
+                        // 创建新版本，指向根版本
                         const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
                             method: 'POST',
                             headers: {
@@ -1540,7 +1599,7 @@
                                 content,
                                 created_by: this.currentUsername,
                                 edit_comment: editComment || `版本 ${newVersion}`,
-                                previous_version_id: this.currentEntryId,
+                                previous_version_id: this.currentRootId, // 始终指向根版本
                                 version: newVersion
                             })
                         });
@@ -1549,23 +1608,9 @@
                             throw new Error('创建新版本失败');
                         }
 
-                        // 只更新根版本的时间戳
-                        await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries?id=eq.${this.currentEntryId}`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'apikey': SUPABASE_KEY,
-                                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                                'Prefer': 'return=minimal'
-                            },
-                            body: JSON.stringify({
-                                updated_at: new Date().toISOString()
-                            })
-                        });
-
                         this.showToast('编辑成功！新版本已创建');
                     } else {
-                        // 创建新词条
+                        // 创建新词条（根版本）
                         const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/wiki_entries`, {
                             method: 'POST',
                             headers: {
@@ -1579,7 +1624,8 @@
                                 content,
                                 created_by: this.currentUsername,
                                 edit_comment: editComment || '初始版本',
-                                version: 1
+                                version: 1,
+                                previous_version_id: null // 根版本没有 previous_version_id
                             })
                         });
 
