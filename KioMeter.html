@@ -388,29 +388,7 @@
         <div class="section-title">
             <span class="icon">📌</span> 项目简介
         </div>
-        <p style="margin-bottom: 1.2rem; color: #cbdae8;">KioMeter 是一款基于计算机视觉的自动化辅助工具，专为游戏《KioMeter》设计。通过 YOLO 模型识别跑道、兵营等建筑，并模拟人类鼠标轨迹进行精准点击与升级。完全离线运行，不修改游戏内存，仅供学习交流。</p>
-        
-        <div class="section-title" style="margin-top: 1.5rem;">
-            <span class="icon">⚡</span> 核心特性
-        </div>
-        <div class="feature-grid">
-            <div class="feature-item">
-                <div class="feature-name">🎯 多目标识别</div>
-                <div class="feature-desc">支持跑道、雷达站、导弹井等多种建筑检测（随版本扩展）</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-name">🖱️ 人类化点击</div>
-                <div class="feature-desc">随机移动轨迹、微小偏移，降低行为特征风险</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-name">🗳️ 多帧投票</div>
-                <div class="feature-desc">连续采样多帧合并结果，大幅减少误检</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-name">🔧 批量升级</div>
-                <div class="feature-desc">支持 Shift+点击快速批量升级（v1.1.0 起）</div>
-            </div>
-        </div>
+        <p style="margin-bottom: 1.2rem; color: #cbdae8;">KioMeter 是一款基于计算机视觉的自动化效率工具，专为特定游戏场景设计。本工具完全运行于本地环境，不修改目标程序内存，不拦截网络通信，所有操作均通过模拟外设输入实现。项目遵循语义化版本规范，持续迭代，仅供技术研究与学习交流。</p>
     </div>
 
     <!-- ========= 新增板块 2：快速开始 ========= -->
@@ -420,11 +398,11 @@
         </div>
         <ul class="steps">
             <li><span class="step-num">1</span> <span>下载对应版本的 <code>KioMeter.zip</code> 并解压到任意目录</span></li>
-            <li><span class="step-num">2</span> <span>确保已安装 Python 3.9+ 及依赖（或直接运行打包好的 .exe）</span></li>
-            <li><span class="step-num">3</span> <span>将游戏窗口化，并将国土缩至最小且保持不动</span></li>
-            <li><span class="step-num">4</span> <span>双击运行 <code>KioMeter.exe</code>，等待检测完成并自动升级</span></li>
+            <li><span class="step-num">2</span> <span>确保已获得该版本许可证</span></li>
+            <li><span class="step-num">3</span> <span>将游戏窗口化，并在运行开始时使国土视野保持不动</span></li>
+            <li><span class="step-num">4</span> <span>双击运行 <code>KioMeter.exe</code>，等待程序检测和其它功能</span></li>
         </ul>
-        <p style="margin-top: 1rem; font-size: 0.9rem; color: #889eb3;">详细使用教程与常见问题见下方 FAQ 及 GitHub 仓库 README。</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: #889eb3;">详细使用教程与常见问题见下方 FAQ 或询问作者 “天烬帝国” </p>
     </div>
 
     <!-- ========= 核心板块：版本发布列表 ========= -->
@@ -446,7 +424,7 @@
             ****************************************
         -->
 
-        <!-- v1.2.0 (示例) -->
+        <!-- v1.2.0 (示例) 
         <div class="release-card">
             <div class="release-header">
                 <div class="version-title">
@@ -481,8 +459,8 @@
                 </ul>
             </div>
         </div>
-
-        <!-- v1.1.0 -->
+        -->
+        <!-- v1.1.0
         <div class="release-card">
             <div class="release-header">
                 <div class="version-title">
@@ -504,8 +482,8 @@
                 </ul>
             </div>
         </div>
-
-        <!-- v1.0.0 -->
+        -->
+        <!-- v1.0.0
         <div class="release-card">
             <div class="release-header">
                 <div class="version-title">
@@ -527,26 +505,25 @@
                 </ul>
             </div>
         </div>
-
+        -->
         <!-- v1.0.0-beta.1 -->
         <div class="release-card">
             <div class="release-header">
                 <div class="version-title">
                     <span class="version">v1.0.0-beta.1</span>
-                    <span class="release-date">2026-04-10</span>
+                    <span class="release-date">2026-06-??</span>
                 </div>
                 <span class="release-tag pre">预发布</span>
             </div>
             <div class="release-links">
-                <div class="link-item"><span class="label">发行说明</span><a href="https://github.com/yourusername/KioMeter/releases/tag/v1.0.0-beta.1" target="_blank">github/v1.0.0-beta.1</a></div>
                 <div class="link-item"><span class="label">下载</span><a href="#" target="_blank">仅内测邀请</a></div>
             </div>
             <div class="changelog">
                 <div class="changelog-title">📋 更新日志</div>
                 <ul class="changelog-list">
-                    <li><span class="log-type type-added">新增</span><span class="log-desc">初步跑道识别逻辑</span></li>
-                    <li><span class="log-type type-fixed">修复</span><span class="log-desc">多屏 DPI 感知问题</span></li>
-                    <li><span class="log-type type-changed">优化</span><span class="log-desc">投票帧数降至 2 帧（速度优先）</span></li>
+                    <li><span class="log-type type-added">新增</span><span class="log-desc">初版跑道识别逻辑</span></li>
+                    <li><span class="log-type type-fixed">修复</span><span class="log-desc">初版鼠标点击模拟</span></li>
+                    <li><span class="log-type type-changed">优化</span><span class="log-desc">增加窗口放大系数</span></li>
                 </ul>
             </div>
         </div>
@@ -563,7 +540,7 @@
                 <span class="arrow">▶</span> 程序启动后没有检测到任何跑道？
             </div>
             <div class="faq-answer">
-                请确保游戏窗口处于前台，且地图已缩至最小。同时检查模型文件 best.pt 是否与程序置于同一目录。若问题持续，请尝试调整置信度阈值（修改配置文件）。
+                请确保游戏窗口处于前台，且地图大小位于该版本侦测阈值内。
             </div>
         </div>
 
@@ -572,7 +549,7 @@
                 <span class="arrow">▶</span> 鼠标点击位置不准，总是点歪？
             </div>
             <div class="faq-answer">
-                通常由 Windows 显示缩放导致。请在程序运行前设置 DPI 感知（代码已尝试自动处理），或手动将系统缩放调至 100%。你也可以在设置中微调 button_offset_x / y 参数。
+                通常由 Windows 显示缩放导致。可以尝试在手动运行前将系统缩放调至 100%。
             </div>
         </div>
 
@@ -581,7 +558,7 @@
                 <span class="arrow">▶</span> 如何获取最新版本和模型？
             </div>
             <div class="faq-answer">
-                关注本页面及 GitHub Releases。模型文件随版本更新发布，请下载对应版本的 best.pt。旧版模型可能无法兼容新功能。
+                关注本页面或询问作者 “天烬帝国” 。模型文件和程序文件将同时随版本更新发布。
             </div>
         </div>
 
@@ -595,17 +572,9 @@
         </div>
     </div>
 
-    <!-- 修改指引 -->
-    <div class="edit-note">
-        <strong>📝 如何更新版本信息？</strong><br>
-        1. 找到 <code>&lt;div class="releases"&gt;</code> 区域。<br>
-        2. 复制任意一个 <code>&lt;div class="release-card"&gt;</code> 整块，粘贴到列表最上方。<br>
-        3. 修改版本号、日期、标签（<code>稳定版</code> 或 <code>预发布</code>）、GitHub 链接及更新条目。<br>
-        4. 建议保持最新版本置顶，方便玩家查阅。
-    </div>
 
     <div class="footer">
-        KioMeter · semver 2.0 · 构建日志
+        KioMeter · 构建日志
     </div>
 </div>
 
