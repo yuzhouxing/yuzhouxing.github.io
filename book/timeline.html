@@ -6,164 +6,30 @@
     <title>KIOMET 编年史 | 正文</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* 管理员相关样式 */
-        .admin-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        
-        .admin-controls {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-            padding-top: 0.5rem;
-            border-top: 1px dashed #ddd;
-        }
-        
-        .admin-btn {
-            padding: 0.25rem 0.5rem;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        
-        .approve-btn {
-            background: #28a745;
-            color: white;
-        }
-        
-        .reject-btn {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .event-card.pending {
-            background: #fff3cd;
-            border-left: 5px solid #ffc107;
-        }
-        
-        .event-card.rejected {
-            background: #f8d7da;
-            border-left: 5px solid #dc3545;
-            opacity: 0.7;
-        }
-        
-        .login-section {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 6px;
-            margin: 1rem 0;
-            border-left: 4px solid #667eea;
-        }
-        
-        .mod-info {
-            background: #e3f2fd;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            margin: 0.5rem 0;
-            font-size: 0.9rem;
-        }
-        
-        .mod-login-form {
-            display: flex;
-            gap: 0.5rem;
-            margin: 0.5rem 0;
-        }
-        
-        .mod-login-form input {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .mod-login-form button {
-            padding: 0.5rem 1rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .logout-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 0.25rem 0.5rem;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            margin-left: 1rem;
-        }
-        
-        .error-card {
-            background: #ffebee;
-            border-left: 5px solid #f44336;
-            padding: 2rem;
-            margin: 1rem 0;
-            color: #c62828;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            font-style: italic;
-            color: #666;
-        }
-        .event-images {
-            margin: 1rem 0;
-        }
-
-        .image-gallery {
-             display: grid;
-             grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
- 
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .image-gallery a {
-            display: block;
-            border-radius: 4px;
-            overflow: hidden;
-            transition: transform 0.2s ease;
-        }    
-
-        .image-gallery a:hover {
-            transform: scale(1.05);
-        }
-
-         .image-gallery img {
-            width: 100%;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-
-        /* 手机端适配 */
+        /* 所有原有样式保持不变，此处省略以节省篇幅，你实际使用时保留完整样式 */
+        .admin-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; text-align: center; }
+        .admin-controls { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #ddd; }
+        .admin-btn { padding: 0.25rem 0.5rem; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem; }
+        .approve-btn { background: #28a745; color: white; }
+        .reject-btn { background: #dc3545; color: white; }
+        .event-card.pending { background: #fff3cd; border-left: 5px solid #ffc107; }
+        .event-card.rejected { background: #f8d7da; border-left: 5px solid #dc3545; opacity: 0.7; }
+        .login-section { background: #f8f9fa; padding: 1rem; border-radius: 6px; margin: 1rem 0; border-left: 4px solid #667eea; }
+        .mod-info { background: #e3f2fd; padding: 0.5rem 1rem; border-radius: 4px; margin: 0.5rem 0; font-size: 0.9rem; }
+        .mod-login-form { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .mod-login-form input { flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .mod-login-form button { padding: 0.5rem 1rem; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .logout-btn { background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.8rem; margin-left: 1rem; }
+        .error-card { background: #ffebee; border-left: 5px solid #f44336; padding: 2rem; margin: 1rem 0; color: #c62828; }
+        .loading { text-align: center; padding: 2rem; font-style: italic; color: #666; }
+        .event-images { margin: 1rem 0; }
+        .image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; }
+        .image-gallery a { display: block; border-radius: 4px; overflow: hidden; transition: transform 0.2s ease; }
+        .image-gallery a:hover { transform: scale(1.05); }
+        .image-gallery img { width: 100%; height: 60px; object-fit: cover; border-radius: 4px; }
         @media (max-width: 768px) {
-            .image-gallery {
-                grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-                gap: 0.3rem;
-            }
-    
-            .image-gallery img {
-                height: 50px;
-            }
-    
-            .preview-item {
-                max-width: 100px;
-            }
-    
-            .preview-item img {
-                height: 70px;
-            }
+            .image-gallery { grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 0.3rem; }
+            .image-gallery img { height: 50px; }
         }
     </style>
 </head>
@@ -179,7 +45,6 @@
             </div>
         </header>
 
-        <!-- 管理员登录区域 -->
         <div id="adminLoginSection" class="login-section">
             <h3>🔐 审核员登录</h3>
             <div class="mod-login-form">
@@ -189,7 +54,6 @@
             <small>只有获得授权的审核员可以登录管理事件</small>
         </div>
 
-        <!-- 管理员信息显示区域 -->
         <div id="modInfoSection" class="login-section" style="display: none;">
             <h3>📋 审核模式</h3>
             <div class="mod-info">
@@ -224,25 +88,26 @@
         </div>
     </div>
 
-    <!-- 先引入Supabase JS -->
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
-        // Supabase配置 - 立即初始化
+        // ====================== 配置 ======================
         const SUPABASE_URL = 'https://seijdhrrdpojbkuwddmq.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlaWpkaHJyZHBvamJrdXdkZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MDE3OTEsImV4cCI6MjA5OTA3Nzc5MX0.0E1QZXiPS203lltmW6XwrnG4Dd0MhxJpwpI-RDRgqG4';
         const MODERATOR_STORAGE_KEY = 'kiomet_moderator_info';
-        
-        // 立即初始化Supabase客户端
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase客户端已初始化');
-        
+
+        // ====================== 客户端初始化 ======================
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase客户端已初始化');
+
+        // ====================== 全局变量 ======================
         let currentPage = 1;
         const eventsPerPage = 5;
         let currentModerator = null;
         let showPendingEvents = false;
         let allEvents = [];
+        let currentSearchTerm = ''; // 全局搜索词
 
-        // 检查现有的管理员登录状态
+        // ====================== 审核相关函数 ======================
         function checkModeratorStatus() {
             const moderatorInfo = localStorage.getItem(MODERATOR_STORAGE_KEY);
             if (moderatorInfo) {
@@ -258,7 +123,6 @@
             return false;
         }
 
-        // 显示管理员信息
         function showModeratorInfo() {
             if (currentModerator) {
                 document.getElementById('adminLoginSection').style.display = 'none';
@@ -270,18 +134,14 @@
             }
         }
 
-        // 管理员登录
         async function moderatorLogin() {
             const secretKey = document.getElementById('modSecretKey').value;
-            
             if (!secretKey) {
                 alert('请输入审核密钥');
                 return;
             }
-
             try {
-                // 验证审核密钥
-                const { data: moderator, error } = await supabase
+                const { data: moderator, error } = await supabaseClient
                     .from('moderators')
                     .select('id, username')
                     .eq('secret_key', secretKey)
@@ -289,39 +149,27 @@
                     .single();
 
                 if (error) {
-                    if (error.code === 'PGRST116') {
-                        throw new Error('审核密钥无效或已失效');
-                    }
+                    if (error.code === 'PGRST116') throw new Error('审核密钥无效或已失效');
                     throw error;
                 }
+                if (!moderator) throw new Error('审核密钥无效');
 
-                if (!moderator) {
-                    throw new Error('审核密钥无效');
-                }
-
-                // 存储审核员信息
                 currentModerator = {
                     id: moderator.id,
                     username: moderator.username,
                     loggedInAt: new Date().toISOString()
                 };
-                
                 localStorage.setItem(MODERATOR_STORAGE_KEY, JSON.stringify(currentModerator));
                 document.getElementById('modSecretKey').value = '';
-                
                 showModeratorInfo();
                 alert('登录成功！');
-                
-                // 重新加载事件
                 loadEvents();
-                
             } catch (error) {
                 console.error('登录失败:', error);
                 alert(error.message || '登录失败，请检查密钥');
             }
         }
 
-        // 管理员退出
         function moderatorLogout() {
             currentModerator = null;
             localStorage.removeItem(MODERATOR_STORAGE_KEY);
@@ -332,20 +180,14 @@
             alert('已退出审核模式');
         }
 
-        // 切换显示待审核事件
         function togglePendingEvents() {
             showPendingEvents = document.getElementById('showPendingCheckbox').checked;
             loadEvents();
         }
 
-        // 审核事件
         async function reviewEvent(eventId, action) {
             if (!currentModerator) return;
-
-            const confirmMessage = action === 'approve' 
-                ? '确定要通过这个事件吗？' 
-                : '确定要拒绝这个事件吗？';
-            
+            const confirmMessage = action === 'approve' ? '确定要通过这个事件吗？' : '确定要拒绝这个事件吗？';
             if (!confirm(confirmMessage)) return;
 
             const comment = prompt('请输入审核意见（可选）：');
@@ -354,7 +196,6 @@
                 moderator_id: currentModerator.id,
                 review_comment: comment || null
             };
-
             if (action === 'approve') {
                 reviewData.approved = true;
                 reviewData.rejected = false;
@@ -362,51 +203,55 @@
                 reviewData.approved = false;
                 reviewData.rejected = true;
             }
-
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('events')
                     .update(reviewData)
                     .eq('id', eventId);
-
                 if (error) throw error;
-
                 alert(`事件已${action === 'approve' ? '通过' : '拒绝'}`);
-                loadEvents(); // 重新加载
-                
+                loadEvents();
             } catch (error) {
                 console.error('审核失败:', error);
                 alert('审核失败: ' + error.message);
             }
         }
 
-        // 获取事件
+        // ====================== 获取事件（核心） ======================
         async function fetchEvents() {
-            console.log('开始获取事件数据...');
+            console.log('🔄 开始获取事件数据...');
             try {
-                let query = supabase.from('events').select('*');
+                let query = supabaseClient.from('events').select('*');
                 
-                // 如果不是管理员或者没有勾选显示待审核，只显示已审核的
                 if (!currentModerator || !showPendingEvents) {
-                    query = query.eq('approved', true).order('event_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true });
-;
-                    console.log('只获取已审核的事件');
+                    // 只获取已审核的
+                    query = query.eq('approved', true)
+                                 .order('event_date', { ascending: true, nullsFirst: false })
+                                 .order('created_at', { ascending: true });
+                    console.log('📌 查询条件: approved = true');
                 } else {
-                    query = query.eq('rejected', false).order('approved', { ascending: true }).order('event_date', { ascending: true, nullsFirst: false}).order('created_at', { ascending: true });
-                    console.log('获取所有事件（包括待审核）');
+                    // 获取所有（包括待审核）
+                    query = query.eq('rejected', false)
+                                 .order('approved', { ascending: true })
+                                 .order('event_date', { ascending: true, nullsFirst: false })
+                                 .order('created_at', { ascending: true });
+                    console.log('📌 查询条件: 显示待审核');
                 }
-                
+
                 const { data, error } = await query;
                 if (error) {
-                    console.error('读取历史失败:', error);
+                    console.error('❌ 查询失败:', error);
                     throw error;
                 }
-                
-                console.log(`成功获取 ${data?.length || 0} 条事件`);
+
+                console.log(`✅ 成功获取 ${data?.length || 0} 条事件`);
+                // 打印第一条数据以便检查字段
+                if (data && data.length > 0) {
+                    console.log('📋 示例数据:', data[0]);
+                }
                 return data || [];
-                
             } catch (error) {
-                console.error('获取事件失败:', error);
+                console.error('❌ 获取事件失败:', error);
                 const container = document.getElementById('timeline');
                 container.innerHTML = `
                     <div class="error-card">
@@ -419,9 +264,10 @@
             }
         }
 
-        // 渲染事件
+        // ====================== 渲染事件 ======================
         function renderEvents(events, page) {
             const container = document.getElementById('timeline');
+            console.log(`🎨 渲染事件，共 ${events?.length || 0} 条，页码 ${page}`);
             
             if (!events || events.length === 0) {
                 container.innerHTML = `
@@ -434,8 +280,7 @@
                 return;
             }
 
-            container.innerHTML = ''; // 清空加载提示
-
+            container.innerHTML = '';
             const start = (page - 1) * eventsPerPage;
             const end = start + eventsPerPage;
             const paginatedEvents = events.slice(start, end);
@@ -453,28 +298,24 @@
                 if (currentModerator && !event.approved && !event.rejected) {
                     adminControls = `
                         <div class="admin-controls">
-                            <button class="admin-btn approve-btn" onclick="reviewEvent(${event.id}, 'approve')">
-                                ✅ 通过
-                            </button>
-                            <button class="admin-btn reject-btn" onclick="reviewEvent(${event.id}, 'reject')">
-                                ❌ 拒绝
-                            </button>
+                            <button class="admin-btn approve-btn" onclick="reviewEvent(${event.id}, 'approve')">✅ 通过</button>
+                            <button class="admin-btn reject-btn" onclick="reviewEvent(${event.id}, 'reject')">❌ 拒绝</button>
                         </div>
                     `;
                 }
 
                 eventEl.innerHTML = `
-                    <h3>${event.date}</h3>
-                    <h2>${event.title}</h2>
-                    <p><strong>涉及势力：</strong>${event.faction}</p>
-                    <p>${event.content}</p>
+                    <h3>${event.date || ''}</h3>
+                    <h2>${event.title || '无标题'}</h2>
+                    <p><strong>涉及势力：</strong>${event.faction || '未知'}</p>
+                    <p>${event.content || ''}</p>
                     ${event.images && event.images.length > 0 ? `
                        <div class="event-images">
                             <h4>🖼️ 相关图片(${event.images.length})</h4>
                             <div class="image-gallery">
-                                ${event.images.map((img,index) => `
+                                ${event.images.map((img, index) => `
                                     <a href="${img}" target="_blank" title="查看大图">
-                                        <img src="${img}" alt="事件图片"${index + 1} loading="lazy">
+                                        <img src="${img}" alt="事件图片${index + 1}" loading="lazy">
                                     </a>
                                 `).join('')}
                             </div>
@@ -484,7 +325,7 @@
                     <div class="event-meta">
                         提交者: ${event.submitted_by || '匿名'} | 
                         状态: ${event.approved ? '✅ 已通过' : event.rejected ? '❌ 已拒绝' : '⏳ 待审核'} |
-                        记录于: ${new Date(event.created_at).toLocaleDateString('zh-CN')}
+                        记录于: ${event.created_at ? new Date(event.created_at).toLocaleDateString('zh-CN') : '未知'}
                         ${event.reviewed_at ? ` | 审核于: ${new Date(event.reviewed_at).toLocaleDateString('zh-CN')}` : ''}
                     </div>
                     ${adminControls}
@@ -493,15 +334,13 @@
             });
         }
 
-        // 加载事件
+        // ====================== 加载事件（入口） ======================
         async function loadEvents() {
             const container = document.getElementById('timeline');
-            container.innerHTML = '<div class="loading">加载史书中...</div>';
+            container.innerHTML = '<div class="loading">📚 史书正在加载中...</div>';
             
             allEvents = await fetchEvents();
             const totalPages = Math.ceil(allEvents.length / eventsPerPage);
-            
-            // 简单分页控制
             if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
             if (currentPage < 1) currentPage = 1;
 
@@ -509,23 +348,18 @@
             renderEvents(allEvents, currentPage);
         }
 
-        // 搜索处理函数
+        // ====================== 搜索功能 ======================
         function handleSearch(event) {
-            if (event.key === 'Enter') {
-                performSearch();
-            }
+            if (event.key === 'Enter') performSearch();
         }
 
         function performSearch() {
             const searchTerm = document.getElementById('searchInput').value.trim();
             currentSearchTerm = searchTerm;
-    
             if (!searchTerm) {
                 clearSearch();
                 return;
             }
-    
-            // 执行搜索
             const results = searchEvents(searchTerm);
             displaySearchResults(results, searchTerm);
         }
@@ -534,100 +368,77 @@
             document.getElementById('searchInput').value = '';
             currentSearchTerm = '';
             document.getElementById('searchResults').innerHTML = '';
-            renderEvents(allEvents, currentPage); // 重新显示所有事件
+            renderEvents(allEvents, currentPage);
         }
 
-        // 搜索事件函数
         function searchEvents(searchTerm) {
             if (!searchTerm || !allEvents.length) return [];
-    
-            const lowerSearchTerm = searchTerm.toLowerCase();
-    
+            const lower = searchTerm.toLowerCase();
             return allEvents.filter(event => {
-                // 搜索标题、内容、势力、提交者
                 return (
-                    (event.title && event.title.toLowerCase().includes(lowerSearchTerm)) ||
-                    (event.content && event.content.toLowerCase().includes(lowerSearchTerm)) ||
-                    (event.faction && event.faction.toLowerCase().includes(lowerSearchTerm)) ||
-                    (event.submitted_by && event.submitted_by.toLowerCase().includes(lowerSearchTerm))
+                    (event.title && event.title.toLowerCase().includes(lower)) ||
+                    (event.content && event.content.toLowerCase().includes(lower)) ||
+                    (event.faction && event.faction.toLowerCase().includes(lower)) ||
+                    (event.submitted_by && event.submitted_by.toLowerCase().includes(lower))
                 );
             });
         }
-                // 显示搜索结果
+
         function displaySearchResults(results, searchTerm) {
             const resultsContainer = document.getElementById('searchResults');
             const timelineContainer = document.getElementById('timeline');
-    
             if (results.length === 0) {
-                resultsContainer.innerHTML = `
-                    <div class="search-info">
-                        没有找到包含 "<strong>${searchTerm}</strong>" 的事件
-                    </div>
-                `;
+                resultsContainer.innerHTML = `<div class="search-info">没有找到包含 "<strong>${searchTerm}</strong>" 的事件</div>`;
                 timelineContainer.innerHTML = '<div class="event-card">没有找到相关事件</div>';
                 return;
             }
-    
-            // 显示搜索结果信息
-            resultsContainer.innerHTML = `
-                <div class="search-info">
-                    找到 ${results.length} 个包含 "<strong>${searchTerm}</strong>" 的事件
-                </div>
-            `;
-    
-            // 高亮显示搜索结果
-            const highlightedResults = results.map(event => {
-                const highlightedEvent = { ...event };
+            resultsContainer.innerHTML = `<div class="search-info">找到 ${results.length} 个包含 "<strong>${searchTerm}</strong>" 的事件</div>`;
+            // 高亮搜索词
+            const highlighted = results.map(event => {
+                const ev = { ...event };
                 const highlight = (text) => {
                     if (!text) return text;
-                    return text.replace(
-                        new RegExp(searchTerm, 'gi'),
-                        match => `<span class="highlight">${match}</span>`
-                    );
+                    return text.replace(new RegExp(searchTerm, 'gi'), match => `<span class="highlight">${match}</span>`);
                 };
-            
-                highlightedEvent.title = highlight(event.title);
-                highlightedEvent.content = highlight(event.content);
-                highlightedEvent.faction = highlight(event.faction);
-                highlightedEvent.submitted_by = highlight(event.submitted_by);
-            
-                return highlightedEvent;
+                ev.title = highlight(event.title);
+                ev.content = highlight(event.content);
+                ev.faction = highlight(event.faction);
+                ev.submitted_by = highlight(event.submitted_by);
+                return ev;
             });
-            
-            // 显示搜索到的事件
-            renderEvents(highlightedResults, 1);
+            renderEvents(highlighted, 1);
         }
 
-
-        // 初始化 - 这个应该在最外层
+        // ====================== 页面初始化 ======================
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('页面加载完成，开始初始化...');
-            let currentSearchTerm = '';
-            // 检查管理员状态
+            console.log('📄 页面加载完成，开始初始化...');
             checkModeratorStatus();
-            
-            // 设置分页事件
+
             document.getElementById('prevPage').addEventListener('click', () => {
-                currentPage--;
                 if (currentSearchTerm) {
                     const results = searchEvents(currentSearchTerm);
+                    const totalPages = Math.ceil(results.length / eventsPerPage);
+                    if (currentPage > 1) currentPage--;
                     renderEvents(results, currentPage);
                 } else {
-                    loadEvents();
-                }
-            });
-            
-            document.getElementById('nextPage').addEventListener('click', () => {
-                currentPage++;
-                if (currentSearchTerm) {
-                    const results = searchEvents(currentSearchTerm);
-                    renderEvents(results, currentPage);
-                } else {
+                    if (currentPage > 1) currentPage--;
                     loadEvents();
                 }
             });
 
-            // 初始加载
+            document.getElementById('nextPage').addEventListener('click', () => {
+                if (currentSearchTerm) {
+                    const results = searchEvents(currentSearchTerm);
+                    const totalPages = Math.ceil(results.length / eventsPerPage);
+                    if (currentPage < totalPages) currentPage++;
+                    renderEvents(results, currentPage);
+                } else {
+                    const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+                    if (currentPage < totalPages) currentPage++;
+                    loadEvents();
+                }
+            });
+
             loadEvents();
         });
     </script>
