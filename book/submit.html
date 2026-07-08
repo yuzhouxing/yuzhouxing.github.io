@@ -19,12 +19,12 @@
             border-radius: 6px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            max-width: 120px; /* 限制最大宽度 */
+            max-width: 120px;
         }
 
         .preview-item img {
             width: 100%;
-            height: 80px; /* 减小高度 */
+            height: 80px;
             object-fit: cover;
         }    
 
@@ -212,8 +212,9 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlaWpkaHJyZHBvamJrdXdkZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MDE3OTEsImV4cCI6MjA5OTA3Nzc5MX0.0E1QZXiPS203lltmW6XwrnG4Dd0MhxJpwpI-RDRgqG4';
         const SUBMITTER_STORAGE_KEY = 'kiomet_submitter_name';
         const BUCKET_NAME = 'event-images';
-        // 正确的Supabase初始化方式
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // 使用 supabaseClient 避免与全局冲突
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('Supabase客户端已初始化');
         
         let currentSubmitter = '';
@@ -272,7 +273,7 @@
                 const fileName = `${Math.random().toString(36).substr(2, 9)}_${Date.now()}.${fileExt}`;
                 const filePath = `${fileName}`;
                 
-                const { data, error } = await supabase.storage
+                const { data, error } = await supabaseClient.storage
                     .from(BUCKET_NAME)
                     .upload(filePath, file, {
                         cacheControl: '3600',
@@ -286,7 +287,7 @@
                 if (error) throw error;
                 
                 // 获取图片公开URL
-                const { data: { publicUrl } } = supabase.storage
+                const { data: { publicUrl } } = supabaseClient.storage
                     .from(BUCKET_NAME)
                     .getPublicUrl(filePath);
                 
@@ -515,7 +516,7 @@
             console.log('准备提交的数据:', eventData);
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('events')
                     .insert([eventData])
                     .select();
@@ -562,6 +563,7 @@
             console.log('页面加载完成，初始化提交者系统');
             console.log('Supabase客户端状态:', window.supabase ? '已加载' : '未加载');
             initSubmitter();
+            setupDragAndDrop();
             
             // 为日期输入框添加实时验证
             document.getElementById('date').addEventListener('blur', function() {
