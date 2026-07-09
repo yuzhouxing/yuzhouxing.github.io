@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>势力关系图谱 · KIOMET 编年史</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js">
+    </script>
+    <script src="https://unpkg.com/@supabase/supabase-js">
+    </script>
+    <style>
+        /* ---------- 全局重置 ---------- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html,
+        body {
+            height: 100%;
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+            background: #f5f3f0;
+            color: #2d2a24;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 1rem 0.5rem;
+        }
+
+        /* ---------- 头部 ---------- */
+        .app-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #e0d6cc;
+            flex-shrink: 0;
+        }
+        .app-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #3e2e1f;
+        }
+        .app-header h1 small {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #7a6a5a;
+            margin-left: 0.75rem;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .header-actions .nav-link {
+            color: #5a4a3a;
+            text-decoration: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            background: #ede8e2;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .header-actions .nav-link:hover {
+            background: #d6cec4;
+        }
+
+        /* ---------- 简单工具栏（仅刷新和重置） ---------- */
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.5rem 0;
+            flex-shrink: 0;
+        }
+        .toolbar .btn {
+            padding: 0.25rem 1rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            background: #eae5de;
+            color: #2d2a24;
+            transition: 0.2s;
+        }
+        .toolbar .btn:hover {
+            background: #d5cdc2;
+        }
+        .toolbar .btn-primary {
+            background: #6b5b4b;
+            color: #fff;
+        }
+        .toolbar .btn-primary:hover {
+            background: #524436;
+        }
+        .toolbar .badge {
+            background: #6b5b4b20;
+            padding: 0.15rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            color: #5a4a3a;
+            margin-left: 0.5rem;
+        }
+
+        /* ---------- 图谱容器 ---------- */
+        .graph-wrapper {
+            flex: 1;
+            min-height: 0;
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e8e0d8;
+            position: relative;
+            overflow: hidden;
+        }
+        #network {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ---------- 占位 ---------- */
+        .graph-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #b5a99b;
+            pointer-events: none;
+            background: #ffffff;
+            z-index: 2;
+            font-size: 1.1rem;
+        }
+        .graph-placeholder .icon {
+            font-size: 3.6rem;
+            margin-bottom: 0.6rem;
+        }
+        .graph-placeholder .sub {
+            font-size: 0.9rem;
+            color: #ccc4b8;
+        }
+
+        /* ---------- 信息面板（右上） ---------- */
+        .info-panel {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 280px;
+            max-height: calc(100% - 2rem);
+            background: #ffffffec;
+            backdrop-filter: blur(8px);
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            padding: 1rem 1.2rem;
+            border: 1px solid #e0d6cc;
+            overflow-y: auto;
+            display: none;
+            z-index: 10;
+        }
+        .info-panel.visible {
+            display: block;
+        }
+        .info-panel h4 {
+            font-size: 0.9rem;
+            color: #6b5b4b;
+            margin-bottom: 0.4rem;
+        }
+        .info-panel .node-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+        .info-panel .node-detail {
+            font-size: 0.85rem;
+            color: #5a4a3a;
+            line-height: 1.5;
+        }
+        .info-panel .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #8a7a6a;
+        }
+
+        /* ---------- 图例 ---------- */
+        .legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: #ffffffec;
+            backdrop-filter: blur(4px);
+            padding: 0.4rem 0.9rem;
+            border-radius: 30px;
+            border: 1px solid #e0d6cc;
+            font-size: 0.7rem;
+            color: #5a4a3a;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #ccc4b8;
+        }
+        .legend-line {
+            display: inline-block;
+            width: 20px;
+            height: 2px;
+            background: #8a7a6a;
+        }
+
+        /* ---------- 响应式 ---------- */
+        @media (max-width: 768px) {
+            .app-header h1 {
+                font-size: 1.2rem;
+            }
+            .app-header h1 small {
+                font-size: 0.7rem;
+                display: block;
+                margin-left: 0;
+            }
+            .info-panel {
+                width: 200px;
+                top: 0.6rem;
+                right: 0.6rem;
+                padding: 0.8rem;
+                font-size: 0.8rem;
+            }
+            .legend {
+                font-size: 0.6rem;
+                gap: 0.5rem;
+                padding: 0.3rem 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- 头部 -->
+        <header class="app-header">
+            <h1>🏛️ 势力关系图谱 <small>KIOMET 编年史</small></h1>
+            <div class="header-actions">
+                <a href="timeline.html" class="nav-link">📖 史书</a>
+                <a href="submit.html" class="nav-link">📝 贡献</a>
+                <a href="hall-of-fame.html" class="nav-link">🏆 贡献榜</a>
+                <a href="stats.html" class="nav-link">📊 统计</a>
+            </div>
+        </header>
+
+        <!-- 工具栏（仅刷新和重置） -->
+        <div class="toolbar">
+            <button class="btn btn-primary" id="btnRefresh">🔄 刷新图谱</button>
+            <button class="btn" id="btnReset">🎯 重置视图</button>
+            <span class="badge" id="nodeCount">节点: 0</span>
+            <span class="badge" id="edgeCount">关系: 0</span>
+        </div>
+
+        <!-- 图谱 -->
+        <div class="graph-wrapper" id="graphWrapper">
+            <div id="network"></div>
+
+            <!-- 占位 -->
+            <div class="graph-placeholder" id="placeholder">
+                <div class="icon">🌐</div>
+                <span>加载势力网络中…</span>
+                <span class="sub">从史书中提取势力关系</span>
+            </div>
+
+            <!-- 信息面板 -->
+            <div class="info-panel" id="infoPanel">
+                <button class="close-btn" id="infoClose">✕</button>
+                <h4>⚡ 势力详情</h4>
+                <div class="node-name" id="infoName">—</div>
+                <div class="node-detail" id="infoDetail">点击图谱中的节点查看详情</div>
+            </div>
+
+            <!-- 图例 -->
+            <div class="legend">
+                <span class="legend-item"><span class="legend-dot" style="background:#6b5b4b;"></span> 势力</span>
+                <span class="legend-item"><span class="legend-line"></span> 共现关系</span>
+                <span style="font-size:0.65rem; color:#b5a99b;">💡 双击节点查看详情 · 拖拽调整</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  Supabase 配置
+        // ============================================================
+        const SUPABASE_URL = 'https://seijdhrrdpojbkuwddmq.supabase.co';
+        const SUPABASE_ANON_KEY =
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlaWpkaHJyZHBvamJrdXdkZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MDE3OTEsImV4cCI6MjA5OTA3Nzc5MX0.0E1QZXiPS203lltmW6XwrnG4Dd0MhxJpwpI-RDRgqG4';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase 客户端已初始化');
+
+        // ============================================================
+        //  全局状态
+        // ============================================================
+        let network = null;
+        let nodesData = [];
+        let edgesData = [];
+        let factionSet = new Set();
+
+        // ============================================================
+        //  辅助函数
+        // ============================================================
+        function extractFactions(factionStr) {
+            if (!factionStr) return [];
+            // 按逗号分割，去除每个部分的前后空格
+            return factionStr.split(',').map(s => s.trim()).filter(Boolean);
+        }
+
+        function getFactionColor(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = (hash * 31 + name.charCodeAt(i)) & 0xFFFFFFFF;
+            }
+            const hue = (hash % 360 + 360) % 360;
+            return `hsl(${hue}, 55%, 55%)`;
+        }
+
+        // ============================================================
+        //  核心：获取事件并构建图谱
+        // ============================================================
+        async function fetchAndRender() {
+            try {
+                showPlaceholder('⏳ 读取史书数据…');
+
+                const { data: events, error } = await supabaseClient
+                    .from('events')
+                    .select('id, faction, title')
+                    .eq('approved', true);
+
+                if (error) throw new Error('读取事件失败: ' + error.message);
+                if (!events || events.length === 0) {
+                    showPlaceholder('📭 暂无已审核事件', '请先在编年史中添加事件');
+                    return;
+                }
+
+                // 1. 提取所有势力（去重）
+                const factionMap = new Map();
+                const eventFactions = []; // 每个事件对应的势力列表
+
+                events.forEach(ev => {
+                    const factions = extractFactions(ev.faction);
+                    if (factions.length === 0) return;
+                    eventFactions.push({ id: ev.id, factions, title: ev.title });
+                    factions.forEach(f => {
+                        if (!factionMap.has(f)) {
+                            factionMap.set(f, { name: f, events: [] });
+                        }
+                        factionMap.get(f).events.push(ev.title);
+                    });
+                });
+
+                if (factionMap.size < 2) {
+                    showPlaceholder('🔍 势力不足', '至少需要两个不同势力才能形成关系网');
+                    return;
+                }
+
+                // 2. 构建节点
+                const nodes = [];
+                factionMap.forEach((value, key) => {
+                    const eventCount = value.events.length;
+                    nodes.push({
+                        id: key,
+                        label: key,
+                        title: `${key}\n参与事件: ${eventCount} 次`,
+                        value: Math.min(20 + eventCount * 2, 60),
+                        shape: 'dot',
+                        size: Math.min(20 + eventCount * 2, 50),
+                        color: getFactionColor(key),
+                        font: { size: 14, face: 'PingFang SC, sans-serif' },
+                    });
+                    factionSet.add(key);
+                });
+
+                // 3. 构建共现边
+                const edgeMap = new Map();
+                eventFactions.forEach(({ factions, title }) => {
+                    for (let i = 0; i < factions.length; i++) {
+                        for (let j = i + 1; j < factions.length; j++) {
+                            const a = factions[i];
+                            const b = factions[j];
+                            const key = [a, b].sort().join('|');
+                            if (!edgeMap.has(key)) {
+                                edgeMap.set(key, { from: a, to: b, count: 0, events: [] });
+                            }
+                            const entry = edgeMap.get(key);
+                            entry.count++;
+                            entry.events.push(title);
+                        }
+                    }
+                });
+
+                const edges = [];
+                edgeMap.forEach((value, key) => {
+                    const { from, to, count, events } = value;
+                    const width = Math.min(1 + count * 0.8, 6);
+                    edges.push({
+                        id: key,
+                        from: from,
+                        to: to,
+                        label: count > 1 ? `${count}次` : '',
+                        width: width,
+                        dashes: count < 2,
+                        title: `共现 ${count} 次\n${events.slice(0, 3).join('\n')}${events.length > 3 ? `\n…等${events.length}个事件` : ''}`,
+                        color: {
+                            color: count >= 3 ? '#6b5b4b' : '#b5a99b',
+                            highlight: '#3e2e1f',
+                        },
+                        smooth: { type: 'curvedCW', roundness: 0.1 },
+                    });
+                });
+
+                nodesData = nodes;
+                edgesData = edges;
+
+                renderNetwork(nodes, edges);
+
+                document.getElementById('nodeCount').textContent = `节点: ${nodes.length}`;
+                document.getElementById('edgeCount').textContent = `关系: ${edges.length}`;
+
+                hidePlaceholder();
+
+            } catch (err) {
+                console.error('❌ 构建图谱失败:', err);
+                showPlaceholder('❌ 加载失败', err.message);
+            }
+        }
+
+        // ============================================================
+        //  vis-network 渲染
+        // ============================================================
+        function renderNetwork(nodes, edges) {
+            const container = document.getElementById('network');
+            if (network) {
+                network.destroy();
+                network = null;
+            }
+
+            const data = {
+                nodes: new vis.DataSet(nodes),
+                edges: new vis.DataSet(edges),
+            };
+
+            const options = {
+                nodes: {
+                    shape: 'dot',
+                    size: 28,
+                    font: {
+                        size: 14,
+                        face: 'PingFang SC, "Microsoft YaHei", sans-serif',
+                        strokeWidth: 1,
+                        strokeColor: '#ffffffcc',
+                    },
+                    borderWidth: 2,
+                    shadow: {
+                        enabled: true,
+                        size: 6,
+                        color: 'rgba(0,0,0,0.08)',
+                    },
+                },
+                edges: {
+                    smooth: {
+                        type: 'curvedCW',
+                        roundness: 0.15,
+                    },
+                    font: {
+                        size: 10,
+                        color: '#5a4a3a',
+                        background: '#ffffffdd',
+                    },
+                    shadow: {
+                        enabled: true,
+                        size: 3,
+                        color: 'rgba(0,0,0,0.05)',
+                    },
+                },
+                physics: {
+                    enabled: true,
+                    stabilization: {
+                        iterations: 100,
+                        updateInterval: 20,
+                    },
+                    barnesHut: {
+                        gravitationalConstant: -3000,
+                        springLength: 160,
+                        springConstant: 0.04,
+                        damping: 0.09,
+                    },
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 200,
+                    navigationButtons: false,
+                },
+                layout: {
+                    randomSeed: 42,
+                },
+            };
+
+            network = new vis.Network(container, data, options);
+
+            // ---- 双击节点显示详情 ----
+            network.on('doubleClick', function(params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    showNodeInfo(nodeId);
+                }
+            });
+
+            // 点击空白处隐藏面板
+            network.on('click', function(params) {
+                if (params.nodes.length === 0 && params.edges.length === 0) {
+                    document.getElementById('infoPanel').classList.remove('visible');
+                }
+            });
+
+            // 窗口resize自动适配
+            window.addEventListener('resize', () => {
+                if (network) network.fit();
+            });
+
+            setTimeout(() => {
+                if (network) network.fit();
+            }, 300);
+        }
+
+        // ============================================================
+        //  信息面板
+        // ============================================================
+        function showNodeInfo(nodeId) {
+            const panel = document.getElementById('infoPanel');
+            const nameEl = document.getElementById('infoName');
+            const detailEl = document.getElementById('infoDetail');
+
+            const node = nodesData.find(n => n.id === nodeId);
+            if (!node) return;
+
+            nameEl.textContent = node.label || nodeId;
+
+            // 收集该势力参与的事件（从边数据中提取）
+            const relatedEdges = edgesData.filter(e => e.from === nodeId || e.to === nodeId);
+            const eventTitles = [];
+            relatedEdges.forEach(e => {
+                const title = e.title || '';
+                if (title.includes('\n')) {
+                    const lines = title.split('\n');
+                    if (lines.length > 1) {
+                        const parts = lines.slice(1).join('\n');
+                        eventTitles.push(parts);
+                    }
+                }
+            });
+
+            const uniqueEvents = [...new Set(eventTitles.flatMap(s => s.split('\n').filter(Boolean)))];
+            const eventList = uniqueEvents.slice(0, 8).map(t => `• ${t}`).join('\n');
+
+            detailEl.innerHTML = `
+                <div style="margin-top:0.5rem;">
+                    <strong>关联事件</strong>
+                    <pre style="font-size:0.8rem; color:#3e2e1f; background:#f5f3f0; padding:0.5rem; border-radius:6px; margin-top:0.3rem; white-space:pre-wrap; word-break:break-all; max-height:120px; overflow-y:auto;">${eventList || '暂无关联事件'}</pre>
+                    <div style="margin-top:0.5rem; font-size:0.75rem; color:#8a7a6a;">
+                        共参与 ${relatedEdges.length} 段关系
+                    </div>
+                </div>
+            `;
+
+            panel.classList.add('visible');
+        }
+
+        // ============================================================
+        //  UI 控制
+        // ============================================================
+        function showPlaceholder(main, sub = '') {
+            const el = document.getElementById('placeholder');
+            el.querySelector('.icon').textContent = '📜';
+            el.querySelector('span:first-of-type').textContent = main;
+            const subEl = el.querySelector('.sub');
+            if (sub) subEl.textContent = sub;
+            else subEl.textContent = '请确保事件已审核通过';
+            el.style.display = 'flex';
+        }
+
+        function hidePlaceholder() {
+            document.getElementById('placeholder').style.display = 'none';
+        }
+
+        document.getElementById('btnRefresh').addEventListener('click', fetchAndRender);
+        document.getElementById('btnReset').addEventListener('click', () => {
+            if (network) network.fit();
+        });
+        document.getElementById('infoClose').addEventListener('click', () => {
+            document.getElementById('infoPanel').classList.remove('visible');
+        });
+
+        // ESC 关闭面板
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('infoPanel').classList.remove('visible');
+            }
+        });
+
+        // ============================================================
+        //  初始化
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', fetchAndRender);
+    </script>
+</body>
+</html>
