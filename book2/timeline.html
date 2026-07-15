@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MK48/49 编年史 | 正文</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 所有原有样式保持不变，此处省略以节省篇幅，你实际使用时保留完整样式 */
+        .admin-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; text-align: center; }
+        .admin-controls { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #ddd; }
+        .admin-btn { padding: 0.25rem 0.5rem; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem; }
+        .approve-btn { background: #28a745; color: white; }
+        .reject-btn { background: #dc3545; color: white; }
+        .event-card.pending { background: #fff3cd; border-left: 5px solid #ffc107; }
+        .event-card.rejected { background: #f8d7da; border-left: 5px solid #dc3545; opacity: 0.7; }
+        .login-section { background: #f8f9fa; padding: 1rem; border-radius: 6px; margin: 1rem 0; border-left: 4px solid #667eea; }
+        .mod-info { background: #e3f2fd; padding: 0.5rem 1rem; border-radius: 4px; margin: 0.5rem 0; font-size: 0.9rem; }
+        .mod-login-form { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
+        .mod-login-form input { flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .mod-login-form button { padding: 0.5rem 1rem; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .logout-btn { background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 3px; cursor: pointer; font-size: 0.8rem; margin-left: 1rem; }
+        .error-card { background: #ffebee; border-left: 5px solid #f44336; padding: 2rem; margin: 1rem 0; color: #c62828; }
+        .loading { text-align: center; padding: 2rem; font-style: italic; color: #666; }
+        .event-images { margin: 1rem 0; }
+        .image-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; }
+        .image-gallery a { display: block; border-radius: 4px; overflow: hidden; transition: transform 0.2s ease; }
+        .image-gallery a:hover { transform: scale(1.05); }
+        .image-gallery img { width: 100%; height: 60px; object-fit: cover; border-radius: 4px; }
+        @media (max-width: 768px) {
+            .image-gallery { grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 0.3rem; }
+            .image-gallery img { height: 50px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="book-container">
+        <header class="book-header">
+            <h1>MK48/49 编年史</h1>
+            <div>
+                <a href="index.html">🏠 返回首页</a>
+                <a href="hall-of-fame.html">📖 贡献榜单</a>
+                <a href="submit.html">📝 贡献史料</a>
+                <a href="stats.html">📊 数据统计</a>
+                <a href="graph.html">🌐 势力关系图</a>
+            </div>
+        </header>
+
+        <div id="adminLoginSection" class="login-section">
+            <h3>🔐 审核员登录</h3>
+            <div class="mod-login-form">
+                <input type="password" id="modSecretKey" placeholder="输入审核密钥">
+                <button onclick="moderatorLogin()">登录</button>
+            </div>
+            <small>只有获得授权的审核员可以登录管理事件</small>
+        </div>
+
+        <div id="modInfoSection" class="login-section" style="display: none;">
+            <h3>📋 审核模式</h3>
+            <div class="mod-info">
+                👤 审核员: <span id="modUsername"></span>
+                <button onclick="moderatorLogout()" class="logout-btn">退出</button>
+            </div>
+            <div class="mod-actions">
+                <label>
+                    <input type="checkbox" id="showPendingCheckbox" onchange="togglePendingEvents()">
+                    显示待审核事件
+                </label>
+            </div>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 搜索事件关键词..." onkeyup="handleSearch(event)">
+                <button onclick="performSearch()">搜索</button>
+                <button onclick="clearSearch()" class="clear-btn">清除</button>
+            </div>
+            <div id="searchResults" class="search-results"></div>
+        </div>
+        
+        <main class="timeline-container" id="timeline">
+            <div class="loading">史书正在加载中...</div>
+        </main>
+
+        <div class="pagination">
+            <button id="prevPage">上一页</button>
+            <span id="currentPage">1</span>
+            <button id="nextPage">下一页</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+        // ====================== MK48/49 编年史 · Supabase 配置 ======================
+        const SUPABASE_URL = 'https://rjstjmxwizfxrgrwgyab.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
+        const MODERATOR_STORAGE_KEY = 'mk49_moderator_info';
+
+        // ====================== 客户端初始化 ======================
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase客户端已初始化');
+
+        // ====================== 全局变量 ======================
+        let currentPage = 1;
+        const eventsPerPage = 5;
+        let currentModerator = null;
+        let showPendingEvents = false;
+        let allEvents = [];
+        let currentSearchTerm = ''; // 全局搜索词
+
+        // ====================== 审核相关函数 ======================
+        function checkModeratorStatus() {
+            const moderatorInfo = localStorage.getItem(MODERATOR_STORAGE_KEY);
+            if (moderatorInfo) {
+                try {
+                    currentModerator = JSON.parse(moderatorInfo);
+                    showModeratorInfo();
+                    return true;
+                } catch (error) {
+                    console.error('解析审核员信息失败:', error);
+                    localStorage.removeItem(MODERATOR_STORAGE_KEY);
+                }
+            }
+            return false;
+        }
+
+        function showModeratorInfo() {
+            if (currentModerator) {
+                document.getElementById('adminLoginSection').style.display = 'none';
+                document.getElementById('modInfoSection').style.display = 'block';
+                document.getElementById('modUsername').textContent = currentModerator.username;
+            } else {
+                document.getElementById('adminLoginSection').style.display = 'block';
+                document.getElementById('modInfoSection').style.display = 'none';
+            }
+        }
+
+        async function moderatorLogin() {
+            const secretKey = document.getElementById('modSecretKey').value;
+            if (!secretKey) {
+                alert('请输入审核密钥');
+                return;
+            }
+            try {
+                const { data: moderator, error } = await supabaseClient
+                    .from('moderators')
+                    .select('id, username')
+                    .eq('secret_key', secretKey)
+                    .eq('is_active', true)
+                    .single();
+
+                if (error) {
+                    if (error.code === 'PGRST116') throw new Error('审核密钥无效或已失效');
+                    throw error;
+                }
+                if (!moderator) throw new Error('审核密钥无效');
+
+                currentModerator = {
+                    id: moderator.id,
+                    username: moderator.username,
+                    loggedInAt: new Date().toISOString()
+                };
+                localStorage.setItem(MODERATOR_STORAGE_KEY, JSON.stringify(currentModerator));
+                document.getElementById('modSecretKey').value = '';
+                showModeratorInfo();
+                alert('登录成功！');
+                loadEvents();
+            } catch (error) {
+                console.error('登录失败:', error);
+                alert(error.message || '登录失败，请检查密钥');
+            }
+        }
+
+        function moderatorLogout() {
+            currentModerator = null;
+            localStorage.removeItem(MODERATOR_STORAGE_KEY);
+            showModeratorInfo();
+            showPendingEvents = false;
+            document.getElementById('showPendingCheckbox').checked = false;
+            loadEvents();
+            alert('已退出审核模式');
+        }
+
+        function togglePendingEvents() {
+            showPendingEvents = document.getElementById('showPendingCheckbox').checked;
+            loadEvents();
+        }
+
+        async function reviewEvent(eventId, action) {
+            if (!currentModerator) return;
+            const confirmMessage = action === 'approve' ? '确定要通过这个事件吗？' : '确定要拒绝这个事件吗？';
+            if (!confirm(confirmMessage)) return;
+
+            const comment = prompt('请输入审核意见（可选）：');
+            const reviewData = {
+                reviewed_at: new Date().toISOString(),
+                moderator_id: currentModerator.id,
+                review_comment: comment || null
+            };
+            if (action === 'approve') {
+                reviewData.approved = true;
+                reviewData.rejected = false;
+            } else {
+                reviewData.approved = false;
+                reviewData.rejected = true;
+            }
+            try {
+                const { error } = await supabaseClient
+                    .from('events')
+                    .update(reviewData)
+                    .eq('id', eventId);
+                if (error) throw error;
+                alert(`事件已${action === 'approve' ? '通过' : '拒绝'}`);
+                loadEvents();
+            } catch (error) {
+                console.error('审核失败:', error);
+                alert('审核失败: ' + error.message);
+            }
+        }
+
+        // ====================== 获取事件（核心） ======================
+        async function fetchEvents() {
+            console.log('🔄 开始获取事件数据...');
+            try {
+                let query = supabaseClient.from('events').select('*');
+                
+                if (!currentModerator || !showPendingEvents) {
+                    // 只获取已审核的
+                    query = query.eq('approved', true)
+                                 .order('event_date', { ascending: true, nullsFirst: false })
+                                 .order('created_at', { ascending: true });
+                    console.log('📌 查询条件: approved = true');
+                } else {
+                    // 获取所有（包括待审核）
+                    query = query.eq('rejected', false)
+                                 .order('approved', { ascending: true })
+                                 .order('event_date', { ascending: true, nullsFirst: false })
+                                 .order('created_at', { ascending: true });
+                    console.log('📌 查询条件: 显示待审核');
+                }
+
+                const { data, error } = await query;
+                if (error) {
+                    console.error('❌ 查询失败:', error);
+                    throw error;
+                }
+
+                console.log(`✅ 成功获取 ${data?.length || 0} 条事件`);
+                // 打印第一条数据以便检查字段
+                if (data && data.length > 0) {
+                    console.log('📋 示例数据:', data[0]);
+                }
+                return data || [];
+            } catch (error) {
+                console.error('❌ 获取事件失败:', error);
+                const container = document.getElementById('timeline');
+                container.innerHTML = `
+                    <div class="error-card">
+                        <h3>读取史书失败</h3>
+                        <p>错误信息: ${error.message}</p>
+                        <p>请检查控制台获取详细信息</p>
+                    </div>
+                `;
+                return [];
+            }
+        }
+
+        // ====================== 渲染事件 ======================
+        function renderEvents(events, page) {
+            const container = document.getElementById('timeline');
+            console.log(`🎨 渲染事件，共 ${events?.length || 0} 条，页码 ${page}`);
+            
+            if (!events || events.length === 0) {
+                container.innerHTML = `
+                    <div class="event-card">
+                        <h3>史书尚为空卷</h3>
+                        <p>尚未有通过审核的历史事件。</p>
+                        <p><a href="submit.html">成为历史的书写者</a></p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            const start = (page - 1) * eventsPerPage;
+            const end = start + eventsPerPage;
+            const paginatedEvents = events.slice(start, end);
+
+            if (paginatedEvents.length === 0) {
+                container.innerHTML = '<div class="event-card">这一页是空白的，等待书写...</div>';
+                return;
+            }
+
+            paginatedEvents.forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.className = `event-card ${!event.approved && !event.rejected ? 'pending' : ''} ${event.rejected ? 'rejected' : ''}`;
+                
+                let adminControls = '';
+                if (currentModerator && !event.approved && !event.rejected) {
+                    adminControls = `
+                        <div class="admin-controls">
+                            <button class="admin-btn approve-btn" onclick="reviewEvent(${event.id}, 'approve')">✅ 通过</button>
+                            <button class="admin-btn reject-btn" onclick="reviewEvent(${event.id}, 'reject')">❌ 拒绝</button>
+                        </div>
+                    `;
+                }
+
+                eventEl.innerHTML = `
+                    <h3>${event.date || ''}</h3>
+                    <h2>${event.title || '无标题'}</h2>
+                    <p><strong>涉及势力：</strong>${event.faction || '未知'}</p>
+                    <p>${event.content || ''}</p>
+                    ${event.images && event.images.length > 0 ? `
+                       <div class="event-images">
+                            <h4>🖼️ 相关图片(${event.images.length})</h4>
+                            <div class="image-gallery">
+                                ${event.images.map((img, index) => `
+                                    <a href="${img}" target="_blank" title="查看大图">
+                                        <img src="${img}" alt="事件图片${index + 1}" loading="lazy">
+                                    </a>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">📜 查看证据</a>` : ''}
+                    <div class="event-meta">
+                        提交者: ${event.submitted_by || '匿名'} | 
+                        状态: ${event.approved ? '✅ 已通过' : event.rejected ? '❌ 已拒绝' : '⏳ 待审核'} |
+                        记录于: ${event.created_at ? new Date(event.created_at).toLocaleDateString('zh-CN') : '未知'}
+                        ${event.reviewed_at ? ` | 审核于: ${new Date(event.reviewed_at).toLocaleDateString('zh-CN')}` : ''}
+                    </div>
+                    ${adminControls}
+                `;
+                container.appendChild(eventEl);
+            });
+        }
+
+        // ====================== 加载事件（入口） ======================
+        async function loadEvents() {
+            const container = document.getElementById('timeline');
+            container.innerHTML = '<div class="loading">📚 史书正在加载中...</div>';
+            
+            allEvents = await fetchEvents();
+            const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+            if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+            if (currentPage < 1) currentPage = 1;
+
+            document.getElementById('currentPage').textContent = `${currentPage} / ${totalPages || 1}`;
+            renderEvents(allEvents, currentPage);
+        }
+
+        // ====================== 搜索功能 ======================
+        function handleSearch(event) {
+            if (event.key === 'Enter') performSearch();
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            currentSearchTerm = searchTerm;
+            if (!searchTerm) {
+                clearSearch();
+                return;
+            }
+            const results = searchEvents(searchTerm);
+            displaySearchResults(results, searchTerm);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentSearchTerm = '';
+            document.getElementById('searchResults').innerHTML = '';
+            renderEvents(allEvents, currentPage);
+        }
+
+        function searchEvents(searchTerm) {
+            if (!searchTerm || !allEvents.length) return [];
+            const lower = searchTerm.toLowerCase();
+            return allEvents.filter(event => {
+                return (
+                    (event.title && event.title.toLowerCase().includes(lower)) ||
+                    (event.content && event.content.toLowerCase().includes(lower)) ||
+                    (event.faction && event.faction.toLowerCase().includes(lower)) ||
+                    (event.submitted_by && event.submitted_by.toLowerCase().includes(lower))
+                );
+            });
+        }
+
+        function displaySearchResults(results, searchTerm) {
+            const resultsContainer = document.getElementById('searchResults');
+            const timelineContainer = document.getElementById('timeline');
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `<div class="search-info">没有找到包含 "<strong>${searchTerm}</strong>" 的事件</div>`;
+                timelineContainer.innerHTML = '<div class="event-card">没有找到相关事件</div>';
+                return;
+            }
+            resultsContainer.innerHTML = `<div class="search-info">找到 ${results.length} 个包含 "<strong>${searchTerm}</strong>" 的事件</div>`;
+            // 高亮搜索词
+            const highlighted = results.map(event => {
+                const ev = { ...event };
+                const highlight = (text) => {
+                    if (!text) return text;
+                    return text.replace(new RegExp(searchTerm, 'gi'), match => `<span class="highlight">${match}</span>`);
+                };
+                ev.title = highlight(event.title);
+                ev.content = highlight(event.content);
+                ev.faction = highlight(event.faction);
+                ev.submitted_by = highlight(event.submitted_by);
+                return ev;
+            });
+            renderEvents(highlighted, 1);
+        }
+
+        // ====================== 页面初始化 ======================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 页面加载完成，开始初始化...');
+            checkModeratorStatus();
+
+            document.getElementById('prevPage').addEventListener('click', () => {
+                if (currentSearchTerm) {
+                    const results = searchEvents(currentSearchTerm);
+                    const totalPages = Math.ceil(results.length / eventsPerPage);
+                    if (currentPage > 1) currentPage--;
+                    renderEvents(results, currentPage);
+                } else {
+                    if (currentPage > 1) currentPage--;
+                    loadEvents();
+                }
+            });
+
+            document.getElementById('nextPage').addEventListener('click', () => {
+                if (currentSearchTerm) {
+                    const results = searchEvents(currentSearchTerm);
+                    const totalPages = Math.ceil(results.length / eventsPerPage);
+                    if (currentPage < totalPages) currentPage++;
+                    renderEvents(results, currentPage);
+                } else {
+                    const totalPages = Math.ceil(allEvents.length / eventsPerPage);
+                    if (currentPage < totalPages) currentPage++;
+                    loadEvents();
+                }
+            });
+
+            loadEvents();
+        });
+    </script>
+</body>
+</html>
