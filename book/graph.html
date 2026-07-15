@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>势力关系图谱 · MK48/49 编年史</title>
+    <title>势力关系图谱 · KIOMET 编年史</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js">
     </script>
@@ -262,7 +262,7 @@
 
         <!-- 头部 -->
         <header class="app-header">
-            <h1>🏛️ 势力关系图谱 <small>MK48/49 编年史</small></h1>
+            <h1>🏛️ 势力关系图谱 <small>KIOMET 编年史</small></h1>
             <div class="header-actions">
                 <a href="timeline.html" class="nav-link">📖 史书</a>
                 <a href="submit.html" class="nav-link">📝 贡献</a>
@@ -310,11 +310,11 @@
 
     <script>
         // ============================================================
-        //  MK48/49 编年史 · Supabase 配置
+        //  Supabase 配置
         // ============================================================
-        const SUPABASE_URL = 'https://rjstjmxwizfxrgrwgyab.supabase.co';
+        const SUPABASE_URL = 'https://seijdhrrdpojbkuwddmq.supabase.co';
         const SUPABASE_ANON_KEY =
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlaWpkaHJyZHBvamJrdXdkZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MDE3OTEsImV4cCI6MjA5OTA3Nzc5MX0.0E1QZXiPS203lltmW6XwrnG4Dd0MhxJpwpI-RDRgqG4';
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('✅ Supabase 客户端已初始化');
