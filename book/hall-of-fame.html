@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>贡献榜 - MK48/49 编年史</title>
+    <title>贡献榜 - KIOMET 编年史</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .hall-container {
@@ -14,23 +14,23 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
-        
+
         .hall-header {
             text-align: center;
             margin-bottom: 3rem;
         }
-        
+
         .trophy-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
         }
-        
+
         .rankings {
             display: grid;
             gap: 1.5rem;
             margin-bottom: 3rem;
         }
-        
+
         .ranking-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -38,11 +38,11 @@
             border-radius: 12px;
             position: relative;
         }
-        
+
         .rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
         .rank-2 { background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%); }
         .rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); }
-        
+
         .rank-number {
             position: absolute;
             top: -15px;
@@ -59,46 +59,46 @@
             font-size: 1.2rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
-        
+
         .submitter-name {
             font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
         }
-        
+
         .stats {
             display: flex;
             gap: 2rem;
             margin-top: 1rem;
         }
-        
+
         .stat {
             text-align: center;
         }
-        
+
         .stat-number {
             font-size: 1.8rem;
             font-weight: bold;
         }
-        
+
         .stat-label {
             font-size: 0.9rem;
             opacity: 0.9;
         }
-        
+
         .all-submitters {
             background: #f8f9fa;
             padding: 2rem;
             border-radius: 12px;
         }
-        
+
         .submitter-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 1rem;
             margin-top: 1rem;
         }
-        
+
         .submitter-item {
             background: white;
             padding: 1rem;
@@ -106,7 +106,7 @@
             text-align: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .badge {
             display: inline-block;
             padding: 0.25rem 0.5rem;
@@ -114,7 +114,7 @@
             font-size: 0.8rem;
             margin-left: 0.5rem;
         }
-        
+
         .badge-gold { background: #FFD700; color: #333; }
         .badge-silver { background: #C0C0C0; color: #333; }
         .badge-bronze { background: #CD7F32; color: white; }
@@ -124,7 +124,7 @@
     <div class="hall-container">
         <div class="hall-header">
             <div class="trophy-icon">🏆</div>
-            <h1>MK48/49 编年史贡献榜</h1>
+            <h1>KIOMET 编年史贡献榜</h1>
             <p>致敬所有为记录历史做出贡献的玩家</p>
         </div>
 
@@ -150,17 +150,16 @@
 
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
-        // ============================================================
-        //  MK48/49 编年史 · Supabase 配置
-        // ============================================================
-        const SUPABASE_URL = 'https://rjstjmxwizfxrgrwgyab.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
-        
+        const SUPABASE_URL = 'https://seijdhrrdpojbkuwddmq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlaWpkaHJyZHBvamJrdXdkZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MDE3OTEsImV4cCI6MjA5OTA3Nzc5MX0.0E1QZXiPS203lltmW6XwrnG4Dd0MhxJpwpI-RDRgqG4';
+
+        // 改为 supabaseClient 避免与全局冲突
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 获取贡献者统计数据
         async function getSubmitterStats() {
             try {
+                // 获取所有已审核的事件
                 const { data: events, error } = await supabaseClient
                     .from('events')
                     .select('submitted_by, approved, created_at')
@@ -169,11 +168,12 @@
 
                 if (error) throw error;
 
+                // 统计每个提交者的事件数量
                 const stats = {};
                 events.forEach(event => {
                     const submitter = event.submitted_by;
                     if (!submitter || submitter === '匿名' || submitter.trim() === '') {
-                        return;
+                        return; // 直接跳过，不统计
                     }
                     if (!stats[submitter]) {
                         stats[submitter] = {
@@ -183,7 +183,8 @@
                         };
                     }
                     stats[submitter].total++;
-                    
+
+                    // 计算最近30天的提交数
                     const eventDate = new Date(event.created_at);
                     const thirtyDaysAgo = new Date();
                     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -193,7 +194,7 @@
                 });
 
                 return stats;
-                
+
             } catch (error) {
                 console.error('获取统计数据失败:', error);
                 return {};
@@ -214,7 +215,7 @@
         // 渲染前十名
         function renderTopRankings(topSubmitters) {
             const container = document.getElementById('topRankings');
-            
+
             if (topSubmitters.length === 0) {
                 container.innerHTML = '<div class="ranking-card">暂无数据，成为第一个贡献者吧！</div>';
                 return;
@@ -246,7 +247,7 @@
         // 渲染所有贡献者
         function renderAllSubmitters(allSubmitters) {
             const container = document.getElementById('allSubmitters');
-            
+
             container.innerHTML = allSubmitters.map((submitter, index) => `
                 <div class="submitter-item">
                     <div class="submitter-name">${submitter.name}</div>
