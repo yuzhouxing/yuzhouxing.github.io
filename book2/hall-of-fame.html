@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贡献榜 - MK48/49 编年史</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .hall-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hall-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .trophy-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .rankings {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .ranking-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
+        .rank-2 { background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%); }
+        .rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); }
+        
+        .rank-number {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            background: white;
+            color: #333;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .submitter-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .all-submitters {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+        }
+        
+        .submitter-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .submitter-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+        
+        .badge-gold { background: #FFD700; color: #333; }
+        .badge-silver { background: #C0C0C0; color: #333; }
+        .badge-bronze { background: #CD7F32; color: white; }
+    </style>
+</head>
+<body class="submit-body">
+    <div class="hall-container">
+        <div class="hall-header">
+            <div class="trophy-icon">🏆</div>
+            <h1>MK48/49 编年史贡献榜</h1>
+            <p>致敬所有为记录历史做出贡献的玩家</p>
+        </div>
+
+        <div class="rankings" id="topRankings">
+            <div class="loading">加载英雄榜中...</div>
+        </div>
+
+        <div class="all-submitters">
+            <h2>📊 所有贡献者</h2>
+            <div class="submitter-list" id="allSubmitters">
+                <div class="loading">加载贡献者列表...</div>
+            </div>
+        </div>
+
+        <div class="navigation" style="margin-top: 3rem;">
+            <a href="index.html">🏠 返回首页</a>
+            <a href="timeline.html">📖 查看编年史</a>
+            <a href="submit.html">📝 贡献史料</a>
+            <a href="stats.html">📊 数据统计</a>
+            <a href="graph.html">🌐 势力关系图</a>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+        // ============================================================
+        //  MK48/49 编年史 · Supabase 配置
+        // ============================================================
+        const SUPABASE_URL = 'https://rjstjmxwizfxrgrwgyab.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 获取贡献者统计数据
+        async function getSubmitterStats() {
+            try {
+                const { data: events, error } = await supabaseClient
+                    .from('events')
+                    .select('submitted_by, approved, created_at')
+                    .eq('approved', true)
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+
+                const stats = {};
+                events.forEach(event => {
+                    const submitter = event.submitted_by;
+                    if (!submitter || submitter === '匿名' || submitter.trim() === '') {
+                        return;
+                    }
+                    if (!stats[submitter]) {
+                        stats[submitter] = {
+                            total: 0,
+                            recent: 0,
+                            firstSubmission: new Date(event.created_at)
+                        };
+                    }
+                    stats[submitter].total++;
+                    
+                    const eventDate = new Date(event.created_at);
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    if (eventDate > thirtyDaysAgo) {
+                        stats[submitter].recent++;
+                    }
+                });
+
+                return stats;
+                
+            } catch (error) {
+                console.error('获取统计数据失败:', error);
+                return {};
+            }
+        }
+
+        // 渲染名人堂
+        async function renderHallOfFame() {
+            const stats = await getSubmitterStats();
+            const submitters = Object.entries(stats)
+                .map(([name, data]) => ({ name, ...data }))
+                .sort((a, b) => b.total - a.total);
+
+            renderTopRankings(submitters.slice(0, 10));
+            renderAllSubmitters(submitters);
+        }
+
+        // 渲染前十名
+        function renderTopRankings(topSubmitters) {
+            const container = document.getElementById('topRankings');
+            
+            if (topSubmitters.length === 0) {
+                container.innerHTML = '<div class="ranking-card">暂无数据，成为第一个贡献者吧！</div>';
+                return;
+            }
+
+            container.innerHTML = topSubmitters.map((submitter, index) => `
+                <div class="ranking-card ${index < 3 ? 'rank-' + (index + 1) : ''}">
+                    <div class="rank-number">${index + 1}</div>
+                    <div class="submitter-name">${submitter.name}</div>
+                    <p>历史守护者，贡献了 ${submitter.total} 个重要事件</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-number">${submitter.total}</div>
+                            <div class="stat-label">总贡献</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">${submitter.recent}</div>
+                            <div class="stat-label">近30天</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">${new Date(submitter.firstSubmission).toLocaleDateString('zh-CN')}</div>
+                            <div class="stat-label">首次贡献</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染所有贡献者
+        function renderAllSubmitters(allSubmitters) {
+            const container = document.getElementById('allSubmitters');
+            
+            container.innerHTML = allSubmitters.map((submitter, index) => `
+                <div class="submitter-item">
+                    <div class="submitter-name">${submitter.name}</div>
+                    <div>${submitter.total} 个事件</div>
+                    ${index < 3 ? `<span class="badge badge-${['gold', 'silver', 'bronze'][index]}">TOP ${index + 1}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderHallOfFame();
+        });
+    </script>
+</body>
+</html>
