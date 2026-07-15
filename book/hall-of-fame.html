@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>贡献榜 - KIOMET 编年史</title>
+    <title>贡献榜 - MK48/49 编年史</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .hall-container {
@@ -124,7 +124,7 @@
     <div class="hall-container">
         <div class="hall-header">
             <div class="trophy-icon">🏆</div>
-            <h1>KIOMET 编年史贡献榜</h1>
+            <h1>MK48/49 编年史贡献榜</h1>
             <p>致敬所有为记录历史做出贡献的玩家</p>
         </div>
 
@@ -150,16 +150,17 @@
 
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
-        const SUPABASE_URL = 'https://seijdhrrdpojbkuwddmq.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlaWpkaHJyZHBvamJrdXdkZG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MDE3OTEsImV4cCI6MjA5OTA3Nzc5MX0.0E1QZXiPS203lltmW6XwrnG4Dd0MhxJpwpI-RDRgqG4';
+        // ============================================================
+        //  MK48/49 编年史 · Supabase 配置
+        // ============================================================
+        const SUPABASE_URL = 'https://rjstjmxwizfxrgrwgyab.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
         
-        // 改为 supabaseClient 避免与全局冲突
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 获取贡献者统计数据
         async function getSubmitterStats() {
             try {
-                // 获取所有已审核的事件
                 const { data: events, error } = await supabaseClient
                     .from('events')
                     .select('submitted_by, approved, created_at')
@@ -168,12 +169,11 @@
 
                 if (error) throw error;
 
-                // 统计每个提交者的事件数量
                 const stats = {};
                 events.forEach(event => {
                     const submitter = event.submitted_by;
                     if (!submitter || submitter === '匿名' || submitter.trim() === '') {
-                        return; // 直接跳过，不统计
+                        return;
                     }
                     if (!stats[submitter]) {
                         stats[submitter] = {
@@ -184,7 +184,6 @@
                     }
                     stats[submitter].total++;
                     
-                    // 计算最近30天的提交数
                     const eventDate = new Date(event.created_at);
                     const thirtyDaysAgo = new Date();
                     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
