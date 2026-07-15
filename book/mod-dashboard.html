@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>审核面板 - KIOMET 编年史</title>
+    <title>审核面板 - MK48/49 编年史</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .mod-container {
@@ -102,6 +102,52 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        .admin-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .approve-btn {
+            background: #28a745;
+            color: white;
+        }
+        .reject-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        .event-meta {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .navigation {
+            margin-top: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .navigation a {
+            color: #6b5b4b;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body class="submit-body">
@@ -144,14 +190,43 @@
         <div class="event-list" id="eventList">
             <div class="loading">加载中...</div>
         </div>
+
+        <div class="navigation">
+            <a href="index.html">🏠 返回首页</a>
+            <a href="timeline.html">📖 查看编年史</a>
+            <a href="submit.html">📝 贡献史料</a>
+            <a href="hall-of-fame.html">🏆 贡献榜</a>
+            <a href="stats.html">📊 数据统计</a>
+            <a href="graph.html">🌐 势力关系图</a>
+        </div>
     </div>
 
+    <script src="https://unpkg.com/@supabase/supabase-js">
+    </script>
     <script>
-        const MODERATOR_STORAGE_KEY = 'kiomet_moderator_info';
+        // ============================================================
+        //  MK48/49 编年史 · Supabase 配置
+        // ============================================================
+        const SUPABASE_URL = 'https://rjstjmxwizfxrgrwgyab.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase 客户端已初始化 (审核面板)');
+
+        // ============================================================
+        //  配置
+        // ============================================================
+        const MODERATOR_STORAGE_KEY = 'mk49_moderator_info';
+
+        // ============================================================
+        //  全局状态
+        // ============================================================
         let currentModerator = null;
         let allEvents = [];
 
-        // 检查登录状态
+        // ============================================================
+        //  登录检查
+        // ============================================================
         function checkLogin() {
             const moderatorInfo = localStorage.getItem(MODERATOR_STORAGE_KEY);
             if (!moderatorInfo) {
@@ -159,7 +234,7 @@
                 window.location.href = 'mod-login.html';
                 return false;
             }
-            
+
             try {
                 currentModerator = JSON.parse(moderatorInfo);
                 document.getElementById('modInfo').innerHTML = `
@@ -174,18 +249,22 @@
             }
         }
 
-        // 退出登录
+        // ============================================================
+        //  退出登录
+        // ============================================================
         function logout() {
             localStorage.removeItem(MODERATOR_STORAGE_KEY);
             window.location.href = 'mod-login.html';
         }
 
-        // 加载事件数据
+        // ============================================================
+        //  加载事件
+        // ============================================================
         async function loadEvents() {
             if (!checkLogin()) return;
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('events')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -195,7 +274,7 @@
                 allEvents = data || [];
                 updateStats();
                 renderEvents(allEvents);
-                
+
             } catch (error) {
                 console.error('加载事件失败:', error);
                 document.getElementById('eventList').innerHTML = `
@@ -204,7 +283,9 @@
             }
         }
 
-        // 更新统计信息
+        // ============================================================
+        //  更新统计
+        // ============================================================
         function updateStats() {
             const total = allEvents.length;
             const pending = allEvents.filter(e => !e.approved && !e.rejected).length;
@@ -217,10 +298,12 @@
             document.getElementById('rejectedEvents').textContent = rejected;
         }
 
-        // 渲染事件列表
+        // ============================================================
+        //  渲染事件列表
+        // ============================================================
         function renderEvents(events) {
             const eventList = document.getElementById('eventList');
-            
+
             if (events.length === 0) {
                 eventList.innerHTML = '<div class="mod-event-card">暂无事件</div>';
                 return;
@@ -228,10 +311,10 @@
 
             eventList.innerHTML = events.map(event => `
                 <div class="mod-event-card ${event.approved ? 'approved' : ''} ${event.rejected ? 'rejected' : ''}">
-                    <h3>${event.date}</h3>
-                    <h2>${event.title}</h2>
-                    <p><strong>涉及势力：</strong>${event.faction}</p>
-                    <p>${event.content}</p>
+                    <h3>${event.date || ''}</h3>
+                    <h2>${event.title || '无标题'}</h2>
+                    <p><strong>涉及势力：</strong>${event.faction || '未知'}</p>
+                    <p>${event.content || ''}</p>
                     ${event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">📜 查看证据</a>` : ''}
                     <div class="event-meta">
                         提交者: ${event.submitted_by || '匿名'} | 
@@ -252,7 +335,9 @@
             `).join('');
         }
 
-        // 审核事件
+        // ============================================================
+        //  审核事件
+        // ============================================================
         async function reviewEvent(eventId, action) {
             if (!checkLogin()) return;
 
@@ -272,7 +357,7 @@
             }
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('events')
                     .update(reviewData)
                     .eq('id', eventId);
@@ -280,35 +365,44 @@
                 if (error) throw error;
 
                 alert(`事件已${action === 'approve' ? '通过' : '拒绝'}`);
-                loadEvents(); // 重新加载
-                
+                loadEvents();
+
             } catch (error) {
                 console.error('审核失败:', error);
                 alert('审核失败: ' + error.message);
             }
         }
 
-        // 过滤事件
+        // ============================================================
+        //  过滤事件
+        // ============================================================
         function filterEvents(filter) {
             const filteredEvents = allEvents.filter(event => {
                 switch (filter) {
-                    case 'pending': return !event.approved && !event.rejected;
-                    case 'approved': return event.approved;
-                    case 'rejected': return event.rejected;
-                    default: return true;
+                    case 'pending':
+                        return !event.approved && !event.rejected;
+                    case 'approved':
+                        return event.approved;
+                    case 'rejected':
+                        return event.rejected;
+                    default:
+                        return true;
                 }
             });
 
-            // 更新按钮状态
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
 
             renderEvents(filteredEvents);
         }
 
-        // 初始化
+        // ============================================================
+        //  初始化
+        // ============================================================
         document.addEventListener('DOMContentLoaded', () => {
             if (checkLogin()) {
                 loadEvents();
