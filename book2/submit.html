@@ -48,7 +48,60 @@
         }
         .form-group textarea { resize: vertical; }
 
-        /* ===== 日期验证 ===== */
+        /* ===== 日期模式切换 ===== */
+        .date-mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+        .date-mode-toggle button {
+            padding: 0.4rem 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .date-mode-toggle button.active {
+            background: #6b5b4b;
+            color: white;
+            border-color: #6b5b4b;
+        }
+        .date-mode-toggle button:hover:not(.active) {
+            background: #f0ede8;
+        }
+
+        .date-input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .date-input-group input {
+            flex: 1;
+            min-width: 120px;
+        }
+        .date-input-group .date-label {
+            font-size: 0.85rem;
+            color: #8a7a6a;
+            font-weight: 500;
+        }
+        .date-input-group .date-separator {
+            font-size: 1.2rem;
+            color: #b5a99b;
+            font-weight: 300;
+        }
+        .date-input-group .end-date-group {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .date-input-group .end-date-group.hidden {
+            display: none;
+        }
+
         .date-error {
             color: #dc3545;
             font-size: 0.8rem;
@@ -371,6 +424,8 @@
             .submit-container { padding: 1rem; }
             .faction-selector .input-row input { min-width: 120px; }
             .faction-selector .input-row button { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
+            .date-input-group input { min-width: 80px; }
+            .date-mode-toggle button { font-size: 0.75rem; padding: 0.3rem 0.8rem; }
         }
     </style>
 </head>
@@ -399,17 +454,46 @@
         </div>
 
         <form id="eventForm">
-            <!-- 日期 -->
+            <!-- ===== 日期区域（支持单日/时间段） ===== -->
             <div class="form-group">
-                <label for="date">🗓️ 历史日期：</label>
-                <input type="text" id="date" name="date" required
-                       placeholder="例如：2025.3 或 2025.3.18"
-                       oninput="validateDate(this)">
-                <div id="dateError" class="date-error"></div>
-                <small>请使用标准格式：YYYY.M 或 YYYY.M.D</small>
+                <label>🗓️ 历史日期：</label>
+
+                <!-- 模式切换 -->
+                <div class="date-mode-toggle">
+                    <button type="button" id="modeSingle" class="active" onclick="setDateMode('single')">📅 单日</button>
+                    <button type="button" id="modeRange" onclick="setDateMode('range')">📆 时间段</button>
+                </div>
+
+                <!-- 单日模式 -->
+                <div id="singleDateGroup">
+                    <input type="text" id="date" name="date" 
+                           placeholder="例如：2025.3 或 2025.3.18"
+                           oninput="validateDate(this)">
+                    <div id="dateError" class="date-error"></div>
+                </div>
+
+                <!-- 时间段模式 -->
+                <div id="rangeDateGroup" style="display: none;">
+                    <div class="date-input-group">
+                        <div>
+                            <div class="date-label">起始</div>
+                            <input type="text" id="dateStart" placeholder="2025.3"
+                                   oninput="validateDateRange()">
+                        </div>
+                        <span class="date-separator">—</span>
+                        <div>
+                            <div class="date-label">结束</div>
+                            <input type="text" id="dateEnd" placeholder="2025.5"
+                                   oninput="validateDateRange()">
+                        </div>
+                    </div>
+                    <div id="rangeDateError" class="date-error"></div>
+                </div>
+
+                <small>单日格式：YYYY.M 或 YYYY.M.D | 时间段格式：YYYY.M — YYYY.M</small>
                 <div class="date-examples">
-                    📋 正确示例：2025.3、2025.3.18、2025.12、2025.12.1<br>
-                    ❌ 错误示例：2025年3月、2025/3/18、2025-3-18
+                    📋 单日示例：2025.3、2025.3.18<br>
+                    📋 时间段示例：2025.3 — 2025.5、2025.1.15 — 2025.2.20
                 </div>
             </div>
 
@@ -419,7 +503,7 @@
                 <input type="text" id="title" name="title" required placeholder="请输入事件标题">
             </div>
 
-            <!-- ===== 势力选择器 ===== -->
+            <!-- 势力选择器 -->
             <div class="form-group">
                 <label>⚔️ 涉及势力：</label>
                 <div class="faction-selector">
@@ -443,7 +527,6 @@
 
                     <div class="hint">💡 可选择多个势力，将用逗号分隔存储。势力名称前后空格会自动去除。</div>
                 </div>
-                <!-- 隐藏字段：存储逗号分隔的势力字符串 -->
                 <input type="hidden" id="faction" name="faction" required>
             </div>
 
@@ -509,18 +592,188 @@
         console.log('✅ Supabase 客户端已初始化');
 
         // ================================================================
-        //  2. 全局状态
+        //  全局状态
         // ================================================================
         let currentSubmitter = '';
         let uploadedImages = [];
-        let allFactions = [];        // 所有势力名称列表（从 factions 表加载）
-        let selectedFactions = [];   // 当前已选中的势力名称
+        let allFactions = [];
+        let selectedFactions = [];
+        let dateMode = 'single'; // 'single' 或 'range'
 
         // ================================================================
-        //  3. 势力标签管理（核心）
+        //  日期模式切换
+        // ================================================================
+        function setDateMode(mode) {
+            dateMode = mode;
+            document.getElementById('modeSingle').classList.toggle('active', mode === 'single');
+            document.getElementById('modeRange').classList.toggle('active', mode === 'range');
+            document.getElementById('singleDateGroup').style.display = mode === 'single' ? 'block' : 'none';
+            document.getElementById('rangeDateGroup').style.display = mode === 'range' ? 'block' : 'none';
+            // 清除错误状态
+            document.getElementById('dateError').style.display = 'none';
+            document.getElementById('rangeDateError').style.display = 'none';
+        }
+
+        // ================================================================
+        //  日期验证（单日）
+        // ================================================================
+        function validateDate(input) {
+            const errorDiv = document.getElementById('dateError');
+            const value = input.value.trim();
+            if (!value) {
+                errorDiv.style.display = 'none';
+                input.setCustomValidity('');
+                return true;
+            }
+            const isValid = /^20[2-9][0-9]\.(1[0-2]|[1-9])(\.(3[01]|[12][0-9]|[1-9]))?$/.test(value);
+            if (!isValid) {
+                errorDiv.textContent = '请使用正确格式：YYYY.M 或 YYYY.M.D（如：2025.3 或 2025.3.18）';
+                errorDiv.style.display = 'block';
+                input.setCustomValidity('日期格式不正确');
+                return false;
+            }
+            const parts = value.split('.');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            let day = parts.length > 2 ? parseInt(parts[2]) : 0;
+            if (month < 1 || month > 12) {
+                errorDiv.textContent = '月份必须在1-12之间';
+                errorDiv.style.display = 'block';
+                input.setCustomValidity('月份无效');
+                return false;
+            }
+            if (day > 0) {
+                const daysInMonth = new Date(year, month, 0).getDate();
+                if (day < 1 || day > daysInMonth) {
+                    errorDiv.textContent = `日期无效，${year}年${month}月只有${daysInMonth}天`;
+                    errorDiv.style.display = 'block';
+                    input.setCustomValidity('日期无效');
+                    return false;
+                }
+            }
+            errorDiv.style.display = 'none';
+            input.setCustomValidity('');
+            return true;
+        }
+
+        // ================================================================
+        //  日期验证（时间段）
+        // ================================================================
+        function validateDateRange() {
+            const errorDiv = document.getElementById('rangeDateError');
+            const startInput = document.getElementById('dateStart');
+            const endInput = document.getElementById('dateEnd');
+            const startVal = startInput.value.trim();
+            const endVal = endInput.value.trim();
+
+            if (!startVal && !endVal) {
+                errorDiv.style.display = 'none';
+                return true;
+            }
+
+            // 验证格式
+            const datePattern = /^20[2-9][0-9]\.(1[0-2]|[1-9])(\.(3[01]|[12][0-9]|[1-9]))?$/;
+            if (startVal && !datePattern.test(startVal)) {
+                errorDiv.textContent = '起始日期格式不正确，请使用 YYYY.M 或 YYYY.M.D';
+                errorDiv.style.display = 'block';
+                return false;
+            }
+            if (endVal && !datePattern.test(endVal)) {
+                errorDiv.textContent = '结束日期格式不正确，请使用 YYYY.M 或 YYYY.M.D';
+                errorDiv.style.display = 'block';
+                return false;
+            }
+
+            // 验证先后顺序
+            if (startVal && endVal) {
+                const startDate = parseDateToDate(startVal);
+                const endDate = parseDateToDate(endVal);
+                if (startDate && endDate && startDate > endDate) {
+                    errorDiv.textContent = '起始日期不能晚于结束日期';
+                    errorDiv.style.display = 'block';
+                    return false;
+                }
+            }
+
+            errorDiv.style.display = 'none';
+            return true;
+        }
+
+        // ================================================================
+        //  解析日期字符串为 Date 对象
+        // ================================================================
+        function parseDateToDate(dateText) {
+            const parts = dateText.split('.');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1;
+            const day = parts.length > 2 ? parseInt(parts[2]) : 1;
+            return new Date(year, month, day);
+        }
+
+        // ================================================================
+        //  解析日期字符串为 ISO 格式
+        // ================================================================
+        function parseDateToISO(dateText) {
+            if (!dateText) return null;
+            const parts = dateText.split('.');
+            const year = parts[0];
+            const month = parts[1].padStart(2, '0');
+            if (parts.length === 2) return `${year}-${month}-01`;
+            if (parts.length === 3) {
+                const day = parts[2].padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            return null;
+        }
+
+        // ================================================================
+        //  获取当前日期模式下的日期数据
+        // ================================================================
+        function getDateData() {
+            if (dateMode === 'single') {
+                const input = document.getElementById('date');
+                const value = input.value.trim();
+                if (!value) return { valid: false, error: '请填写日期' };
+                if (!validateDate(input)) return { valid: false, error: '日期格式不正确' };
+                return {
+                    valid: true,
+                    date_display: value,
+                    event_date: parseDateToISO(value),
+                    event_date_end: null
+                };
+            } else {
+                const startInput = document.getElementById('dateStart');
+                const endInput = document.getElementById('dateEnd');
+                const startVal = startInput.value.trim();
+                const endVal = endInput.value.trim();
+
+                if (!startVal && !endVal) {
+                    return { valid: false, error: '请填写起始日期和结束日期' };
+                }
+                if (!startVal) {
+                    return { valid: false, error: '请填写起始日期' };
+                }
+                if (!endVal) {
+                    return { valid: false, error: '请填写结束日期' };
+                }
+                if (!validateDateRange()) {
+                    return { valid: false, error: '日期范围无效' };
+                }
+
+                const display = `${startVal} — ${endVal}`;
+                return {
+                    valid: true,
+                    date_display: display,
+                    event_date: parseDateToISO(startVal),
+                    event_date_end: parseDateToISO(endVal)
+                };
+            }
+        }
+
+        // ================================================================
+        //  势力标签管理
         // ================================================================
 
-        // 加载所有势力（从 factions 表）
         async function loadFactions() {
             try {
                 const { data, error } = await supabaseClient
@@ -529,7 +782,6 @@
                     .order('name');
 
                 if (error) {
-                    // 如果表不存在，可能是还没创建，静默处理
                     console.warn('⚠️ factions 表可能不存在:', error.message);
                     allFactions = [];
                     return [];
@@ -545,7 +797,6 @@
             }
         }
 
-        // 过滤建议列表（实时搜索）
         function filterSuggestions(query) {
             const container = document.getElementById('factionSuggestions');
             const trimmed = query.trim().toLowerCase();
@@ -555,7 +806,6 @@
                 return;
             }
 
-            // 过滤：包含关键词且未被选中的
             const matched = allFactions.filter(name =>
                 name.toLowerCase().includes(trimmed) &&
                 !selectedFactions.includes(name)
@@ -573,7 +823,6 @@
             ).join('');
         }
 
-        // 选择已有势力
         function selectFaction(name) {
             if (selectedFactions.includes(name)) return;
             selectedFactions.push(name);
@@ -583,26 +832,22 @@
             filterSuggestions('');
         }
 
-        // 从输入框添加（尝试匹配已有势力，或提示创建）
         function addCurrentFaction() {
             const input = document.getElementById('factionInput');
             const name = input.value.trim();
             if (!name) return;
 
-            // 检查是否在 allFactions 中（忽略大小写）
             const matched = allFactions.find(f => f.toLowerCase() === name.toLowerCase());
             if (matched) {
                 selectFaction(matched);
                 return;
             }
 
-            // 不在列表中，自动创建
             if (confirm(`"${name}" 不在已有势力列表中，是否立即创建？`)) {
                 createFaction(name);
             }
         }
 
-        // 创建新势力（无审核，自动 INSERT）
         async function createFaction(name) {
             const trimmed = name.trim();
             if (!trimmed) return;
@@ -615,10 +860,9 @@
                     .single();
 
                 if (error) {
-                    if (error.code === '23505') { // 唯一约束冲突
+                    if (error.code === '23505') {
                         alert(`⚠️ 势力 "${trimmed}" 已存在`);
-                        await loadFactions();  // 刷新本地列表
-                        // 尝试自动选中
+                        await loadFactions();
                         const existed = allFactions.find(f => f.toLowerCase() === trimmed.toLowerCase());
                         if (existed) selectFaction(existed);
                         return;
@@ -626,7 +870,6 @@
                     throw error;
                 }
 
-                // 更新本地列表
                 if (!allFactions.includes(trimmed)) {
                     allFactions.push(trimmed);
                     allFactions.sort();
@@ -640,7 +883,6 @@
             }
         }
 
-        // 弹出对话框创建新势力
         function createNewFaction() {
             const name = prompt('请输入新势力的名称：');
             if (name && name.trim()) {
@@ -648,7 +890,6 @@
             }
         }
 
-        // 键盘事件
         function handleFactionKeydown(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
@@ -659,7 +900,6 @@
             }
         }
 
-        // 移除已选势力
         function removeFaction(name) {
             selectedFactions = selectedFactions.filter(f => f !== name);
             updateSelectedDisplay();
@@ -669,7 +909,6 @@
             }
         }
 
-        // 更新已选显示 + 隐藏字段
         function updateSelectedDisplay() {
             const container = document.getElementById('selectedFactions');
 
@@ -684,12 +923,11 @@
                 ).join('');
             }
 
-            // 更新隐藏字段（逗号分隔）
             document.getElementById('faction').value = selectedFactions.join(', ');
         }
 
         // ================================================================
-        //  4. 工具函数（防 XSS）
+        //  工具函数
         // ================================================================
         function escapeJS(str) {
             return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -702,7 +940,7 @@
         }
 
         // ================================================================
-        //  5. 图片上传
+        //  图片上传
         // ================================================================
         function setupDragAndDrop() {
             const uploadArea = document.getElementById('uploadArea');
@@ -803,61 +1041,7 @@
         }
 
         // ================================================================
-        //  6. 日期验证
-        // ================================================================
-        function validateDate(input) {
-            const errorDiv = document.getElementById('dateError');
-            const value = input.value.trim();
-            if (!value) {
-                errorDiv.style.display = 'none';
-                input.setCustomValidity('');
-                return true;
-            }
-            const isValid = /^20[2-9][0-9]\.(1[0-2]|[1-9])(\.(3[01]|[12][0-9]|[1-9]))?$/.test(value);
-            if (!isValid) {
-                errorDiv.textContent = '请使用正确格式：YYYY.M 或 YYYY.M.D（如：2025.3 或 2025.3.18）';
-                errorDiv.style.display = 'block';
-                input.setCustomValidity('日期格式不正确');
-                return false;
-            }
-            const parts = value.split('.');
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]);
-            let day = parts.length > 2 ? parseInt(parts[2]) : 0;
-            if (month < 1 || month > 12) {
-                errorDiv.textContent = '月份必须在1-12之间';
-                errorDiv.style.display = 'block';
-                input.setCustomValidity('月份无效');
-                return false;
-            }
-            if (day > 0) {
-                const daysInMonth = new Date(year, month, 0).getDate();
-                if (day < 1 || day > daysInMonth) {
-                    errorDiv.textContent = `日期无效，${year}年${month}月只有${daysInMonth}天`;
-                    errorDiv.style.display = 'block';
-                    input.setCustomValidity('日期无效');
-                    return false;
-                }
-            }
-            errorDiv.style.display = 'none';
-            input.setCustomValidity('');
-            return true;
-        }
-
-        function parseDateToISO(dateText) {
-            const parts = dateText.split('.');
-            const year = parts[0];
-            const month = parts[1].padStart(2, '0');
-            if (parts.length === 2) return `${year}-${month}-01`;
-            if (parts.length === 3) {
-                const day = parts[2].padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            }
-            return null;
-        }
-
-        // ================================================================
-        //  7. 提交者管理
+        //  提交者管理
         // ================================================================
         function initSubmitter() {
             const savedName = localStorage.getItem(SUBMITTER_STORAGE_KEY);
@@ -900,7 +1084,7 @@
         }
 
         // ================================================================
-        //  8. 表单提交
+        //  表单提交
         // ================================================================
         document.getElementById('eventForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -917,11 +1101,10 @@
                 return;
             }
 
-            const dateInput = document.getElementById('date');
-            const dateValue = dateInput.value.trim();
-            if (!validateDate(dateInput)) {
-                alert('请使用正确的日期格式：YYYY.M 或 YYYY.M.D');
-                dateInput.focus();
+            // 获取日期数据
+            const dateData = getDateData();
+            if (!dateData.valid) {
+                alert(dateData.error);
                 return;
             }
 
@@ -929,10 +1112,14 @@
             const formData = new FormData(e.target);
             const eventData = Object.fromEntries(formData.entries());
 
+            // 使用日期数据（覆盖默认的 date 字段）
+            eventData.date = dateData.date_display;
+            eventData.event_date = dateData.event_date;
+            eventData.event_date_end = dateData.event_date_end;
+
             eventData.submitted_by = currentSubmitter;
             eventData.approved = false;
-            eventData.faction = document.getElementById('faction').value; // 逗号分隔
-            eventData.event_date = parseDateToISO(dateValue);
+            eventData.faction = document.getElementById('faction').value;
 
             if (uploadedImages.length > 0) {
                 eventData.images = uploadedImages;
@@ -962,12 +1149,15 @@
                     e.target.reset();
                     document.getElementById('imagePreview').innerHTML = '';
                     uploadedImages = [];
-                    // 重置势力选择
                     selectedFactions = [];
                     updateSelectedDisplay();
                     document.getElementById('factionInput').value = '';
                     document.getElementById('factionSuggestions').innerHTML =
                         `<span class="hint-text">💡 输入关键词搜索已有势力，或直接输入新名称后点击"新建"</span>`;
+                    // 重置日期模式为单日
+                    setDateMode('single');
+                    document.getElementById('dateStart').value = '';
+                    document.getElementById('dateEnd').value = '';
                     console.log('✅ 提交成功:', data[0]);
                 } else {
                     throw new Error('服务器返回空数据');
@@ -984,14 +1174,13 @@
         });
 
         // ================================================================
-        //  9. 初始化
+        //  初始化
         // ================================================================
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('📄 页面加载完成');
             initSubmitter();
             setupDragAndDrop();
 
-            // 加载势力列表
             await loadFactions();
 
             // 日期验证
