@@ -306,7 +306,7 @@
                 }
 
                 eventEl.innerHTML = `
-                    <h3>${event.event_date_end ? `${event.date}（持续至 ${event.event_date_end}）` : event.date || ''}</h3>
+                    <h3>${event.date || ''}</h3>
                     <h2>${event.title || '无标题'}</h2>
                     <p><strong>涉及势力：</strong>${event.faction || '未知'}</p>
                     <p>${event.content || ''}</p>
