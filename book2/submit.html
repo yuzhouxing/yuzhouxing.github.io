@@ -63,7 +63,7 @@
             font-size: 0.8rem;
         }
 
-        /* ===== 势力选择器（保持不变） ===== */
+        /* ===== 势力选择器 ===== */
         .faction-selector {
             background: #f8f9fa;
             padding: 1rem;
@@ -370,9 +370,143 @@
             .faction-selector .input-row input { min-width: 120px; }
             .faction-selector .input-row button { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
         }
+
+        /* ===== 新增公告弹窗样式 ===== */
+        .announcement-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .announcement-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .announcement-card {
+            max-width: 580px;
+            width: 90%;
+            background: #fcf8f0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.05"><rect fill="none" stroke="%238b4513" stroke-width="1" x="5" y="5" width="90" height="90"/></svg>');
+            border: 12px double #8b4513;
+            border-radius: 18px;
+            padding: 2rem 2rem 1.8rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+            font-family: 'SimSun', '宋体', serif;
+            color: #3e2e1f;
+            transform: scale(0.9);
+            transition: transform 0.4s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .announcement-overlay.active .announcement-card {
+            transform: scale(1);
+        }
+
+        .announcement-card::before {
+            content: "📜";
+            font-size: 3rem;
+            display: block;
+            text-align: center;
+            margin-bottom: 0.2rem;
+        }
+
+        .announcement-card h2 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin: 0.2rem 0 1rem 0;
+            color: #5a3e2b;
+            letter-spacing: 4px;
+            border-bottom: 2px solid #d4c5a0;
+            padding-bottom: 0.6rem;
+        }
+
+        .announcement-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 1.2rem 0;
+        }
+
+        .announcement-card ul li {
+            padding: 0.6rem 0 0.6rem 2rem;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%238b4513" stroke-width="2"><path d="M20 12L10 18L4 12L10 6L20 12Z"/></svg>') left center no-repeat;
+            background-size: 1.2rem;
+            font-size: 1rem;
+            line-height: 1.6;
+            border-bottom: 1px dashed #e8ddd0;
+        }
+
+        .announcement-card ul li:last-child {
+            border-bottom: none;
+        }
+
+        .announcement-card .btn-close-announce {
+            display: block;
+            margin: 1.5rem auto 0;
+            padding: 0.6rem 2.5rem;
+            background: #8b4513;
+            color: #fcf8f0;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            letter-spacing: 2px;
+            font-family: inherit;
+        }
+
+        .announcement-card .btn-close-announce:hover {
+            background: #6b3410;
+            transform: scale(1.02);
+        }
+
+        /* 小屏适配 */
+        @media (max-width: 480px) {
+            .announcement-card {
+                padding: 1.5rem;
+            }
+            .announcement-card h2 {
+                font-size: 1.3rem;
+            }
+            .announcement-card ul li {
+                padding-left: 1.5rem;
+                background-size: 1rem;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body class="submit-body">
+    <!-- ===== 公告弹窗 ===== -->
+    <div class="announcement-overlay" id="announcementOverlay">
+        <div class="announcement-card">
+            <h2>📜 书写规范</h2>
+            <ul>
+                <li><strong>真实客观</strong> — 只记录真实发生的事件，不杜撰、不修饰、不夸大，拒绝夹带个人主观成分。</li>
+                <li><strong>用语规范</strong> — 拒绝错别字，病句，口语化。(这一条是最常犯的，请各位务必认真检查。) </li>
+                <li><strong>史料内容</strong> — 请不要发送有关任何舰队、个人恩怨、描写论坛历史的内容，但可以发送与mk48/49有联系的论坛内容 。</li>
+                <li><strong>证据为上</strong> — 如有截图、战报等，请尽量上传图片和链接，增加可信度。</li>
+                <li><strong>申诉渠道</strong> — 编年史内容不隶属于任何一个团体，玩家。遇到问题请找审核员申诉。</li>
+            </ul>
+            <button class="btn-close-announce" id="closeAnnouncement">我已阅读，开始书写</button>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
     <div class="submit-container">
         <h1>📜 为编年史贡献史料</h1>
         <p class="description">在此提交MK48/49世界中的重大事件，审核通过后将载入史册</p>
@@ -397,7 +531,7 @@
         </div>
 
         <form id="eventForm">
-            <!-- ===== 日期输入（改动部分） ===== -->
+            <!-- ===== 日期输入（支持时间段） ===== -->
             <div class="form-group">
                 <label for="date">🗓️ 历史日期 / 时间段：</label>
                 <input type="text" id="date" name="date" required
@@ -418,7 +552,7 @@
                 <input type="text" id="title" name="title" required placeholder="请输入事件标题">
             </div>
 
-            <!-- 势力选择器（不变） -->
+            <!-- 势力选择器 -->
             <div class="form-group">
                 <label>⚔️ 涉及势力：</label>
                 <div class="faction-selector">
@@ -515,7 +649,21 @@
         let selectedFactions = [];
 
         // ================================================================
-        //  势力标签管理（不变）
+        //  公告弹窗控制
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // 显示公告（每次进入都显示）
+            const overlay = document.getElementById('announcementOverlay');
+            overlay.classList.add('active');
+
+            // 点击确认按钮关闭
+            document.getElementById('closeAnnouncement').addEventListener('click', function() {
+                overlay.classList.remove('active');
+            });
+        });
+
+        // ================================================================
+        //  势力标签管理
         // ================================================================
         async function loadFactions() {
             try {
@@ -683,7 +831,7 @@
         }
 
         // ================================================================
-        //  图片上传（不变）
+        //  图片上传
         // ================================================================
         function setupDragAndDrop() {
             const uploadArea = document.getElementById('uploadArea');
@@ -784,13 +932,9 @@
         }
 
         // ================================================================
-        //  【改动核心】日期验证与解析（支持时间段）
+        //  日期验证与解析（支持时间段）
         // ================================================================
 
-        /**
-         * 验证日期输入：支持单个日期或时间段（用 - 分隔）
-         * 格式：YYYY.M 或 YYYY.M.D 或 YYYY.M-YYYY.M 等
-         */
         function validateDate(input) {
             const errorDiv = document.getElementById('dateError');
             const value = input.value.trim();
@@ -801,7 +945,6 @@
                 return true;
             }
 
-            // 检查是否包含时间段分隔符 "-"
             if (value.includes('-')) {
                 const parts = value.split('-').map(s => s.trim());
                 if (parts.length !== 2) {
@@ -810,7 +953,6 @@
                     input.setCustomValidity('时间段格式错误');
                     return false;
                 }
-                // 分别验证起止日期格式
                 const startValid = validateSingleDate(parts[0]);
                 const endValid = validateSingleDate(parts[1]);
                 if (!startValid || !endValid) {
@@ -819,12 +961,10 @@
                     input.setCustomValidity('日期格式不正确');
                     return false;
                 }
-                // 可选：验证结束日期不早于起始日期（逻辑上，但不强制）
                 errorDiv.style.display = 'none';
                 input.setCustomValidity('');
                 return true;
             } else {
-                // 单个日期
                 const valid = validateSingleDate(value);
                 if (!valid) {
                     errorDiv.textContent = '请使用正确格式：YYYY.M 或 YYYY.M.D（如：2025.3 或 2025.3.18）';
@@ -838,25 +978,15 @@
             }
         }
 
-        /**
-         * 验证单个日期字符串（YYYY.M 或 YYYY.M.D）
-         */
         function validateSingleDate(str) {
             return /^20[2-9][0-9]\.(1[0-2]|[1-9])(\.(3[01]|[12][0-9]|[1-9]))?$/.test(str);
         }
 
-        /**
-         * 解析日期字符串为 ISO 日期（用于排序）
-         * - 如果是时间段，取起始日期
-         * - 如果是单个日期，直接解析
-         */
         function parseDateToISO(dateText) {
             let singleDate = dateText;
             if (dateText.includes('-')) {
-                // 取起始部分
                 singleDate = dateText.split('-')[0].trim();
             }
-            // 现在 singleDate 是 YYYY.M 或 YYYY.M.D
             const parts = singleDate.split('.');
             const year = parts[0];
             const month = parts[1].padStart(2, '0');
@@ -870,7 +1000,7 @@
         }
 
         // ================================================================
-        //  提交者管理（不变）
+        //  提交者管理
         // ================================================================
         function initSubmitter() {
             const savedName = localStorage.getItem(SUBMITTER_STORAGE_KEY);
@@ -913,7 +1043,7 @@
         }
 
         // ================================================================
-        //  表单提交（略有调整：使用新的解析逻辑）
+        //  表单提交
         // ================================================================
         document.getElementById('eventForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -945,7 +1075,7 @@
             eventData.submitted_by = currentSubmitter;
             eventData.approved = false;
             eventData.faction = document.getElementById('faction').value;
-            eventData.event_date = parseDateToISO(dateValue); // 取起始日期用于排序
+            eventData.event_date = parseDateToISO(dateValue);
 
             if (uploadedImages.length > 0) {
                 eventData.images = uploadedImages;
