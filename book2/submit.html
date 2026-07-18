@@ -371,7 +371,7 @@
             .faction-selector .input-row button { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
         }
 
-        /* ===== 新增公告弹窗样式 ===== */
+        /* ===== 公告弹窗样式 ===== */
         .announcement-overlay {
             position: fixed;
             top: 0;
@@ -474,6 +474,60 @@
             transform: scale(1.02);
         }
 
+        /* ===== 史官助手按钮 ===== */
+        .content-toolbar {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.3rem;
+            flex-wrap: wrap;
+        }
+
+        .content-toolbar label {
+            margin-bottom: 0;
+        }
+
+        .btn-scribe {
+            padding: 0.3rem 1rem;
+            background: #2d7d4a;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn-scribe:hover:not(:disabled) {
+            background: #1f5f36;
+            transform: scale(1.02);
+        }
+
+        .btn-scribe:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-scribe .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* 小屏适配 */
         @media (max-width: 480px) {
             .announcement-card {
@@ -496,11 +550,11 @@
         <div class="announcement-card">
             <h2>📜 书写规范</h2>
             <ul>
-                <li><strong>真实客观</strong> — 只记录真实发生的事件，不杜撰、不修饰、不夸大，拒绝夹带个人主观成分。</li>
-                <li><strong>用语规范</strong> — 拒绝错别字，病句，口语化。(这一条是最常犯的，请各位务必认真检查。) </li>
-                <li><strong>史料内容</strong> — 请不要发送有关任何舰队、个人恩怨、描写论坛历史的内容，但可以发送与mk48/49有联系的论坛内容 。</li>
-                <li><strong>证据为上</strong> — 如有截图、战报等，请尽量上传图片和链接，增加可信度。</li>
-                <li><strong>申诉渠道</strong> — 编年史内容不隶属于任何一个团体，玩家。遇到问题请找审核员申诉。</li>
+                <li><strong>真实为上</strong> — 只记录真实发生的事件，不杜撰、不修饰、不夸大。</li>
+                <li><strong>势力命名</strong> — 使用标准势力名称，多个势力请用 <strong>英文逗号</strong> 分隔。</li>
+                <li><strong>日期格式</strong> — 支持时间点（如 <code>2025.3</code>）或时间段（如 <code>2025.3-2025.5</code>）。</li>
+                <li><strong>证据为上</strong> — 如有截图、战报等，请尽量上传图片，增加可信度。</li>
+                <li><strong>客观中立</strong> — 不带个人偏见，不攻击他人，遵守论坛规则。</li>
             </ul>
             <button class="btn-close-announce" id="closeAnnouncement">我已阅读，开始书写</button>
         </div>
@@ -531,7 +585,7 @@
         </div>
 
         <form id="eventForm">
-            <!-- ===== 日期输入（支持时间段） ===== -->
+            <!-- 日期 -->
             <div class="form-group">
                 <label for="date">🗓️ 历史日期 / 时间段：</label>
                 <input type="text" id="date" name="date" required
@@ -579,10 +633,17 @@
                 <input type="hidden" id="faction" name="faction" required>
             </div>
 
-            <!-- 内容 -->
+            <!-- ===== 内容输入 + 史官助手 ===== -->
             <div class="form-group">
-                <label for="content">📖 事件详情：</label>
+                <div class="content-toolbar">
+                    <label for="content">📖 事件详情：</label>
+                    <button type="button" class="btn-scribe" id="btnScribe" title="将口语润色为史料书面语">
+                        📜 史官助手
+                    </button>
+                    <span style="font-size:0.75rem; color:#8a7a6a; margin-left:0.2rem;">（润色口语为书面语）</span>
+                </div>
                 <textarea id="content" name="content" rows="6" required placeholder="请详细描述事件的经过、影响和意义..."></textarea>
+                <div id="scribeStatus" style="font-size:0.85rem; color:#8a7a6a; margin-top:0.25rem; min-height:1.2rem;"></div>
             </div>
 
             <!-- 图片上传 -->
@@ -641,26 +702,183 @@
         console.log('✅ Supabase 客户端已初始化');
 
         // ================================================================
+        //  智谱 AI 配置（史官助手）
+        // ================================================================
+        const ZHIPU_API_KEY = '227a9d22bde84e6ea6477c0b25d74f7c.neKLixgcdD7C8lkw';
+        const ZHIPU_MODEL = 'glm-4.5-flash';
+        const ZHIPU_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+
+        // ================================================================
         //  全局状态
         // ================================================================
         let currentSubmitter = '';
         let uploadedImages = [];
         let allFactions = [];
         let selectedFactions = [];
+        let isScribing = false;
 
         // ================================================================
         //  公告弹窗控制
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            // 显示公告（每次进入都显示）
             const overlay = document.getElementById('announcementOverlay');
             overlay.classList.add('active');
 
-            // 点击确认按钮关闭
             document.getElementById('closeAnnouncement').addEventListener('click', function() {
                 overlay.classList.remove('active');
             });
         });
+
+        // ================================================================
+        //  史官助手 — 口语转现代汉语书面语（含每分钟限流）
+        // ================================================================
+        const scribeBtn = document.getElementById('btnScribe');
+        const contentTextarea = document.getElementById('content');
+        const scribeStatus = document.getElementById('scribeStatus');
+
+        const SCRIBE_COOLDOWN_KEY = 'mk49_scribe_last_use';
+        const SCRIBE_COOLDOWN_SECONDS = 60;
+
+        function getCooldownRemaining() {
+            const lastUse = localStorage.getItem(SCRIBE_COOLDOWN_KEY);
+            if (!lastUse) return 0;
+            const elapsed = (Date.now() - parseInt(lastUse, 10)) / 1000;
+            const remaining = Math.ceil(SCRIBE_COOLDOWN_SECONDS - elapsed);
+            return remaining > 0 ? remaining : 0;
+        }
+
+        function setCooldown() {
+            localStorage.setItem(SCRIBE_COOLDOWN_KEY, String(Date.now()));
+        }
+
+        scribeBtn.addEventListener('click', async function() {
+            // 1. 检查冷却时间
+            const remaining = getCooldownRemaining();
+            if (remaining > 0) {
+                scribeStatus.textContent = `⏳ 史官助手冷却中，请等待 ${remaining} 秒后再试`;
+                scribeStatus.style.color = '#dc3545';
+                // 动态更新倒计时
+                let timer = remaining;
+                const interval = setInterval(() => {
+                    timer -= 1;
+                    if (timer <= 0) {
+                        clearInterval(interval);
+                        if (scribeStatus.textContent.includes('冷却中')) {
+                            scribeStatus.textContent = '✅ 冷却结束，可再次使用史官助手';
+                            scribeStatus.style.color = '#2d7d4a';
+                            setTimeout(() => {
+                                if (scribeStatus.textContent.includes('冷却结束')) {
+                                    scribeStatus.textContent = '';
+                                }
+                            }, 3000);
+                        }
+                    } else {
+                        if (scribeStatus.textContent.includes('冷却中')) {
+                            scribeStatus.textContent = `⏳ 史官助手冷却中，请等待 ${timer} 秒后再试`;
+                        }
+                    }
+                }, 1000);
+                return;
+            }
+
+            // 2. 检查是否有内容
+            const rawText = contentTextarea.value.trim();
+            if (!rawText) {
+                scribeStatus.textContent = '⚠️ 请先输入事件详情';
+                scribeStatus.style.color = '#dc3545';
+                setTimeout(() => { scribeStatus.textContent = ''; }, 2500);
+                return;
+            }
+
+            // 3. 执行润色
+            if (isScribing) return;
+            isScribing = true;
+            scribeBtn.disabled = true;
+            scribeBtn.innerHTML = '<span class="spinner"></span> 润色中...';
+            scribeStatus.textContent = '📜 史官正在润色...';
+            scribeStatus.style.color = '#2d7d4a';
+
+            try {
+                const result = await callZhipuAI(rawText);
+                if (result && result.trim().length > 0) {
+                    contentTextarea.value = result;
+                    scribeStatus.textContent = '✅ 史官润色完成！';
+                    scribeStatus.style.color = '#2d7d4a';
+                    // 润色成功后记录时间
+                    setCooldown();
+                } else {
+                    throw new Error('空响应');
+                }
+            } catch (error) {
+                console.error('史官助手错误:', error);
+                scribeStatus.textContent = '😅 史官助手忙碌中，请稍后再试';
+                scribeStatus.style.color = '#dc3545';
+            } finally {
+                isScribing = false;
+                scribeBtn.disabled = false;
+                scribeBtn.innerHTML = '📜 史官助手';
+                // 5 秒后自动清除状态（除非是冷却倒计时）
+                setTimeout(() => {
+                    const currentMsg = scribeStatus.textContent;
+                    if (currentMsg && (currentMsg.includes('润色完成') || currentMsg.includes('忙碌中') || currentMsg.includes('请先输入'))) {
+                        scribeStatus.textContent = '';
+                    }
+                }, 5000);
+            }
+        });
+
+        /**
+         * 调用智谱 AI API 润色文本（现代汉语书面语）
+         */
+        async function callZhipuAI(text) {
+            const systemPrompt =
+                '你是一位史官，负责将玩家口述的游戏事件转化为正式的现代汉语书面语记录。' +
+                '要求：\n' +
+                '1. 保留所有关键事实、时间、地点、人物和势力名称\n' +
+                '2. 去除口语化表达（如"然后"、"那个"、"我们"、"我觉得"、"非常"、"超级"等）\n' +
+                '3. 使用规范的现代汉语书面语，类似新闻报道或历史记录的口吻\n' +
+                '4. 避免文言文词汇（如"之"、"乎"、"者"、"也"、"乃"、"遂"等），不使用古汉语句式\n' +
+                '5. 保持客观中立的语气，不添加个人评价或情感色彩\n' +
+                '6. 不要添加原内容中没有的事实\n' +
+                '7. 直接输出润色后的文字，不要加任何前缀、后缀或解释\n' +
+                '8. 字数控制在原内容的80%-120%之间';
+
+            const userPrompt =
+                `请将以下玩家口述的事件转化为现代汉语书面语：\n\n${text}`;
+
+            const response = await fetch(ZHIPU_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${ZHIPU_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: ZHIPU_MODEL,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.6,
+                    max_tokens: 2000,
+                    stream: false
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error('API 响应错误:', response.status, errText);
+                throw new Error(`API 请求失败 (${response.status})`);
+            }
+
+            const data = await response.json();
+
+            if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+                return data.choices[0].message.content.trim();
+            } else {
+                console.error('API 返回异常:', data);
+                throw new Error('API 返回数据格式异常');
+            }
+        }
 
         // ================================================================
         //  势力标签管理
@@ -932,7 +1150,7 @@
         }
 
         // ================================================================
-        //  日期验证与解析（支持时间段）
+        //  日期验证与解析
         // ================================================================
 
         function validateDate(input) {
@@ -1137,6 +1355,7 @@
                 validateDate(this);
             });
             console.log(`✅ 势力选择器就绪，共 ${allFactions.length} 个势力`);
+            console.log('📜 史官助手已加载（现代汉语书面语模式 + 每分钟限流）');
         });
     </script>
 </body>
