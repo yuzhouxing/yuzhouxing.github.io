@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MK48/49 编年史 | 正文</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+    </script>
     <style>
-        /* 所有原有样式保持不变，此处省略以节省篇幅，你实际使用时保留完整样式 */
+        /* ===== 原有样式（完整保留） ===== */
         .admin-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; text-align: center; }
         .admin-controls { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #ddd; }
         .admin-btn { padding: 0.25rem 0.5rem; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem; }
@@ -31,6 +33,176 @@
             .image-gallery { grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 0.3rem; }
             .image-gallery img { height: 50px; }
         }
+        .share-btn {
+            display: inline-block;
+            margin-top: 0.8rem;
+            padding: 0.3rem 1rem;
+            background: #6b5b4b;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .share-btn:hover { background: #4f3f2f; transform: scale(1.02); }
+        .share-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ===== 分享卡片样式（自适应宽度，显示全部图片） ===== */
+        .share-card-container {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            display: block;
+            width: fit-content;
+            max-width: 620px;
+            min-width: 280px;
+            padding: 2rem 2rem 1.8rem;
+            background: linear-gradient(145deg, #0b0b1a 0%, #1a1a2e 40%, #2a1f3d 100%);
+            border: 3px solid #d4af37;
+            border-radius: 24px;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.3), inset 0 0 30px rgba(212, 175, 55, 0.05);
+            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+            color: #e8dcc8;
+            box-sizing: border-box;
+            z-index: 99999;
+            pointer-events: none;
+            word-wrap: break-word;
+            overflow: visible;
+        }
+        .share-card-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .share-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+            padding-bottom: 0.6rem;
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+        .share-card-header h2 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: #d4af37;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            letter-spacing: 3px;
+            font-weight: 700;
+        }
+        .share-card-header .logo {
+            font-size: 1.3rem;
+            color: #d4af37;
+            font-weight: 300;
+            letter-spacing: 2px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            background: rgba(212, 175, 55, 0.05);
+            white-space: nowrap;
+        }
+        .share-card-date {
+            font-size: 1rem;
+            color: #b8a58a;
+            margin-bottom: 0.4rem;
+            letter-spacing: 1px;
+        }
+        .share-card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f0e6d0;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            margin: 0.2rem 0 0.4rem 0;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .share-card-faction {
+            font-size: 1rem;
+            color: #d4af37;
+            margin-bottom: 0.8rem;
+            background: rgba(212, 175, 55, 0.08);
+            display: inline-block;
+            padding: 0.1rem 1rem;
+            border-radius: 20px;
+            border-left: 2px solid #d4af37;
+        }
+        .share-card-content {
+            font-size: 1rem;
+            line-height: 1.8;
+            text-align: left;
+            color: #d4cdc0;
+            margin-bottom: 1.2rem;
+            padding-right: 0.5rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .share-card-content ul, .share-card-content ol {
+            padding-left: 1.5rem;
+            margin: 0.4rem 0;
+        }
+        .share-card-content li {
+            margin-bottom: 0.2rem;
+        }
+        /* 图片网格 */
+        .share-card-images {
+            margin: 0.8rem 0 1.2rem 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.6rem;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            background: rgba(0,0,0,0.2);
+        }
+        .share-card-images img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            display: block;
+            transition: 0.2s;
+        }
+        .share-card-images img:only-child {
+            aspect-ratio: 16 / 9;
+            grid-column: 1 / -1;
+        }
+        .share-card-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #9a8a7a;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+            padding-top: 0.8rem;
+            margin-top: 0.2rem;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        .share-card-footer .watermark {
+            font-weight: 600;
+            color: #d4af37;
+            letter-spacing: 1px;
+        }
+        .share-card-footer .submitter {
+            color: #b8a58a;
+        }
+        /* 装饰元素 */
+        .share-card-container .ornament {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.06;
+            color: #d4af37;
+            pointer-events: none;
+        }
+        .ornament-tl { top: 10px; left: 10px; transform: rotate(-15deg); }
+        .ornament-br { bottom: 10px; right: 10px; transform: rotate(15deg); }
     </style>
 </head>
 <body>
@@ -39,7 +211,7 @@
             <h1>MK48/49 编年史</h1>
             <div>
                 <a href="index.html">🏠 返回首页</a>
-                <a href="hall-of-fame.html">📖 贡献榜单</a>
+                <a href="hall-of-fame.html">🏆 贡献榜单</a>
                 <a href="submit.html">📝 贡献史料</a>
                 <a href="stats.html">📊 数据统计</a>
                 <a href="graph.html">🌐 势力关系图</a>
@@ -77,7 +249,7 @@
             </div>
             <div id="searchResults" class="search-results"></div>
         </div>
-        
+
         <main class="timeline-container" id="timeline">
             <div class="loading">史书正在加载中...</div>
         </main>
@@ -89,26 +261,36 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <!-- 隐藏容器用于生成分享卡片 -->
+    <div id="shareCardContainer" class="share-card-container"></div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js">
+    </script>
     <script>
-        // ====================== MK48/49 编年史 · Supabase 配置 ======================
+        // ================================================================
+        //  Supabase 配置
+        // ================================================================
         const SUPABASE_URL = 'https://rjstjmxwizfxrgrwgyab.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
+        const SUPABASE_ANON_KEY =
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqc3RqbXh3aXpmeHJncndneWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjAxODgsImV4cCI6MjA5OTU5NjE4OH0.m44t35UhOjRuRAUB9qMiIn-1enGk3lNCKqjVe_6kPt0';
         const MODERATOR_STORAGE_KEY = 'mk49_moderator_info';
 
-        // ====================== 客户端初始化 ======================
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase客户端已初始化');
+        console.log('✅ Supabase 客户端已初始化');
 
-        // ====================== 全局变量 ======================
+        // ================================================================
+        //  全局变量
+        // ================================================================
         let currentPage = 1;
         const eventsPerPage = 5;
         let currentModerator = null;
         let showPendingEvents = false;
         let allEvents = [];
-        let currentSearchTerm = ''; // 全局搜索词
+        let currentSearchTerm = '';
 
-        // ====================== 审核相关函数 ======================
+        // ================================================================
+        //  审核相关函数
+        // ================================================================
         function checkModeratorStatus() {
             const moderatorInfo = localStorage.getItem(MODERATOR_STORAGE_KEY);
             if (moderatorInfo) {
@@ -218,24 +400,24 @@
             }
         }
 
-        // ====================== 获取事件（核心） ======================
+        // ================================================================
+        //  获取事件
+        // ================================================================
         async function fetchEvents() {
             console.log('🔄 开始获取事件数据...');
             try {
                 let query = supabaseClient.from('events').select('*');
-                
+
                 if (!currentModerator || !showPendingEvents) {
-                    // 只获取已审核的
                     query = query.eq('approved', true)
-                                 .order('event_date', { ascending: true, nullsFirst: false })
-                                 .order('created_at', { ascending: true });
+                        .order('event_date', { ascending: true, nullsFirst: false })
+                        .order('created_at', { ascending: true });
                     console.log('📌 查询条件: approved = true');
                 } else {
-                    // 获取所有（包括待审核）
                     query = query.eq('rejected', false)
-                                 .order('approved', { ascending: true })
-                                 .order('event_date', { ascending: true, nullsFirst: false })
-                                 .order('created_at', { ascending: true });
+                        .order('approved', { ascending: true })
+                        .order('event_date', { ascending: true, nullsFirst: false })
+                        .order('created_at', { ascending: true });
                     console.log('📌 查询条件: 显示待审核');
                 }
 
@@ -246,7 +428,6 @@
                 }
 
                 console.log(`✅ 成功获取 ${data?.length || 0} 条事件`);
-                // 打印第一条数据以便检查字段
                 if (data && data.length > 0) {
                     console.log('📋 示例数据:', data[0]);
                 }
@@ -265,11 +446,13 @@
             }
         }
 
-        // ====================== 渲染事件 ======================
+        // ================================================================
+        //  渲染事件
+        // ================================================================
         function renderEvents(events, page) {
             const container = document.getElementById('timeline');
             console.log(`🎨 渲染事件，共 ${events?.length || 0} 条，页码 ${page}`);
-            
+
             if (!events || events.length === 0) {
                 container.innerHTML = `
                     <div class="event-card">
@@ -293,8 +476,9 @@
 
             paginatedEvents.forEach(event => {
                 const eventEl = document.createElement('div');
-                eventEl.className = `event-card ${!event.approved && !event.rejected ? 'pending' : ''} ${event.rejected ? 'rejected' : ''}`;
-                
+                eventEl.className =
+                    `event-card ${!event.approved && !event.rejected ? 'pending' : ''} ${event.rejected ? 'rejected' : ''}`;
+
                 let adminControls = '';
                 if (currentModerator && !event.approved && !event.rejected) {
                     adminControls = `
@@ -305,13 +489,10 @@
                     `;
                 }
 
-                eventEl.innerHTML = `
-                    <h3>${event.date || ''}</h3>
-                    <h2>${event.title || '无标题'}</h2>
-                    <p><strong>涉及势力：</strong>${event.faction || '未知'}</p>
-                    <p>${event.content || ''}</p>
-                    ${event.images && event.images.length > 0 ? `
-                       <div class="event-images">
+                let imagesHtml = '';
+                if (event.images && event.images.length > 0) {
+                    imagesHtml = `
+                        <div class="event-images">
                             <h4>🖼️ 相关图片(${event.images.length})</h4>
                             <div class="image-gallery">
                                 ${event.images.map((img, index) => `
@@ -321,25 +502,157 @@
                                 `).join('')}
                             </div>
                         </div>
-                    ` : ''}
-                    ${event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">📜 查看证据</a>` : ''}
+                    `;
+                }
+
+                const evidenceHtml = event.evidence_url ? `<a href="${event.evidence_url}" target="_blank">📜 查看证据</a>` : '';
+
+                const metaHtml = `
                     <div class="event-meta">
                         提交者: ${event.submitted_by || '匿名'} | 
                         状态: ${event.approved ? '✅ 已通过' : event.rejected ? '❌ 已拒绝' : '⏳ 待审核'} |
                         记录于: ${event.created_at ? new Date(event.created_at).toLocaleDateString('zh-CN') : '未知'}
                         ${event.reviewed_at ? ` | 审核于: ${new Date(event.reviewed_at).toLocaleDateString('zh-CN')}` : ''}
                     </div>
+                `;
+
+                const shareButton = `
+                    <button class="share-btn" onclick="shareEvent.bind(this, ${JSON.stringify(event).replace(/"/g, '&quot;')})()" title="分享此事件">
+                        📤 分享史料卡
+                    </button>
+                `;
+
+                eventEl.innerHTML = `
+                    <h3>${event.date || ''}</h3>
+                    <h2>${event.title || '无标题'}</h2>
+                    <p><strong>涉及势力：</strong>${event.faction || '未知'}</p>
+                    <p>${event.content || ''}</p>
+                    ${imagesHtml}
+                    ${evidenceHtml}
+                    ${metaHtml}
+                    ${shareButton}
                     ${adminControls}
                 `;
                 container.appendChild(eventEl);
             });
         }
 
-        // ====================== 加载事件（入口） ======================
+        // ================================================================
+        //  分享功能（显示所有图片）
+        // ================================================================
+        async function shareEvent(eventData, btn) {
+            let button = btn;
+            if (!button && this && this.tagName === 'BUTTON') {
+                button = this;
+            }
+            if (button) {
+                button.disabled = true;
+                button.textContent = '生成中…';
+            }
+
+            try {
+                const container = document.getElementById('shareCardContainer');
+                const dateStr = eventData.date || '日期不详';
+                const title = eventData.title || '未命名事件';
+                const faction = eventData.faction || '未知势力';
+                const content = eventData.content || '暂无详情';
+                const submitter = eventData.submitted_by || '匿名';
+                const images = eventData.images || [];
+
+                // 构建图片网格 HTML
+                let imagesHtml = '';
+                if (images.length > 0) {
+                    imagesHtml = `
+                        <div class="share-card-images">
+                            ${images.map(url => `<img src="${url}" crossorigin="anonymous" alt="事件图片">`).join('')}
+                        </div>
+                    `;
+                }
+
+                // 构建卡片内容
+                container.innerHTML = `
+                    <div class="ornament orn-tl">✦</div>
+                    <div class="ornament orn-br">✦</div>
+                    <div class="share-card-header">
+                        <h2>📜 编年史</h2>
+                        <span class="logo">MK48/49</span>
+                    </div>
+                    <div class="share-card-date">${dateStr}</div>
+                    <div class="share-card-title">${title}</div>
+                    <div class="share-card-faction">⚔️ 涉及势力：${faction}</div>
+                    ${imagesHtml}
+                    <div class="share-card-content">${content.replace(/\n/g, '<br>')}</div>
+                    <div class="share-card-footer">
+                        <span class="submitter">记录者：${submitter}</span>
+                        <span class="watermark">#MK48/49编年史</span>
+                    </div>
+                `;
+
+                // 等待渲染
+                await new Promise(resolve => setTimeout(resolve, 150));
+
+                // 等待所有图片加载完成
+                const imgs = container.querySelectorAll('img');
+                await Promise.all(Array.from(imgs).map(img => {
+                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                    return new Promise((resolve) => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    });
+                }));
+
+                // 获取实际尺寸
+                const rect = container.getBoundingClientRect();
+                const width = rect.width || container.scrollWidth || 600;
+                const height = rect.height || container.scrollHeight || 400;
+
+                // 截图
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    logging: false,
+                    width: width,
+                    height: height,
+                });
+
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+
+                if (navigator.clipboard && navigator.clipboard.write) {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'image/png': blob
+                        })
+                    ]);
+                    alert('✅ 史料卡已复制到剪贴板，可以粘贴到聊天或帖子中！');
+                } else {
+                    const link = document.createElement('a');
+                    link.download = `史料卡_${eventData.title || '事件'}.png`;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    alert('📥 您的浏览器不支持直接复制，已为您下载图片。');
+                }
+
+            } catch (error) {
+                console.error('分享失败:', error);
+                alert('❌ 分享失败，请重试或截图保存。');
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = '📤 分享史料卡';
+                }
+                document.getElementById('shareCardContainer').innerHTML = '';
+            }
+        }
+
+        // ================================================================
+        //  加载事件
+        // ================================================================
         async function loadEvents() {
             const container = document.getElementById('timeline');
             container.innerHTML = '<div class="loading">📚 史书正在加载中...</div>';
-            
+
             allEvents = await fetchEvents();
             const totalPages = Math.ceil(allEvents.length / eventsPerPage);
             if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
@@ -349,7 +662,9 @@
             renderEvents(allEvents, currentPage);
         }
 
-        // ====================== 搜索功能 ======================
+        // ================================================================
+        //  搜索功能
+        // ================================================================
         function handleSearch(event) {
             if (event.key === 'Enter') performSearch();
         }
@@ -394,7 +709,6 @@
                 return;
             }
             resultsContainer.innerHTML = `<div class="search-info">找到 ${results.length} 个包含 "<strong>${searchTerm}</strong>" 的事件</div>`;
-            // 高亮搜索词
             const highlighted = results.map(event => {
                 const ev = { ...event };
                 const highlight = (text) => {
@@ -410,7 +724,9 @@
             renderEvents(highlighted, 1);
         }
 
-        // ====================== 页面初始化 ======================
+        // ================================================================
+        //  页面初始化
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📄 页面加载完成，开始初始化...');
             checkModeratorStatus();
