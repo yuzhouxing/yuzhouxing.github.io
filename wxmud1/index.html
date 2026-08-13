@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="武神传说脚本分享站 —— 触发、流程、自命令，一键复制使用。">
+    <meta name="description" content="武仙传说脚本分享站 —— 触发、流程，一键复制使用。">
     <meta name="theme-color" content="#0b0a08">
-    <title>武神脚本库 · 黑金版</title>
+    <title>武仙脚本库</title>
     <style>
         /* ============================================================
            黑金主题配色 (Black & Gold)
@@ -913,9 +913,9 @@
     <!-- ===== 头部 ===== -->
     <header class="site-header">
         <div class="container header-inner">
-            <a class="brand" href="/" aria-label="武神脚本库首页">
+            <a class="brand" href="/" aria-label="武仙脚本库首页">
                 <span class="brand-mark" aria-hidden="true">武</span>
-                <span>武神脚本库 · 黑金</span>
+                <span>武仙脚本库</span>
             </a>
             <nav aria-label="主导航">
                 <ul class="nav-links">
@@ -934,8 +934,8 @@
         <section class="container hero" aria-labelledby="hero-title">
             <div>
                 <div class="eyebrow">WSMUD Script Library</div>
-                <h1 id="hero-title">武神传说 · <span>黑金脚本集</span></h1>
-                <p class="hero-copy">汇集玩家自写的实用触发与流程脚本，点击卡片查看详情，一键复制即可使用。</p>
+                <h1 id="hero-title">武仙传说 · <span>个人脚本集</span></h1>
+                <p class="hero-copy">点击卡片查看详情，一键复制即可使用。</p>
                 <div class="hero-meta">
                     <span>无需登录</span>
                     <span>手机友好</span>
@@ -996,9 +996,7 @@
                 </div>
                 <!-- 编辑提示：方便用户添加脚本 -->
                 <div class="edit-hint">
-                    <span>✏️ <strong>如何新增脚本？</strong></span>
-                    <span>在下方 <code>scriptsData</code> 数组中添加新对象即可，格式参考已有条目。</span>
-                    <span style="margin-left:auto; opacity:0.7;">📖 编辑 <code>&lt;script&gt;</code> 区域</span>
+                    <span>个人搭建，简陋轻喷 <code>by 舟行</code></span>
                 </div>
             </div>
         </section>
@@ -1024,8 +1022,8 @@
     <!-- ===== 页脚 ===== -->
     <footer class="site-footer" id="notice">
         <div class="container footer-inner">
-            <div class="footer-brand">武神脚本库 · 黑金版</div>
-            <p class="notice">本站脚本由玩家自行编写并分享，仅供学习交流使用。如有问题请通过玩家群反馈。</p>
+            <div class="footer-brand">武仙脚本库</div>
+            <p class="notice">本站脚本由舟行自行编写并分享，仅供学习交流或分享趣味代码。</p>
         </div>
     </footer>
 
@@ -1051,6 +1049,22 @@
             description: '把门派或襄阳的绿色和蓝色装备自动分解，也可自设装备分解颜色',
             code: `[if] (quality)=绿||(quality)=蓝
      fenjie (id)`
+        },
+        {
+            id: 2,
+            name: '快速复活',
+            type: '触发',
+            event: '死亡状态改变',
+            keyword: '已经复活',
+            description: '让你复活后瞬间满血满内力:)',
+            code: `@cmdDelay 0
+[if] (:room) == "扬州城-武庙"
+    goto bei
+    go southeast
+    go enter
+    wudao_exit
+    jh fam 0 start
+    tm 【舟行-快速复活】已成功运行`
         }];
 
         // ================================================================
