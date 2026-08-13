@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="武神传说脚本分享站 —— 触发、流程、自命令，一键复制使用。">
+    <meta name="theme-color" content="#0b0a08">
+    <title>武神脚本库 · 黑金版</title>
+    <style>
+        /* ============================================================
+           黑金主题配色 (Black & Gold)
+           ============================================================ */
+        :root {
+            --bg: #0b0a08;
+            --bg-deep: #050403;
+            --surface: rgba(24, 20, 16, .86);
+            --surface-strong: #1f1812;
+            --surface-soft: rgba(255, 215, 140, .06);
+            --line: rgba(212, 163, 115, .22);
+            --text: #f2eee9;
+            --muted: #b8aa98;
+            --gold: #d4a373;
+            --gold-bright: #eac784;
+            --gold-deep: #b8863a;
+            --gold-glow: rgba(212, 163, 115, .35);
+            --shadow: 0 28px 80px rgba(0, 0, 0, .6);
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --radius-sm: 14px;
+            --container: 1160px;
+            --font: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        body {
+            min-width: 320px;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 5%, rgba(212, 163, 115, .10), transparent 30rem),
+                radial-gradient(circle at 90% 20%, rgba(184, 134, 58, .07), transparent 35rem),
+                linear-gradient(180deg, var(--bg) 0%, #12100c 48%, var(--bg-deep) 100%);
+            font-family: var(--font);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: .18;
+            background-image:
+                linear-gradient(rgba(212, 163, 115, .06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 163, 115, .06) 1px, transparent 1px);
+            background-size: 52px 52px;
+            mask-image: linear-gradient(to bottom, black, transparent 78%);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .container {
+            width: min(calc(100% - 40px), var(--container));
+            margin-inline: auto;
+        }
+
+        /* ===== 头部 ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid rgba(212, 163, 115, .18);
+            background: rgba(11, 10, 8, .82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .header-inner {
+            min-height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            color: var(--gold-bright);
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(212, 163, 115, .5);
+            border-radius: 13px;
+            color: #1f1a14;
+            background: linear-gradient(135deg, #f7e0b5, var(--gold));
+            box-shadow: 0 10px 30px rgba(212, 163, 115, .28);
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 23px;
+            font-weight: 900;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            display: block;
+            padding: 9px 13px;
+            border-radius: 11px;
+            color: var(--muted);
+            font-size: 14px;
+            transition: color .2s ease, background .2s ease;
+        }
+
+        .nav-links a:hover,
+        .nav-links a[aria-current="page"] {
+            color: var(--gold-bright);
+            background: rgba(212, 163, 115, .12);
+        }
+
+        /* ===== 英雄区 ===== */
+        .hero {
+            position: relative;
+            padding-block: 72px 48px;
+            text-align: center;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -12%;
+            top: 2%;
+            width: 480px;
+            height: 480px;
+            z-index: -1;
+            border: 1px solid rgba(212, 163, 115, .13);
+            border-radius: 50%;
+            box-shadow: 0 0 0 48px rgba(212, 163, 115, .03), 0 0 0 112px rgba(212, 163, 115, .02);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            padding: 7px 16px;
+            border: 1px solid rgba(212, 163, 115, .35);
+            border-radius: 999px;
+            color: #f5e2c7;
+            background: rgba(212, 163, 115, .10);
+            font-size: 12px;
+            font-weight: 750;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 16px var(--gold);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(40px, 5.4vw, 68px);
+            line-height: 1.08;
+            letter-spacing: -.055em;
+        }
+
+        .hero h1 span {
+            display: block;
+            color: transparent;
+            background: linear-gradient(100deg, #f7e5c4 6%, var(--gold-bright) 48%, #f7d89e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .hero-copy {
+            max-width: 640px;
+            margin: 20px auto 0;
+            color: var(--muted);
+            font-size: clamp(16px, 1.6vw, 19px);
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 24px;
+            margin-top: 28px;
+            color: #b8aa98;
+            font-size: 13px;
+        }
+
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-meta span::before {
+            content: "✦";
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        /* ===== 统计条 ===== */
+        .stats-band {
+            padding: 0 0 56px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+            transition: border-color .25s ease, transform .25s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            flex: 0 0 auto;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(212, 163, 115, .25);
+            border-radius: 14px;
+            color: var(--gold-bright);
+            background: linear-gradient(145deg, rgba(212, 163, 115, .18), rgba(212, 163, 115, .06));
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .stat-icon.blue {
+            color: #eacba1;
+            border-color: rgba(212, 163, 115, .2);
+            background: linear-gradient(145deg, rgba(212, 163, 115, .18), rgba(212, 163, 115, .05));
+        }
+
+        .stat-icon.gold {
+            color: #f7dba8;
+            border-color: rgba(212, 163, 115, .25);
+            background: linear-gradient(145deg, rgba(212, 163, 115, .22), rgba(212, 163, 115, .07));
+        }
+
+        .stat-num {
+            font-size: clamp(26px, 2.8vw, 36px);
+            font-weight: 850;
+            line-height: 1.1;
+            letter-spacing: -.02em;
+            font-variant-numeric: tabular-nums;
+            color: transparent;
+            background: linear-gradient(100deg, #f7e5c4 6%, var(--gold-bright) 52%, #f7d89e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-label {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        /* ===== 脚本列表 ===== */
+        .section {
+            padding-block: 56px;
+        }
+
+        .section+.section {
+            border-top: 1px solid rgba(212, 163, 115, .12);
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-kicker {
+            margin: 0 0 6px;
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: clamp(28px, 3.6vw, 40px);
+            line-height: 1.18;
+            letter-spacing: -.035em;
+        }
+
+        .section-heading>p {
+            max-width: 400px;
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .scripts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .script-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 26px 28px 28px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+            cursor: pointer;
+            transition: transform .25s ease, border-color .25s ease, background .25s ease, box-shadow .3s ease;
+        }
+
+        .script-card::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            right: -70px;
+            bottom: -80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 163, 115, .12), transparent 68%);
+            transition: transform .3s ease;
+            pointer-events: none;
+        }
+
+        .script-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--gold);
+            background: rgba(30, 24, 18, .94);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+        }
+
+        .script-card:hover::after {
+            transform: scale(1.3);
+        }
+
+        .script-card .card-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            margin-bottom: 18px;
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 14px;
+            color: var(--gold-bright);
+            background: linear-gradient(145deg, rgba(212, 163, 115, .16), rgba(212, 163, 115, .05));
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 21px;
+            font-weight: 900;
+        }
+
+        .script-card h3 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: -.015em;
+        }
+
+        .script-card .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0 12px;
+        }
+
+        .script-card .tag {
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(212, 163, 115, .14);
+            color: #f5e2c7;
+            border: 1px solid rgba(212, 163, 115, .12);
+        }
+
+        .script-card .tag.event {
+            background: rgba(212, 163, 115, .10);
+            color: #eacba1;
+            border-color: rgba(212, 163, 115, .08);
+        }
+
+        .script-card .card-desc {
+            margin: 4px 0 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .script-card .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold-bright);
+            font-size: 14px;
+            font-weight: 750;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, .78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: fadeIn .25s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-box {
+            max-width: 780px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(145deg, rgba(22, 18, 14, .96), rgba(10, 8, 6, .98));
+            border: 1px solid rgba(212, 163, 115, .2);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, .7);
+            padding: 0;
+            animation: slideUp .3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 30px 16px;
+            border-bottom: 1px solid rgba(212, 163, 115, .15);
+            position: sticky;
+            top: 0;
+            background: rgba(10, 8, 6, .92);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            z-index: 2;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: -.02em;
+            color: var(--gold-bright);
+        }
+
+        .modal-close {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: none;
+            border-radius: 50%;
+            background: rgba(212, 163, 115, .08);
+            color: var(--muted);
+            font-size: 22px;
+            cursor: pointer;
+            transition: background .2s, color .2s, transform .2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(212, 163, 115, .18);
+            color: var(--gold-bright);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 24px 30px 30px;
+        }
+
+        .modal-body .detail-row {
+            display: grid;
+            grid-template-columns: 72px 1fr;
+            gap: 12px 18px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(212, 163, 115, .08);
+        }
+
+        .modal-body .detail-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .modal-body .detail-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+            padding-top: 2px;
+        }
+
+        .modal-body .detail-value {
+            color: var(--text);
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .modal-body .detail-value .tag {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(212, 163, 115, .14);
+            color: #f5e2c7;
+            border: 1px solid rgba(212, 163, 115, .12);
+        }
+
+        .modal-body .detail-value .tag.event {
+            background: rgba(212, 163, 115, .10);
+            color: #eacba1;
+            border-color: rgba(212, 163, 115, .08);
+        }
+
+        .code-block-wrap {
+            margin-top: 6px;
+            position: relative;
+            border-radius: var(--radius-sm);
+            background: rgba(0, 0, 0, .55);
+            border: 1px solid rgba(212, 163, 115, .12);
+            overflow: hidden;
+        }
+
+        .code-block-wrap pre {
+            margin: 0;
+            padding: 18px 20px;
+            overflow-x: auto;
+            font-family: "JetBrains Mono", "Fira Code", "SF Mono", monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #e8ddd0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .code-block-wrap .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(212, 163, 115, .12);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .code-block-wrap .copy-btn:hover {
+            background: rgba(212, 163, 115, .25);
+            color: var(--gold-bright);
+        }
+
+        .code-block-wrap .copy-btn.copied {
+            background: rgba(212, 163, 115, .25);
+            color: var(--gold);
+        }
+
+        /* ===== 页脚 ===== */
+        .site-footer {
+            padding-block: 28px 38px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            color: #8a7e70;
+            font-size: 12px;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 26px;
+            flex-wrap: wrap;
+        }
+
+        .footer-brand {
+            color: #b8aa98;
+            font-weight: 750;
+        }
+
+        .notice {
+            max-width: 720px;
+            margin: 0;
+            text-align: right;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+            border: 2px dashed rgba(212, 163, 115, .15);
+            border-radius: var(--radius-md);
+        }
+
+        .empty-state .big-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: .5;
+        }
+
+        .empty-state h3 {
+            color: var(--text);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .header-inner {
+                min-height: auto;
+                padding-block: 13px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+            .nav-links {
+                max-width: 560px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .section-heading {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .section-heading>p {
+                max-width: 100%;
+            }
+            .hero::after {
+                width: 300px;
+                height: 300px;
+                right: -10%;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .container {
+                width: min(calc(100% - 28px), var(--container));
+            }
+            .site-header {
+                position: relative;
+            }
+            .header-inner {
+                display: block;
+            }
+            .nav-links {
+                justify-content: flex-start;
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(212, 163, 115, .12);
+            }
+            .nav-links a {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            .hero {
+                padding-block: 48px 32px;
+            }
+            .hero h1 {
+                font-size: clamp(34px, 10vw, 48px);
+            }
+            .scripts-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px 16px;
+                gap: 12px;
+            }
+            .stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+            .stat-num {
+                font-size: 22px;
+            }
+            .modal-box {
+                max-height: 95vh;
+                border-radius: var(--radius-md);
+            }
+            .modal-header {
+                padding: 16px 18px 12px;
+            }
+            .modal-body {
+                padding: 16px 18px 22px;
+            }
+            .modal-body .detail-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+                padding: 8px 0;
+            }
+            .modal-body .detail-label {
+                font-size: 12px;
+                color: #9a8c7e;
+            }
+            .code-block-wrap pre {
+                font-size: 12px;
+                padding: 14px 16px;
+                max-height: 240px;
+            }
+            .footer-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .notice {
+                text-align: left;
+            }
+        }
+
+        /* ===== 滚动条美化 ===== */
+        .modal-box::-webkit-scrollbar,
+        .code-block-wrap pre::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        .modal-box::-webkit-scrollbar-track,
+        .code-block-wrap pre::-webkit-scrollbar-track {
+            background: rgba(212, 163, 115, .06);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb,
+        .code-block-wrap pre::-webkit-scrollbar-thumb {
+            background: rgba(212, 163, 115, .3);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb:hover,
+        .code-block-wrap pre::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 163, 115, .5);
+        }
+
+        /* ===== 通用工具 ===== */
+        .text-muted {
+            color: var(--muted);
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(22, 18, 14, .94);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 12px;
+            padding: 12px 28px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+            opacity: 0;
+            transition: opacity .4s ease, transform .4s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast .check {
+            color: var(--gold);
+            margin-right: 10px;
+        }
+
+        /* ===== 编辑提示 ===== */
+        .edit-hint {
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: rgba(212, 163, 115, .06);
+            border: 1px solid rgba(212, 163, 115, .12);
+            border-radius: var(--radius-sm);
+            color: var(--muted);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .edit-hint code {
+            background: rgba(212, 163, 115, .1);
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: var(--gold-bright);
+            font-size: 12px;
+        }
+
+        .edit-hint a {
+            color: var(--gold);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 头部 ===== -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="/" aria-label="武神脚本库首页">
+                <span class="brand-mark" aria-hidden="true">武</span>
+                <span>武神脚本库 · 黑金</span>
+            </a>
+            <nav aria-label="主导航">
+                <ul class="nav-links">
+                    <li><a href="/" aria-current="page">首页</a></li>
+                    <li><a href="#scripts">脚本列表</a></li>
+                    <li><a href="#notice">声明</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===== 主体 ===== -->
+    <main>
+
+        <!-- 英雄区 -->
+        <section class="container hero" aria-labelledby="hero-title">
+            <div>
+                <div class="eyebrow">WSMUD Script Library</div>
+                <h1 id="hero-title">武神传说 · <span>黑金脚本集</span></h1>
+                <p class="hero-copy">汇集玩家自写的实用触发与流程脚本，点击卡片查看详情，一键复制即可使用。</p>
+                <div class="hero-meta">
+                    <span>无需登录</span>
+                    <span>手机友好</span>
+                    <span>一键复制</span>
+                    <span>持续更新</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 统计条 -->
+        <section class="stats-band" id="stats" aria-label="脚本统计">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-icon" aria-hidden="true">触</span>
+                        <div class="stat-body">
+                            <div class="stat-num" id="stat-triggers">0</div>
+                            <div class="stat-label">触发脚本</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon blue" aria-hidden="true">流</span>
+                        <div class="stat-body">
+                            <div class="stat-num" id="stat-flows">0</div>
+                            <div class="stat-label">流程脚本</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon gold" aria-hidden="true">令</span>
+                        <div class="stat-body">
+                            <div class="stat-num" id="stat-commands">0</div>
+                            <div class="stat-label">自命令脚本</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon" aria-hidden="true">📦</span>
+                        <div class="stat-body">
+                            <div class="stat-num" id="stat-total">0</div>
+                            <div class="stat-label">脚本总数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 脚本列表 -->
+        <section class="section" id="scripts" aria-labelledby="scripts-title">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">Scripts</p>
+                        <h2 id="scripts-title">所有脚本</h2>
+                    </div>
+                    <p>点击任意卡片查看完整脚本信息，复制后可直接在游戏中使用。</p>
+                </div>
+                <div class="scripts-grid" id="scriptsGrid">
+                    <!-- 由 JavaScript 动态渲染 -->
+                </div>
+                <!-- 编辑提示：方便用户添加脚本 -->
+                <div class="edit-hint">
+                    <span>✏️ <strong>如何新增脚本？</strong></span>
+                    <span>在下方 <code>scriptsData</code> 数组中添加新对象即可，格式参考已有条目。</span>
+                    <span style="margin-left:auto; opacity:0.7;">📖 编辑 <code>&lt;script&gt;</code> 区域</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== 模态框 ===== -->
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="modalTitle">脚本详情</h2>
+                <button class="modal-close" id="modalClose" aria-label="关闭详情">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 由 JavaScript 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"><span class="check">✦</span><span id="toastMsg">已复制</span></div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="site-footer" id="notice">
+        <div class="container footer-inner">
+            <div class="footer-brand">武神脚本库 · 黑金版</div>
+            <p class="notice">本站脚本由玩家自行编写并分享，仅供学习交流使用。如有问题请通过玩家群反馈。</p>
+        </div>
+    </footer>
+
+    <script>
+        // ================================================================
+        //  ★★★ 脚本数据 ★★★
+        //  在这里添加 / 修改 / 删除脚本即可更新页面内容。
+        //  每个脚本对象包含以下字段：
+        //    id         : 唯一标识（数字，建议递增）
+        //    name       : 脚本名称
+        //    type       : '触发' | '流程' | '自命令'
+        //    event      : 事件类型（如 '气血内力改变'、'新提示信息' 等）
+        //    keyword    : 关键字（触发条件）
+        //    description: 简短描述（显示在卡片上）
+        //    code       : 脚本代码（流程内容）
+        // ================================================================
+        const scriptsData = [{
+            id: 1,
+            name: '低阶装备自动分解',
+            type: '触发',
+            event: '物品拾取',
+            keyword: '宋|蒙|笠|混|真武|君子|鲲鹏|曙光',
+            description: '把门派或襄阳的绿色和蓝色装备自动分解，也可自设装备分解颜色',
+            code: `[if] (quality)=绿||(quality)=蓝
+     fenjie (id)`
+        }];
+
+        // ================================================================
+        //  ★★★ 以下为页面渲染与交互逻辑，一般无需修改 ★★★
+        // ================================================================
+
+        // ---- DOM 引用 ----
+        const grid = document.getElementById('scriptsGrid');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalClose = document.getElementById('modalClose');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        let currentCopyTarget = '';
+
+        // ---- 统计 ----
+        function updateStats() {
+            const triggers = scriptsData.filter(s => s.type === '触发').length;
+            const flows = scriptsData.filter(s => s.type === '流程').length;
+            const commands = scriptsData.filter(s => s.type === '自命令').length;
+            const total = scriptsData.length;
+
+            document.getElementById('stat-triggers').textContent = triggers;
+            document.getElementById('stat-flows').textContent = flows;
+            document.getElementById('stat-commands').textContent = commands;
+            document.getElementById('stat-total').textContent = total;
+        }
+
+        // ---- 渲染卡片 ----
+        function renderCards() {
+            if (scriptsData.length === 0) {
+                grid.innerHTML = `
+                <div class="empty-state">
+                  <div class="big-icon">📭</div>
+                  <h3>暂无脚本</h3>
+                  <p>请先在 <code>scriptsData</code> 数组中添加脚本数据。</p>
+                </div>
+              `;
+                return;
+            }
+
+            let html = '';
+            scriptsData.forEach(s => {
+                const iconMap = { '触发': '触', '流程': '流', '自命令': '令' };
+                const icon = iconMap[s.type] || '📄';
+                html += `
+                <div class="script-card" data-id="${s.id}" role="button" tabindex="0" aria-label="查看 ${s.name}">
+                  <span class="card-icon" aria-hidden="true">${icon}</span>
+                  <h3>${escapeHtml(s.name)}</h3>
+                  <div class="card-tags">
+                    <span class="tag">${escapeHtml(s.type)}</span>
+                    <span class="tag event">${escapeHtml(s.event)}</span>
+                    ${s.keyword ? `<span class="tag">${escapeHtml(s.keyword)}</span>` : ''}
+                  </div>
+                  <p class="card-desc">${escapeHtml(s.description || '')}</p>
+                  <span class="card-link">查看详情 <span aria-hidden="true">→</span></span>
+                </div>
+              `;
+            });
+            grid.innerHTML = html;
+
+            // 绑定点击事件
+            grid.querySelectorAll('.script-card').forEach(el => {
+                const id = parseInt(el.dataset.id, 10);
+                el.addEventListener('click', () => openModal(id));
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openModal(id);
+                    }
+                });
+            });
+        }
+
+        // ---- 打开模态框 ----
+        function openModal(id) {
+            const script = scriptsData.find(s => s.id === id);
+            if (!script) return;
+
+            modalTitle.textContent = script.name;
+
+            const eventLabel = script.event || '—';
+            const keywordLabel = script.keyword || '—';
+            const code = script.code || '// 暂无代码内容';
+
+            modalBody.innerHTML = `
+              <div class="detail-row">
+                <span class="detail-label">名称</span>
+                <span class="detail-value"><strong>${escapeHtml(script.name)}</strong></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">类型</span>
+                <span class="detail-value"><span class="tag">${escapeHtml(script.type)}</span></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">事件</span>
+                <span class="detail-value"><span class="tag event">${escapeHtml(eventLabel)}</span></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">关键字</span>
+                <span class="detail-value">${escapeHtml(keywordLabel)}</span>
+              </div>
+              <div class="detail-row" style="grid-template-columns:1fr; padding-bottom:4px;">
+                <span class="detail-label">流程代码</span>
+              </div>
+              <div class="code-block-wrap">
+                <pre id="codeContent">${escapeHtml(code)}</pre>
+                <button class="copy-btn" id="copyCodeBtn" data-code="${escapeHtml(code)}">📋 复制</button>
+              </div>
+              <div style="margin-top:14px; font-size:13px; color:var(--muted);">
+                💡 点击「复制」按钮即可将代码复制到剪贴板，粘贴到游戏中使用。
+              </div>
+            `;
+
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // 绑定复制按钮
+            const copyBtn = document.getElementById('copyCodeBtn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const codeText = this.dataset.code;
+                    copyToClipboard(codeText);
+                });
+            }
+
+            // 聚焦到模态框
+            modalOverlay.focus();
+        }
+
+        // ---- 关闭模态框 ----
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ---- 复制到剪贴板 ----
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('已复制到剪贴板');
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('已复制到剪贴板');
+            } catch (e) {
+                showToast('复制失败，请手动选择代码复制');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // ---- Toast 提示 ----
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toastMsg.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2200);
+        }
+
+        // ---- 简单转义 ----
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ---- 点击模态框外部关闭 ----
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ---- 键盘事件 ----
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+        modalClose.addEventListener('click', closeModal);
+
+        // ---- 初始化 ----
+        renderCards();
+        updateStats();
+
+        if (scriptsData.length === 0) {
+            console.warn('⚠️ 脚本数据为空，请在 scriptsData 数组中添加脚本。');
+        } else {
+            console.log(`✅ 已加载 ${scriptsData.length} 个脚本。`);
+        }
+
+        // ---- 统计条进入视口动画 ----
+        const statsBand = document.getElementById('stats');
+        if (statsBand && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        statsBand.classList.add('in-view');
+                        observer.disconnect();
+                    }
+                });
+            }, { threshold: 0.2 });
+            observer.observe(statsBand);
+        } else {
+            statsBand.classList.add('in-view');
+        }
+
+        console.log('🐉 武神脚本库 · 黑金版已启动！');
+    </script>
+
+</body>
+</html>
