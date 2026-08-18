@@ -7,43 +7,732 @@
     <meta name="theme-color" content="#0b0a08">
     <title>武仙脚本库 · 副本攻略</title>
     <style>
-        /* 完全复用 index.html 中的样式，此处省略重复，实际使用时请复制相同样式 */
-        /* 为了保持独立，这里需要包含完整样式，但由于篇幅，实际部署时请复制 index.html 的 <style> 内容 */
-        /* 此处为节省空间，仅作示意，实际文件请包含完整样式 */
+        /* 样式与 index.html 完全一致，此处省略重复以节省篇幅，实际部署需复制完整样式 */
+        /* 实际使用时请将 index.html 中的 <style> 完整复制到此处 */
+        /* 为保持完整性，下面直接嵌入完整样式（与 index.html 相同） */
+        /* 为了节省篇幅，这里用注释示意，但最终输出会包含完整样式 */
     </style>
+    <!-- 由于实际输出需完整，以下为完整样式（实际代码中会复制全部） -->
     <style>
-        /* 为独立文件，必须包含全部样式，这里复制 index.html 中 style 的全部内容（从 :root 到最后的滚动条） */
-        /* 由于文件较长，此处用注释代替，实际使用时请将 index.html 中 <style> 内的所有 CSS 完整复制过来 */
-        /* 注意：以下仅为占位，实际需拷贝完整样式 */
-        :root { /* ... 完整样式 ... */ }
-        /* ... 其余样式 ... */
-        .edit-hint { display: none; } /* 攻略页不需要编辑提示 */
+        /* ============================================================
+           黑金主题配色 (Black & Gold) — 全局共用样式
+           ============================================================ */
+        :root {
+            --bg: #0b0a08;
+            --bg-deep: #050403;
+            --surface: rgba(24, 20, 16, .86);
+            --surface-strong: #1f1812;
+            --surface-soft: rgba(255, 215, 140, .06);
+            --line: rgba(212, 163, 115, .22);
+            --text: #f2eee9;
+            --muted: #b8aa98;
+            --gold: #d4a373;
+            --gold-bright: #eac784;
+            --gold-deep: #b8863a;
+            --gold-glow: rgba(212, 163, 115, .35);
+            --shadow: 0 28px 80px rgba(0, 0, 0, .6);
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --radius-sm: 14px;
+            --container: 1160px;
+            --font: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        body {
+            min-width: 320px;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 5%, rgba(212, 163, 115, .10), transparent 30rem),
+                radial-gradient(circle at 90% 20%, rgba(184, 134, 58, .07), transparent 35rem),
+                linear-gradient(180deg, var(--bg) 0%, #12100c 48%, var(--bg-deep) 100%);
+            font-family: var(--font);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: .18;
+            background-image:
+                linear-gradient(rgba(212, 163, 115, .06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 163, 115, .06) 1px, transparent 1px);
+            background-size: 52px 52px;
+            mask-image: linear-gradient(to bottom, black, transparent 78%);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .container {
+            width: min(calc(100% - 40px), var(--container));
+            margin-inline: auto;
+        }
+
+        /* ===== 头部 ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid rgba(212, 163, 115, .18);
+            background: rgba(11, 10, 8, .82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .header-inner {
+            min-height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            color: var(--gold-bright);
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(212, 163, 115, .5);
+            border-radius: 13px;
+            color: #1f1a14;
+            background: linear-gradient(135deg, #f7e0b5, var(--gold));
+            box-shadow: 0 10px 30px rgba(212, 163, 115, .28);
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 23px;
+            font-weight: 900;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            display: block;
+            padding: 9px 13px;
+            border-radius: 11px;
+            color: var(--muted);
+            font-size: 14px;
+            transition: color .2s ease, background .2s ease;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover,
+        .nav-links a[aria-current="page"],
+        .nav-links a.active-section {
+            color: var(--gold-bright);
+            background: rgba(212, 163, 115, .12);
+        }
+
+        /* ===== 英雄区 ===== */
+        .hero {
+            position: relative;
+            padding-block: 72px 48px;
+            text-align: center;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -12%;
+            top: 2%;
+            width: 480px;
+            height: 480px;
+            z-index: -1;
+            border: 1px solid rgba(212, 163, 115, .13);
+            border-radius: 50%;
+            box-shadow: 0 0 0 48px rgba(212, 163, 115, .03), 0 0 0 112px rgba(212, 163, 115, .02);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            padding: 7px 16px;
+            border: 1px solid rgba(212, 163, 115, .35);
+            border-radius: 999px;
+            color: #f5e2c7;
+            background: rgba(212, 163, 115, .10);
+            font-size: 12px;
+            font-weight: 750;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 16px var(--gold);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(40px, 5.4vw, 68px);
+            line-height: 1.08;
+            letter-spacing: -.055em;
+        }
+
+        .hero h1 span {
+            display: block;
+            color: transparent;
+            background: linear-gradient(100deg, #f7e5c4 6%, var(--gold-bright) 48%, #f7d89e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .hero-copy {
+            max-width: 640px;
+            margin: 20px auto 0;
+            color: var(--muted);
+            font-size: clamp(16px, 1.6vw, 19px);
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 24px;
+            margin-top: 28px;
+            color: #b8aa98;
+            font-size: 13px;
+        }
+
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-meta span::before {
+            content: "✦";
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        /* ===== 通用 Section ===== */
+        .section {
+            padding-block: 56px;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-kicker {
+            margin: 0 0 6px;
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: clamp(28px, 3.6vw, 40px);
+            line-height: 1.18;
+            letter-spacing: -.035em;
+        }
+
+        .section-heading>p {
+            max-width: 400px;
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* ===== 卡片网格 ===== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 26px 28px 28px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+            cursor: default;
+            transition: transform .25s ease, border-color .25s ease, background .25s ease, box-shadow .3s ease;
+        }
+
+        .card-item::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            right: -70px;
+            bottom: -80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 163, 115, .12), transparent 68%);
+            transition: transform .3s ease;
+            pointer-events: none;
+        }
+
+        .card-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--gold);
+            background: rgba(30, 24, 18, .94);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+        }
+
+        .card-item:hover::after {
+            transform: scale(1.3);
+        }
+
+        .card-item .card-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            margin-bottom: 18px;
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 14px;
+            color: var(--gold-bright);
+            background: linear-gradient(145deg, rgba(212, 163, 115, .16), rgba(212, 163, 115, .05));
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 21px;
+            font-weight: 900;
+        }
+
+        .card-item h3 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: -.015em;
+        }
+
+        .card-item .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0 12px;
+        }
+
+        .card-item .tag {
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(212, 163, 115, .14);
+            color: #f5e2c7;
+            border: 1px solid rgba(212, 163, 115, .12);
+        }
+
+        .card-item .tag.event {
+            background: rgba(212, 163, 115, .10);
+            color: #eacba1;
+            border-color: rgba(212, 163, 115, .08);
+        }
+
+        .card-item .card-desc {
+            margin: 4px 0 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .card-item .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold-bright);
+            font-size: 14px;
+            font-weight: 750;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, .78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: fadeIn .25s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-box {
+            max-width: 820px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(145deg, rgba(22, 18, 14, .96), rgba(10, 8, 6, .98));
+            border: 1px solid rgba(212, 163, 115, .2);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, .7);
+            padding: 0;
+            animation: slideUp .3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 30px 16px;
+            border-bottom: 1px solid rgba(212, 163, 115, .15);
+            position: sticky;
+            top: 0;
+            background: rgba(10, 8, 6, .92);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            z-index: 2;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: -.02em;
+            color: var(--gold-bright);
+        }
+
+        .modal-close {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: none;
+            border-radius: 50%;
+            background: rgba(212, 163, 115, .08);
+            color: var(--muted);
+            font-size: 22px;
+            cursor: pointer;
+            transition: background .2s, color .2s, transform .2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(212, 163, 115, .18);
+            color: var(--gold-bright);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 24px 30px 30px;
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .modal-body .guide-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-body .guide-section strong {
+            color: var(--gold-bright);
+        }
+
+        .modal-body .guide-section .content {
+            margin-top: 6px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(0, 0, 0, .3);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--gold);
+            font-size: 14px;
+        }
+
+        /* ===== 页脚 ===== */
+        .site-footer {
+            padding-block: 28px 38px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            color: #8a7e70;
+            font-size: 12px;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 26px;
+            flex-wrap: wrap;
+        }
+
+        .footer-brand {
+            color: #b8aa98;
+            font-weight: 750;
+        }
+
+        .notice {
+            max-width: 720px;
+            margin: 0;
+            text-align: right;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+            border: 2px dashed rgba(212, 163, 115, .15);
+            border-radius: var(--radius-md);
+        }
+
+        .empty-state .big-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: .5;
+        }
+
+        .empty-state h3 {
+            color: var(--text);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(22, 18, 14, .94);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 12px;
+            padding: 12px 28px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+            opacity: 0;
+            transition: opacity .4s ease, transform .4s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast .check {
+            color: var(--gold);
+            margin-right: 10px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .header-inner {
+                min-height: auto;
+                padding-block: 13px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+            .nav-links {
+                max-width: 560px;
+            }
+            .section-heading {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .section-heading>p {
+                max-width: 100%;
+            }
+            .hero::after {
+                width: 300px;
+                height: 300px;
+                right: -10%;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .container {
+                width: min(calc(100% - 28px), var(--container));
+            }
+            .site-header {
+                position: relative;
+            }
+            .header-inner {
+                display: block;
+            }
+            .nav-links {
+                justify-content: flex-start;
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(212, 163, 115, .12);
+            }
+            .nav-links a {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            .hero {
+                padding-block: 48px 32px;
+            }
+            .hero h1 {
+                font-size: clamp(34px, 10vw, 48px);
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-box {
+                max-height: 95vh;
+                border-radius: var(--radius-md);
+            }
+            .modal-header {
+                padding: 16px 18px 12px;
+            }
+            .modal-body {
+                padding: 16px 18px 22px;
+            }
+            .footer-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .notice {
+                text-align: left;
+            }
+        }
+
+        /* ===== 滚动条美化 ===== */
+        .modal-box::-webkit-scrollbar,
+        .code-block-wrap pre::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        .modal-box::-webkit-scrollbar-track,
+        .code-block-wrap pre::-webkit-scrollbar-track {
+            background: rgba(212, 163, 115, .06);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb,
+        .code-block-wrap pre::-webkit-scrollbar-thumb {
+            background: rgba(212, 163, 115, .3);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb:hover,
+        .code-block-wrap pre::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 163, 115, .5);
+        }
     </style>
 </head>
 <body>
+
+    <!-- ===== 头部 ===== -->
     <header class="site-header">
         <div class="container header-inner">
-            <a class="brand" href="./index.html">
+            <a class="brand" href="index.html" aria-label="武仙脚本库首页">
                 <span class="brand-mark" aria-hidden="true">武</span>
                 <span>武仙脚本库</span>
             </a>
             <nav aria-label="主导航">
                 <ul class="nav-links" id="mainNav">
-                    <li><a href="./index.html">脚本列表</a></li>
-                    <li><a href="./guides.html" class="active-section">副本攻略</a></li>
-                    <li><a href="./pills.html">丹药查询</a></li>
+                    <li><a href="index.html">脚本列表</a></li>
+                    <li><a href="guides.html" class="active-section">副本攻略</a></li>
+                    <li><a href="pills.html">丹药查询</a></li>
                     <li><a href="#notice">声明</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
+    <!-- ===== 主体 ===== -->
     <main>
+
+        <!-- 英雄区 -->
         <section class="container hero" aria-labelledby="hero-title">
             <div>
                 <div class="eyebrow">Dungeon Guides</div>
                 <h1 id="hero-title">武仙传说 · <span>副本攻略</span></h1>
-                <p class="hero-copy">点击卡片查看详细流程、掉落和参考数据。</p>
+                <p class="hero-copy">详细流程、掉落推荐、参考数据，助你轻松通关。</p>
                 <div class="hero-meta">
                     <span>无需登录</span>
                     <span>手机友好</span>
@@ -52,36 +741,41 @@
             </div>
         </section>
 
+        <!-- ===== 攻略列表 Section ===== -->
         <section class="section" id="guides-section" aria-labelledby="guides-title">
             <div class="container">
                 <div class="section-heading">
                     <div>
-                        <p class="section-kicker">Guides</p>
+                        <p class="section-kicker">Dungeon Guides</p>
                         <h2 id="guides-title">副本攻略大全</h2>
                     </div>
-                    <p>从树林到战神殿，全流程覆盖。</p>
+                    <p>点击副本卡片查看详细流程、掉落和参考数据。</p>
                 </div>
-                <div class="cards-grid" id="guidesGrid"></div>
+                <div class="cards-grid" id="guidesGrid">
+                    <!-- 由 JavaScript 动态渲染 -->
+                </div>
             </div>
         </section>
+
     </main>
 
-    <!-- 模态框、Toast、页脚与 index.html 相同，此处省略，实际使用需复制 -->
-    <!-- 为了独立，下面仅包含必要的 JS 和数据，CSS 和 HTML 结构需完整 -->
-    <!-- 因为篇幅，此处只给出核心 JS 和数据，实际部署请将 index.html 的通用部分（模态框、Toast、页脚）复制过来 -->
-
+    <!-- ===== 通用模态框 ===== -->
     <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-box">
             <div class="modal-header">
-                <h2 id="modalTitle">详情</h2>
+                <h2 id="modalTitle">攻略详情</h2>
                 <button class="modal-close" id="modalClose" aria-label="关闭详情">✕</button>
             </div>
-            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-body" id="modalBody">
+                <!-- 由 JavaScript 动态填充 -->
+            </div>
         </div>
     </div>
 
+    <!-- ===== Toast ===== -->
     <div class="toast" id="toast"><span class="check">✦</span><span id="toastMsg">已复制</span></div>
 
+    <!-- ===== 页脚 ===== -->
     <footer class="site-footer" id="notice">
         <div class="container footer-inner">
             <div class="footer-brand">武仙脚本库 · 副本攻略</div>
@@ -93,14 +787,264 @@
         // ================================================================
         //  ★★★ 副本攻略数据 ★★★
         // ================================================================
-        const dungeonData = [
-            { id:1, name:'树林', drops:'动物皮毛、布衣、钢刀、铁戒指、铁棍、铁剑、英雄巾、布鞋、短衣劲装、基本轻功秘籍。', stats:'所有基础技能5级过关', recommend:'无', guide:'一开始的一金直接给南大街扬州武馆，在那学技能全基础5级，钱可以先付，以后总会用得上的。还有，刷到基本轻功，别浪费时间去读，等到要冲击武士了再去读，刷出来了可以先放在仓库里。' },
-            { id:2, name:'财主府', drops:'家丁服、家丁鞋、东厢钥匙、崔莺莺的手镯、崔员外的戒指、小箱子、基本拳脚秘籍、基本招架秘籍、基本轻功秘籍', stats:'命中50、招架90-120', recommend:'崔莺莺的手镯（攻速悟性装，用到关服）', guide:'普通困难都一样，首先一路杀上去，杀管家有很大几率出"东厢钥匙"。杀完财主后，房间描述中开门（须持有钥匙！如无钥匙，此次无法100%完成。）开门后，救出丫鬟，带她到门口，她会请求住进你家，当然是选择同意啦。救完丫鬟，回去西厢询问崔莺莺，问完杀之，一定几率出镯子，然后再去东厢搜索获得小箱子（小箱子可以开出基本内功秘籍、基本招架秘籍、基本剑法秘籍、基本轻功秘籍、基本拳法秘籍，并且有1-9两金子），可以完成副本了。' },
-            // ... 其余副本数据请从原完整 HTML 中复制（36个副本） ...
-            // 由于篇幅，此处仅示例，实际部署请将原 dungeonData 完整数组复制过来
-        ];
+        const dungeonData = [{
+            id: 1,
+            name: '树林',
+            drops: '动物皮毛、布衣、钢刀、铁戒指、铁棍、铁剑、英雄巾、布鞋、短衣劲装、基本轻功秘籍。',
+            stats: '所有基础技能5级过关',
+            recommend: '无',
+            guide: `一开始的一金直接给南大街扬州武馆，在那学技能全基础5级，钱可以先付，以后总会用得上的。还有，刷到基本轻功，别浪费时间去读，等到要冲击武士了再去读，刷出来了可以先放在仓库里。`
+        }, {
+            id: 2,
+            name: '财主府',
+            drops: '家丁服、家丁鞋、东厢钥匙、崔莺莺的手镯、崔员外的戒指、小箱子、基本拳脚秘籍、基本招架秘籍、基本轻功秘籍',
+            stats: '命中50、招架90-120',
+            recommend: '崔莺莺的手镯（攻速悟性装，用到关服）',
+            guide: `普通困难都一样，首先一路杀上去，杀管家有很大几率出"东厢钥匙"。杀完财主后，房间描述中开门（须持有钥匙！如无钥匙，此次无法100%完成。）开门后，救出丫鬟，带她到门口，她会请求住进你家，当然是选择同意啦。救完丫鬟，回去西厢询问崔莺莺，问完杀之，一定几率出镯子，然后再去东厢搜索获得小箱子（小箱子可以开出基本内功秘籍、基本招架秘籍、基本剑法秘籍、基本轻功秘籍、基本拳法秘籍，并且有1-9两金子），可以完成副本了。`
+        }, {
+            id: 3,
+            name: '流氓巷',
+            drops: '流氓巾、流氓衣、流氓鞋、流氓护腕、流氓短剑、流氓闷棍、千斤拳、基本内功秘籍、基本拳脚秘籍、太祖长拳残页、基本招架秘籍、基本轻功秘籍',
+            stats: '命中60-100、招架210',
+            recommend: '无',
+            guide: `沿路解决所有流氓，流氓头会叫两个流氓助战（60命中已经可以概率击中流氓但不能确保打到两个boss),最后击杀赵三拳完成副本。流氓巷的仓库暂未开放，推石磨可以缓慢练习自己的基本拳脚。`
+        }, {
+            id: 4,
+            name: '丽春院',
+            drops: '基本刀法秘籍、五虎断门刀秘籍、五虎断门刀残页、基本鞭法秘籍、云龙鞭法残页、黑龙鞭、黑虎单刀、官服、韦春芳的项链',
+            stats: '命中200、招架400、基础内功170级',
+            recommend: '五虎断门刀（三刀爆发技能，可以用到大后期），云龙鞭法（或者后面的秋风拂尘）',
+            guide: `首先杀死龟公和史松，然后在西厢的地图描述中点击梳妆台并推开（打不过史松你可以选择直接打开梳妆台让两货相斗，史松快死的时候给他补刀，顺便击杀茅十八，不过手速要很快，不然系统会认为你不是自己杀的，那就无法100%），进去见到茅十八，给予茅十八黑龙鞭（获得五虎断门刀秘籍）或是杀死他（爆五虎断门刀残页）后达成100%完成度。`
+        }, {
+            id: 5,
+            name: '兵营',
+            drops: '基本刀法秘籍、基本剑法秘籍、将军剑、军刀、军服、齐眉棍、官服',
+            stats: '命中200、招架400、基础内功170级（这里命中只要180）',
+            recommend: '无',
+            guide: `沿路杀死所有官兵武将，在扬州守备处可以进入武器库（需要30臂力），进去后可以搜索获得大量物资，每24小时重置一次搜索。`
+        }, {
+            id: 6,
+            name: '庄府',
+            drops: '神龙心法残页、意形步法残页、神龙剑残页',
+            stats: '命中200、招架400、基础内功170级',
+            recommend: '无',
+            guide: `在大门处可以选择破门进入或是翻墙进入。破门需要一定的内力；翻墙需要一定基本轻功。\n进入后杀死神龙教的喽啰，最后见到庄夫人和双儿，可以不击杀。\n每给予庄夫人一个吴之荣的头颅（下一关掉落），可以获得一页华山剑法残页。\n容貌达到40并给予一个吴之荣的头颅，可以将双儿领走。`
+        }, {
+            id: 7,
+            name: '鳌拜府',
+            drops: '金丝宝甲、鳌拜匕首、混元一气残页、飞檐走壁残页、伏虎拳残页、绝门棍残页、牢房钥匙、四十二章经',
+            stats: '攻击600（低于也行）、命中300、招架900',
+            recommend: '无',
+            guide: `进门一路向西杀到鳌拜处，鳌拜卧室的一切地图描述请忽略，杀死鳌拜后依旧未能100%完成副本，到后院北方的卧房，点地图描述中的"书"，打开后看"杀"字的位置。\n若"杀"在左下角，则将地图描述中的"画"往左推；若"杀"在右下角，则将"画"往右推。\n推开画后即可达成100%完成度。画后的密室中有四十二章经中的一页（1-4）。\n鳌拜有几率掉落牢房钥匙，可用于到后院处打开地图描述中的门进入牢房，对话庄允诚获得四十二章经中的一页（5-8）。\n集齐四十二章经1～8，可以到关外副本挖一次大清龙脉，获得一本完整的随机低级秘籍和大量物资。`
+        }, {
+            id: 8,
+            name: '天地会',
+            drops: '密宗心法残页、密宗大手印残页、猴拳残页、云龙剑残页、云龙身法残页、云龙心法残页、神形百变残页、秋风拂尘残页、云龙剑',
+            stats: '攻击700、命中700',
+            recommend: '秋风拂尘（或者前面的云龙鞭法）',
+            guide: `进入副本，首先杀死能看见的三个npc。来到内室，点动作栏的敲地板，连点三下，发现多了个可疑的暗道（无论你怎么敲都能开）。进入暗道，有人主动叫杀，悉数解决，在暗道中一路向西走直到尽头，此时北方是青木堂。这里有两个过关方式：一过去青木堂看见陈近南，直接杀死他则达成100%完成度。陈近南东方的房间会随机出现一些秘籍残页。二若选择不杀陈近南，也可继续往东北方走，需要200级基本轻功等级进入客房，杀死围攻独臂神尼的喇嘛达成100%完成度（救出独臂神尼可以获得1页神行百变残页。另外你也可以再把独臂神尼杀了会出秋风尘法，比云龙鞭法的暴率高很多，两者效果完全相同，而且可能还会再出神行百变，你懂得，玩家救了以后再把她杀了不会影响进度）。\n当然，两个过关条件可以一起达成，但是并不会有超出100%的副本完成度。`
+        }, {
+            id: 9,
+            name: '神龙教',
+            drops: '神龙心法残页、意形步法残页、蛇岛奇功残页、神龙剑残页、化骨绵掌残页、神龙袍、神龙冠、神龙靴、神龙护腕、神龙腰带、神龙杖、神龙令',
+            stats: '攻击1000、命中1000、招架950、气血12000',
+            recommend: '蛇岛奇功（前期凑面板非常好用），神龙腰带（打坐），神龙令（悟性）',
+            guide: `进入副本首先一路杀死毒蛇并劈开灌木，然后杀死所有npc通关。注意最后的boss是三人组，可以先比试洪安通，赢了比试马上击杀洪安通。`
+        }, {
+            id: 10,
+            name: '关外',
+            drops: '冷月神功残页、熊胆、胡家刀法残页、四象步法残页、闯王宝刀',
+            stats: '攻击1200、命中1200、招架1000、气血20000',
+            recommend: '无，胡刀可以刷下，但是没太大必要，其实五虎面板稍微高一点就比胡刀好了',
+            guide: `进地图首先不要杀死船夫，一路向东杀死所有动物，地图的最东方可以挖大清龙脉（需集齐8本四十二章经、基础轻功300）。路上会遇到胡斐（实力很强）和他的管家，不必击杀。回返到副本开始出，直接点击西方的江面，船夫会收取1金的渡河费。\n过河后进入雪地，一路向西直到看见北方有出口，往北走杀死阎基达成100%完成度。\n这关掉落的阎基的头颅可以给予胡斐兑换胡家刀法残页。另外闯王宝刀不如田伯光的狂风刀，不要浪费太多玄晶精炼闯王宝刀，4星足矣。`
+        }, {
+            id: 11,
+            name: '温府',
+            drops: '金蛇锥、金蛇戒、金蛇披风、温仪的香囊、八卦拳残页、八卦棍法残页、金蛇剑法残页、金蛇游身掌残页、金蛇游身步残页、金蛇锥法、[八卦棍、金蛇剑]',
+            stats: '武当（招架3300、气血6万、太极剑法300级，无需天师符）、华山（攻击命中4100、独孤九剑400、要若干天师符）、逍遥（北冥神功800级，要若干天师符）、少林峨眉丐帮（紫武功400-500级、黄武功500级）、攻击2200-4100、命中2550、气血4万-6万、躲闪900-1000',
+            recommend: '温仪的香囊（减出招装备，用到关服），金蛇剑法，金蛇游身步（这两个散人必刷，其他门派自己决定，都是打控制用的，因为出率非常非常低，所以要做好心理准备，一天1张就是普天同庆了），金蛇锥法（唯一一个前期能拿到的暗器技能，约等于一个技能七下平A的伤害，一般1到2个月出齐，到后面的燕子坞偷书可以很快出齐，自己决定刷不刷）',
+            guide: `这关的过关要求是破开温家五老的阵法并杀死金蛇郎君。进入地图，首先需要500级基本轻功跳上树木，进入后会遇到主动叫杀的温老大，此时不能将其杀死，而需要想办法脱离战斗。在战斗中向旁边地图移动有几率脱离战斗（脱离失败时会使自己忙乱），而给敌人施加忙乱、眩晕、定身等负面buff可以加大脱离战斗的几率（遇到温老大，此时必须躲开他，否则温家五老无法成阵，不破阵就见不到金蛇郎君，无法达到100%完成）。避开后，沿着走廊来到尽头，点击木桩，跳上去，会遇到温家五老一起出战，需要1v5将他们杀死。战斗结束后再次点击木桩，会见到金蛇郎君，杀死他达成100%完成度。`
+        }, {
+            id: 12,
+            name: '五毒教',
+            drops: '五毒神功残页、五毒烟萝步残页、五毒钩法残页、千蛛万毒手残页、疤面面具、金吴钩',
+            stats: '华山（攻击命中5000）、丐帮（攻击命中高于5000）、武当少林峨眉逍遥（攻击命中低于5000）',
+            recommend: '疤面面具（13终伤，用到关服）',
+            guide: `沿路杀死所有npc，1V3那关会比较难，你切磋一个，叫杀切磋杀的是另一个，然后被切磋的那个一定排最后，所以这关1V3没有骚操作，另外何铁手（金吴钩是这个npc掉落，疤面面具是何红药掉落）不杀。完成度100%。`
+        }, {
+            id: 13,
+            name: '恒山',
+            drops: '恒山身法残页、白云心法残页、恒山剑法残页、天长掌法残页、狂风快刀残页、狂风刀、田伯光的面罩',
+            stats: '命中7000',
+            recommend: '无，白云心法散人可刷（加攻击），狂风快刀等于0.5攻速平A21下，不是很强，出率不高，自己决定刷不刷',
+            guide: `杀死四次田伯光达成100%完成度，前三次会随机逃跑到恒山某个房间，前三次30%完成度，最后一次10%完成度。注意三定会主动叫杀，尽量避开她们，田伯光有的后会跑到三定那里，验证非酋还是欧皇的时机到了。另外一般都是打四次田伯光，不过也有例外，只打三次完成度就100%了。可以考虑下了田伯光的武器（华山）。注意在田伯光用狂风的时候用鞭子缠住，逍遥偷懒一点可以这时候开凌波躲。`
+        }, {
+            id: 14,
+            name: '青城山',
+            drops: '踏歌行残页、摧心掌残页、松风剑法残页',
+            stats: '攻击6500、气血10万',
+            recommend: '踏歌行（前期唯一一个加攻击轻功，出率高值得练），松风剑法散人可以考虑刷，需要配合六扇门千里追风使用，我有一个寒冰松风追风的散人打法，也可以玩到武圣',
+            guide: `杀死余沧海过关。余沧海难度和田伯光差不多，但是余沧海的输出是不稳定的，前面打你不疼，如果运气不好他一直不用技能，叠十多层松风的时候突然一下使用技能，威力就不同凡响了。`
+        }, {
+            id: 15,
+            name: '衡山',
+            drops: '琴中剑、曲洋的琴环、刘正风的茧绸袍、穿云纵残页、流云掌残页、镇岳诀残页、衡山五神剑残页',
+            stats: '攻击7200、命中7500',
+            recommend: '琴中剑（蓝色暗器，不值得精炼），曲洋的琴环（破防暴击戒指，不值得精炼），衡山五神剑（最强属性招架，用到关服）',
+            guide: `这一关过关要求是救出刘正风。\n所谓"救出"并不要求刘正风最后存活，只需要在刘正风死之前击杀费斌即可。\n进入副本首先往西北方移动，杀死首先见到的两个嵩山弟子（得手动击杀），继续移动，忽略路上互掐的npc，直接找到刘正风，发现他正在和费斌苦战。帮助刘正风杀死费斌即可通关。\n注意：衡山五神剑对于华山丐帮来说是必刷的，而且黄色武功可以考虑通过武道进阶橙色`
+        }, {
+            id: 16,
+            name: '泰山',
+            drops: '泰山登山靴、磐石护符、刘正风的茧绸袍、泰山拳法残页、泰山剑法残页、磐石神功残页',
+            stats: '特殊轻功801级',
+            recommend: '无',
+            guide: `一路上去，直接杀，三个人，掉下来就再上去，能过衡山，过此关没难度。`
+        }, {
+            id: 17,
+            name: '嵩山',
+            drops: '大嵩阳神掌残页、嵩山剑法残页、五岳令旗、盟主披风、寒冰真气残页',
+            stats: '攻击8000-10000、命中8500-10000',
+            recommend: '大嵩阳神掌（所有忙乱流必刷技能，13秒忙乱20秒CD仅次于高等级武当长拳），寒冰散人可以刷下，没太大必要但是很快乐',
+            guide: `第一次打1个太保，第二次打2个太保，第三次打3个太保，第四次打4个太保，最后打左冷禅（控住，如果他怂样控制了你，估算下忙乱结束后如果你控的CD还没到就吃个喜宴，然后等到CD冷却结束在控。若是打一套后他控制你，而你的气血又撑不到忙乱结束，那拜拜，去挖矿吧）。`
+        }, {
+            id: 18,
+            name: '云梦沼泽',
+            drops: '鳄鱼皮、火龙筋、玄晶、蓝宝石、红宝石、黄宝石、绿宝石、火龙刀、火龙剑、火龙拳、火龙鞭、火龙棍',
+            stats: '攻击10000、命中9000',
+            recommend: '无，200火龙筋鳄鱼皮玄晶可以造一个火龙腰带，造足够多可以出终伤，练习效率，或者伤害减免其中之一，但是不值得去刷',
+            guide: `一共杀10只，1只鳄鱼，2只鳄鱼，2只鳄鱼，2只鳄鱼，1只火龙，1只火龙。洪荒古泽深处是火龙王，不用打，另外云梦沼泽往瑛姑那个方向的两只鳄鱼要杀了（不杀就少了一次10%进度，变成你去洪荒古泽方向除了面对单只火龙以外，还要深入再打两只火龙补这个10%进度，这就增加了危险性，火毒和忙乱，你懂得）。`
+        }, {
+            id: 19,
+            name: '桃花岛',
+            drops: '金雁功残页、碧波神功残页、暗影浮香残页、落英神剑残页、弹指神通残页、空明拳残页、玉箫、软猬甲',
+            stats: '华山（攻击、命中13000，困难桃花岛要攻击、命中15000）',
+            recommend: '玉箫（CD剑，很有用），软猬甲（炸门派红，后期堆免伤用）',
+            guide: `**普通：**原理简单说，就是由1走到9，其中5可以重复，其他数字不能重复。进副本后渔夫处以及三岔路，都不算迷阵之内。进入九宫格即为进入迷阵，进入迷阵后角色会在九宫格中心位置。首先要知道你在哪棵迷阵，在九宫格中心点位置看"地图描述"。\n比如其中有端描述是这样的写着的（能看到东南方向大概有二棵桃树），此时就可以确定你在二棵桃树迷阵。只要按照以下步骤即可走出迷阵。\n1右下 2左上 3上 4右 5左下 6左下 7右 8上 9左上 10右下 11右，出口右。此时就可以抵达出口一路往里即可找到黄蓉\n下面是其他几颗桃树迷阵的傻瓜走法（走法资料来源于二营长）：\n四颗桃树迷阵：1左下 2右上 3右 4下 5左上 6左上 7下 8右 9右上 10左下 11下，出口下\n六颗桃树迷阵：1左下 2右上 3上 4左 5右下 6右下 7左 8上 9右上 10左下 11左，出口左\n八颗桃树迷阵：1左上 2右下 3右 4上 5左下 6左下 7上 8右 9右下 10左上 11上，出口上\n（即使你不按照这个走法也没差，因为自己摸索也很快，走错了就换没走过的地方，按之前正确的顺序慢慢破阵。）\n出了林子，路上会遇到两个小弟，杀不杀无所谓，继续走，卧室碰到黄蓉（找到黄蓉后一定要与她对话，否则无法触发剧情），点询问石匣，黄蓉叫你去找周伯通，和他切磋后就能拿到石匣，回来给她。然后对话后自行返回渔夫处，再走一遍迷阵，其间注意地图变化，会多出一条路让你进入，看见山洞，进去，然后比试或者杀掉周伯通（直接拿石匣是行不通的，周伯通会告诉你没门儿），然后拿到石匣再去找黄蓉后，这时点完成副本就可以100%通过。\n**困难：**不管遇到几颗桃花树迷阵，走法都在上面，和普通不一样的地方在于不用找周伯通，出了桃花阵以后，去黄蓉所在的地方（此关没有黄蓉只有黄药师）会遇到黄药师，会主动叫杀，杀了就100%。`
+        }, {
+            id: 20,
+            name: '白驼山',
+            drops: '灵蛇杖法残页、蟾蜍步法残页、蛤蟆功残页、灵蛇杖',
+            stats: '华山（攻击14000、命中13000）',
+            recommend: '无，蛤蟆功最快百免，现在蛤蟆加强了吸气的时候可以丢技能，工具人可以刷，不用担心续不上毒手了，蛇杖凑面板可以，不如蛇岛',
+            guide: `在练功房有两条分岔，一条通往门廊，另一条通往长廊。先去门廊那条路，一路走到底，先打欧阳锋（可以在花园的白衣少女刷五神剑你所需要的buff，祝融最好，然后再回来击杀，一套控能秒就秒，尽量无缝控制）。回到花园杀了欧阳锋（可以与白衣少女刷五神剑你所需要的buff，祝融）和白衣少女。返回练功房，走到长廊的时候，有分路，药房是npc小青（可以给你配置蛇血，10份蛇血一份药剂），杀不杀不影响进度，忽略，继续向西走到草丛有一只毒蛇，杀。往北继续走，亦是毒蛇，杀。继续往北走到底是岩洞，出现蟒蛇（npc小青说的蛇血就是这个，随机掉落怪蟒蛇血），杀了之后，完成度100%。`
+        }, {
+            id: 21,
+            name: '星宿海',
+            drops: '[摘星功残页、飞星术残页、碧磷针、三阴蜈蚣爪残页、化功大法残页、神木王鼎]',
+            stats: '华山（攻击14000、命中14000）',
+            recommend: '神木王鼎（炼药效率），碧麟针（黄色暗器，不值得精炼）',
+            guide: `左边星宿海分别是三师兄天狼子、大师兄摘星子，右边星宿海分别是八师兄出尘子、小师妹阿紫（他男的，可以找他刷buff）。这两边的汇聚点星宿海是二师兄狮吼子，必须击杀他才能进去日月洞打星宿老怪。丁春秋的化功没啥用，要小心他的三阴蜈蚣爪，和飞星叠加可是很痛的，可以比试骗掉飞星，然后击杀他，忙乱技能建议至少两个，忙乱少的门派，可以赌随缘鞭（也就是云龙鞭法或者秋风拂尘）。`
+        }, {
+            id: 22,
+            name: '冰火岛',
+            drops: '玄晶、蓝宝石、红宝石、黄宝石、绿宝石、红宝石、青蝠身法残页、精致的蓝宝石、精致的黄宝石、精致的绿宝石、玲珑火芝、七伤拳残页、离火珠、屠龙刀（仅困难）',
+            stats: '华山（普通攻击14000、命中14000。困难：攻击26000、命中23000）',
+            recommend: '无，屠龙刀只能收藏，没有任何用',
+            guide: `**普通：**在海边岩石有两条分岔，一条是丛林，另一条是火山路。火山路有单只炎龙和双只炎龙，杀。继续向西走，在火山脚下遇见炎龙王，杀。最西边是火山，玲珑火芝和离火珠就在这里，不过搜索至少要50万气血以上。返回海边岩石，往丛林走遇见大白熊，杀。继续往前走，遇见两只大白熊，杀。走到里边的石山，房间描述出现"[石洞]"，钻进去，遇见谢逊，杀，完成度100%。\n**困难：**和普通一样，只不过打谢逊的时候，会有张五侠帮忙，他很好杀，但是不论你击杀谢逊还是张五侠，都会先打谢逊，打死了才打张五侠，张五侠会缠字诀、太极拳、真武除邪，谢逊攻击很强大，一个燃木就回武庙，你忙乱谢逊，张五侠忙乱你，难度在这里，我花了20几张天师符才过，仅仅是为了找出张五侠的缠CD冷却的空档。`
+        }, {
+            id: 23,
+            name: '移花宫',
+            drops: '绝情掌残页、涟星的冰玉簪、邀月的手镯、花无缺的玉佩、移风剑法残页、碧玉血莲、移花宫装、移花宫履、移花接木残页、明玉功残页、碧血照丹青（仅困难）',
+            stats: '华山（普通：攻击15000、命中14200。困难：攻击24500、命中23000）、峨眉（困难：攻击24000、命中24000）、丐帮（困难：攻击28000、命中25000）',
+            recommend: '明玉功（前期最强内功，全门派通用），移花接木（就算男号不能学明玉也值得拿一本移花），涟星的冰玉簪（练习CD头，用到古墓派的盘龙簪之前），花无缺的玉佩（练习饰品，用到关服），碧血可刷可不刷',
+            guide: `**普通：**进入移花宫会进入一个十字的花径，一直向下走，注意血量，每走一步会掉血，12步走出来，杀花月奴。再进去两步，直接被两个宫女叫杀，再进去一步直接被两个宫女叫杀。要注意宫女会掉火折子，后面开启暗道会用到。此时分成两条路，左边是邀月宫，右边是涟星宫。汉子进去直接被叫杀，不论丑还是帅；妹子进去不会叫杀你。左边邀月比右边涟星好打一些（反正我是去杀邀月）。杀死两个宫主后，她们各自的房间都有描述"[花丛]"可以点开，记下花朵的数量。之后进去卧室，描述中的[床]可以点，通过刚才花朵的数量，左边宫里几朵花就向左移动几下，右边宫里几朵花就向右移动几下，会出来一个暗道。到暗道使用火折子（没火折子怎么办？很简单退出来重进，不然还能怎样。）后出现下一个暗道。进去暗道后发现花无缺（很弱，别怂），直接干掉（在花无缺这个暗道中，注意墙上有个小匣子，打开会有秘籍，黄金等），副本进度100%。\n**困难：**和普通步骤都差不多，只不过困难的移花宫，不管你打邀月还是打连星，另一个都会来帮忙，至于什么时候来帮忙看脸，也有来帮忙结果没忙乱你，等到你打死一个才忙乱你的情况，完全看运气。`
+        }, {
+            id: 24,
+            name: '燕子坞',
+            drops: '阿朱的易容面具、参合指残页、斗转星移残页',
+            stats: '华山（普通：攻击25000、命中25000）、武当（普通：内力75万以上）',
+            recommend: '参合指（悟性拳脚，刷斗转就跟着出了），斗转星移（开斗转10万招架可以打过侠客岛前几乎所有东西包括跨区影子，无缝控制流可以不刷，自己决定），出率都非常非常高（困难）',
+            guide: `普通困难一样打法，一开始人在岸边（易直非不用管他），向东走在庄府遇到金凤庄庄主包不同，直接秒杀，弱鸡一个。走到前院有两个分岔，向东是大厅，向南是小径。先去小径，一直向南到了云锦楼遇见曼陀罗山庄庄主王夫人，杀。向东是小厅，那里有王语嫣，点击她有询问还施水阁，她会向你要秘籍，我都是不给，然后击杀，其实杀她没有加进度，忽略她。接着回到前院，一直向东走到书房，遇见慕容复，杀。回到大厅向北在后亭遇到阿碧（杀不杀都可以，我都是击杀），东边是阿朱（建议留着，可以刷祝融）。后亭房间描述"[灵位牌子]"点击并拜祭3次会出现还施水阁，进去搜索获得武功残页（随机，也有可能出现锥法、天南步等），这时再去后亭，慕容博会出现并且叫杀你，把他杀了完成度100%。（这里建议在还施水阁换唐诗剑法，去后亭躺尸以后，再去内堂和阿朱切磋刷祝融）\n注意：现在有自动出招，你和阿朱切磋刷出祝融，然后换上唐诗剑法去慕容博躺尸以后，换主攻剑法在叫杀，这期间五神剑的buff时间是足够的，只不过操作比较麻烦，这方法是提供属性不够的玩家使用的，属性够请忽略此方法，直接杀。另外使用唐诗剑法在面对慕容博的时候，不要打坐，也不要疗伤，因为这么做慕容复会杀你。`
+        }, {
+            id: 25,
+            name: '黑木崖',
+            drops: '上官云的披风、童百熊的戒指、杨莲亭的项圈、贾布的护腰锁、辟邪剑法残页、葵花神功残页、东方不败的绣花针',
+            stats: '华山（普通：攻击42000、命中33000）',
+            recommend: '杨莲亭的项圈（CD项链，用到关服），东方不败的绣花针（破防攻速剑，留着总比没有好），辟邪和葵花都只有男性可以学，学后显示女性可以去峨眉，不能学明玉，技能没啥用但都挺快乐的，不推荐刷取',
+            guide: `**普通：**此时所在山谷有三个分岔，北边是白虎堂，东边是树林，南边是青龙堂。先去北边最里面击杀白虎堂长老上官云（随机爆上官云的披风，不如盟主披风），收集白虎堂令牌。去南边最深处击杀青龙堂长老贾布（随机爆贾布的护腰锁，没p用），收集青龙堂令牌。回到山谷，向东走到树林同样有三个分岔，北边是风雷堂，东边是悬崖，南边是天香堂。天香堂不用管，直接去北边风雷堂最深处击杀风雷堂长老童百熊，收集风雷堂令牌。接下来到悬崖，房间描述"[匣子]"，插入白虎堂令牌出现吊篮，通过吊篮到下一个悬崖，接下来都一样，依次插入青龙堂令牌、风雷堂令牌后来到大门（三位长老并不是必爆令牌，如果缺少其中一个令牌，请出副本重新打），向东走有杨莲亭拦路，杀。到后厅，房间描述"[碗]"，转动打开密道，到了密道后需要火折子点亮，才能找到铁环，拉动打开小花园后，东边出现闺房，东方不败就在这里，另外杨莲亭也在这。进入闺房后杨莲亭和东方不败会主动叫杀，你会优先击杀杨莲亭，杨莲亭死后东方不败获得狂暴buff，并且马上开启鬼魅，狂暴状态持续时间大概在30s左右，不论是凌波跑路，还是天师符复活，杨莲亭都会复活帮东方不败挡刀。\n这里可以推荐使用绿色武功：唐诗剑法。\n进闺房之前先装备好唐诗剑法，击杀杨莲亭后立马使用躺尸（但是你如果没来得及躺尸而使用天师符复活，那么杨莲亭也会复活）。躺尸结束后东方不败不会攻击你，杨莲亭也不会复活，并且触发狂暴buff秒开鬼魅。\n若是你没有击杀杨莲亭，东方不败就没有狂暴buff。而在这个时候，不管你有没有击杀杨莲亭，只要使用了唐诗剑法，此时就是你的时间，换回主攻剑法，不管杨莲亭在不在，你叫杀东方不败时，这时的他不会替东方不败挡刀。击杀两货，完成度100%。\n**困难：**进困难之前先到普通黑木崖刷齐三个令牌，因为困难黑木崖需要三个令牌上崖后才能见到3位堂主（所以要先有令牌），然后1v3。就这个地方和普通不一样，击杀东方不败和杨莲亭以后，完成度100%`
+        }, {
+            id: 26,
+            name: '缥缈峰',
+            drops: '神剑诀残页、天羽奇剑残页、驻颜丹、不老长春功残页、天龙遗珠（仅困难）',
+            stats: '华山（普通：25先天臂力、45先天身法、攻击33000、命中30000、不成套的逍遥装、+10%躲闪喜宴、100级神行百变、1900级五神剑的鹤翔）。注意:装了神行加10%躲闪喜宴，有9122躲闪。',
+            recommend: '天龙遗珠（命中CD项链，和项圈几乎没有差别，大后期不如项圈），附赠一本不老，可以玩不老九阴',
+            guide: `**第一种方法缥缈峰攻略：**\n**普通：**先杀乌道老大，后杀不平道人，之后杀卓不凡，然后回来和女童切磋开鹤翔、神行马上过桥，去到李秋水那等女童下来，叫杀李秋水，接控，一套打死，然后在战斗描述界面把女童背起来（注意:直接点女童没有背起选项，打死李秋水后，在战斗描述界面才会出现背起选项，所以要在战斗描述界面直接点），一路飞奔到闭关室，100%过关。\n**第二种方法缥缈峰攻略（第二种方法来源于二营长）：**\n**参考数据：①逍遥（利用卓不凡开启凌波过桥）。②逍遥以外的门派（紫色逍遥套《打满+50闪避的蓝宝石》、50先天身法、装备加高身法的技能《如明玉轻功、飞星术等》、无buff闪避15000、明玉30%、五神剑37%、如果自身闪避底可以吃闪避宴席）。③如果明玉功、五神剑、飞星术都没有，建议去刷一本神行百变，有10000基础面板闪避，开启神行后便可过桥。**\n**普通：**进入副本后，向上走一步看见乌老大和不平道人直接击杀，速度要快否则女童会被2个小怪秒杀。（也可以先背起后击杀2个小怪）。击杀小怪后，背负女童，背负后四维属性降低-100%，各属性降成0，而过铁索桥硬性需求10000闪避。满足过桥条件后，可以利用卓不凡来开启五神剑刷翔鹤凌波等技能，（如果在卓不凡处跑不掉，可以不背女童，先杀了卓不凡，和女童比试刷buff后在背起他），过桥后李秋水拦路，等待女童从你背上下来后，玩家则恢复自身属性，李秋水会叫杀天山童姥，这里需要保护童姥，并且杀死李秋水。\n李秋水会各种逍遥派技能，其中白虹威胁巨大，这里只能看脸童姥是否开启凌波。击杀李秋水后，童姥会叫你背起她，选项在战斗描述界面里。背起后一路向上到闭关室即可完成，如果卓不凡还没杀记得下来杀了在完成副本。\n**困难：**过桥条件一样，抵达李秋水处天山童来还为从身上下来前，叫杀李秋水。击杀后到闭关室可以100%，也就是你在背负-100%的情况下击杀李秋水。`
+        }, {
+            id: 27,
+            name: '光明顶',
+            drops: '圣火神功残页、青蝠身法残页、鹰爪功残页、圣火令法残页、圣火令、周芷若的手镯、杨不悔的项链、赵敏的戒指、韦一笑的逃命鞋、九阳神功残页、乾坤大挪移残页、倚天剑',
+            stats: '华山（攻击45000、命中34000、有此面板明玉可有可无）、其他门派建议明玉当轻功',
+            recommend: '赵敏的戒指（5%CD破防终伤戒指，真正的神器），乾坤大挪移（后期副本武道塔必备），附赠一把倚天剑，有悟性',
+            guide: `此关要速度击杀明教弟子，六大门派弟子能救就救（因为六大门派弟子每死一个张无忌加1层号令，24层号令的张无忌一刀百万血，我最多到5层），帮助峨眉派掌门灭绝脱困，击杀韦一笑和殷天正后，然后到明教最深处击杀张无忌和两位光明左右使。\n**注意：光明顶的弟子全是蓝色名字，韦一笑和殷天正是绿色名字，张教主是黄色名字，很好认别击杀到自己人，再提醒一下，速度一定要快，对副本要熟悉，不然容易按错。**\n进副本后，你人会在山门，易直非不管他。然后一路向北迅速到半山亭击杀冷谦，到半山腰击杀张中，山坡那里没东西，不用去。紧接着到林间小屋击杀周颠，到光明顶之后不要管灭绝，她抗揍。先忽略她到厚土旗击杀颜垣。此时厚土旗有三条路：往西是巨木旗，往北是练武场，往东是洪水旗。练武场先不去，去西边巨木旗击杀闻苍松，向北到锐金旗击杀庄铮。从练武场直接到烈火旗击杀辛然，断崖不用管，向南到洪水旗击杀唐洋，旁边的山崖不用管。接着返回到光明顶把说不得和彭莹玉杀了救灭绝。一路向北到圣火堂有张无忌和两位光明使，张无忌不会自动叫杀，先秒左右光明使，然后用天师符单挑张无忌。`
+        }, {
+            id: 28,
+            name: '天龙寺',
+            drops: '天南步残页、段家剑残页、枯木神功残页、六脉神剑残页、龙骨舍利（仅困难）',
+            stats: '华山（普通：攻击47000、命中35000；困难：攻击47000、命中35000、气血100-120万）、其他门派明玉，五神剑、1个紫喜宴、武当（困难：招架70000无伤过）',
+            recommend: '六脉神剑（用到关服，峨眉也推荐刷，以后总会用上，你又不能一辈子留在峨眉）',
+            guide: `**普通：**此关普通副本就是到牟尼堂抓住段誉并且在抓人debuff（和缥缈峰的背负buff一样）下1V3，打赢后跑到大门即可100%进度。\n一开始在大门，到舍利殿后有三条路，西南方是无我殿，南方是崇圣宝殿，东南方是无乐殿。南方的崇圣宝殿不用管，只能选择从无我殿进去或者无乐殿进去，因为途经的每座殿的和尚会拦你，不管选择哪一边，我们只能选择杀掉两个人，之后多杀一人就无法达成后面抓段誉后1V3这个3人的条件，要注意。\n选择从无我殿进去，会遇到本观、无常殿的本参；\n选择从无乐殿进去，会遇到本尘、无静阁的本相。\n到了般若台后进去牟尼堂会看到枯荣大师和段誉，先比试枯荣，在枯荣快认输时，放一个高伤害技能（锥法、怂样、飞星等），将枯荣的血打的越少越好，接着速度抓段誉，然后放其他技能击杀枯荣。击杀枯荣后，就换三个和尚一轮六脉神剑昏迷攻击，如果有120W血基本能抗住（血少用刺猬甲、磐石护符、减伤喜宴、黄紫喜宴）。抗住并且击杀三个和尚后，带着段誉到大门，即可100%进度。\n**困难：**其他情况和普通一样，就是后面变成1V6，并且需要阿朱面具伪装里面的人混进去，在未1V6之前所遇到的和尚一个也不能杀，杀了会影响1V6这个6人的条件。\n注意：抓人以后，在1v3或者1v6过程中玩家死亡，那么段誉也会死，这时不要浪费天师符复活，直接出副本重来。\n[逍遥普通攻略]: 折梅手疯狂比试下兵器, 杀无乐无净阁的两人, 和枯荣比试(不能用凌波不然逃不出去)贴生死符到1点血, 接着速度抓段誉, 开凌波, 杀枯荣, 逃走. 最后一个一个解决(别死), 回到大门100%`
+        }, {
+            id: 29,
+            name: '血刀门',
+            drops: '身空行残页、神照经残页、血海魔功残页、血刀残页、血刀、龙血斗篷',
+            stats: '(逍遥: 4.3w攻击, 3.7w命中极限, 气血250w足矣)',
+            recommend: '血刀武功（出率极低但是必备，3到5个月齐），附赠副本内所有东西，神照悟性内功，血海过阴阳谷有用，血刀装备可以用到有CD（或命中）自制之前，龙血斗篷加招架',
+            guide: `**普通：**(逍遥建议先借好紫缠, 后面再学老祖的嗜血)开始直接往下冲, 干掉2个弟子(50w, 60w血), 然后向东看到老祖, 他会主动叫杀, 别慌, 还有一堆人和你在打. 血刀老祖杀一个人后会向西走, 跟着, 要快, 老祖杀人不能太快, 否则老祖会在原地不动到最后打不死就翻车了. 成功的话是到山谷, 这时候老祖可以被干掉, 但是血量根据打死的人的快慢定. 逍遥建议100级折梅手+移花+嗜血卸老祖血刀(嗜血+移花+凌波逃走, 换折梅手回去卸)卸掉血刀之后的老祖没啥事了, 但是命中是问题, 自己试过3.7w命中必须嗜血+移花才能全打到, 当然也可以等血海魔功结束的虚弱. 打死老祖100%\n走的那一段不好理解, 自己多试几次就是了(当然也可以找大佬带)\n无缝控可以在他不开血祭时控住老祖，也是一种过法，我散人就是这样过的\n血刀750次换 龙血斗篷1000次换 龙血斗篷换血刀 血刀+250次换龙血斗篷\n血刀砍人不是回血，是加4000攻命!（一个血魔buff）`
+        }, {
+            id: 30,
+            name: '古墓派',
+            drops: '玉女心经残页、银索金铃残页、冰魄银针、金铃索、黯然销魂掌残页、玄铁剑法残页、盘龙簪（仅普通）、龙骨环(仅困难)',
+            stats: '(逍遥5.5w攻击, buff后6w+命中)',
+            recommend: '盘龙簪（超高悟性练习效率头），冰魄银针（破防暗器，用到关服），扫普通出盘龙就停手，剩下的残页等着扫困难出，玄铁凑面板不错，内力高一点九阴玄铁可能...可以战神殿进门，我也不确定能不能行（因为玄铁被削的很惨），黯然不错一个技能，负抗悟性迟钝都有用，还能偷buff',
+            guide: `**普通：**直接进卧室点"画"(没有高亮), 看剑指哪个方向, 记下来. 然后去琴室点"古琴"(没高亮), 弹几下, 小龙女和杨过会出来, 比试小龙女剩下一滴血, 叫杀, 凌波溜, 死掉复活, 干掉小龙女就行. 然后昏迷杨过(只能昏迷!!!)走进地下暗河, 向前面剑指的方向游(这时候必须满血), 然后回血, 跳上去, 点石块, 杨过会来, 点"我准备好了"抗一下海潮汹涌一刀55w左右, 逍遥可以在昏迷杨过的时候开凌波, 这样海潮一下打不到，其他门派要不10万招要不400万血带免伤装备技能，抗完之后进剑冢, 会有剑灵(命中不够根本打不到)杀了100%（3k毒钩下武器5w命+移花杀剑灵）\n剑灵可以无缝控死，他很逊，我散人明玉斗转蛇剑嵩阳过的，就是10万招+无缝控\n**困难：**剑灵变成剑魔，主动叫杀你，控不住+绝对命中，凌波也没法躲，但是10w命+移花4可以下武器。或者直接血九秒吧，没血九就继续咸鱼，反正也只要扫普通\n昏迷杨过的话得借夺魄或者六脉（或者用夺魄或者六脉，催心也可以，要亿些运气，杀手穿山甲，啊不，穿心掌也可以）\n当然，我有两个号都是空手参合追风昏迷的，所以也不是没有办法`
+        }, {
+            id: 31,
+            name: '华山论剑',
+            drops: '段家剑残页、枯木神功残页、天南步残页、金雁功残页、全真剑法残页、蟾蜍步法残页、暗影浮香残页、碧波神功残页、落英神剑残页、蛤蟆功残页、灵蛇杖法残页、弹指神通残页、一阳指残页、灵蛇杖、玉箫、玉竹杖、九阴神功残页、天龙鞶(刷九阴赠品)',
+            stats: '(逍遥6w攻击, buff后5w左右命中[比古墓简单], 必须要有一个公共橙(推荐乾坤))',
+            recommend: '九阴神功（顾名思义就是个神技，100%破防50%攻击攻速超级猛），手刷概率翻倍（王重阳和宝箱都有几率掉），大概1200到1500次出齐，附赠副本全物品，全真剑悟性剑法，天南步悟性轻功，弹指帮战boss工具人有用，玉箫11%CD剑，暗影浮香面板命中轻功（武道命中之道4500级能加2W+命中）',
+            guide: `冲上去, 直接莽, 干掉黄药师, 一灯大师, 欧阳锋, 洪七公, 王真人, (不要用凌波溜走不然会中断[0%完成])打完之后点岩壁, 爬上去, 有个宝箱.\n斗转10万招随便过，无缝控要算好控制技能CD，打死一个出下一个时要续上控制要不容易翻车`
+        }, {
+            id: 32,
+            name: '侠客岛',
+            drops: '玄虚步残页、天龙逐日靴、逆鳞手环、太玄功残页',
+            stats: 'buff下10万命（赏善），挺高配置的九阴血刀（罚恶）',
+            recommend: '无，除非你想玩慈航帝去扫一本太玄，手刷省元宝，出率不高',
+            guide: `赏善使者：首先要60精力，每次进岛站石破天旁边发呆练功，直到他问你某一句诗是什么意思\n然后去诗句对应的石室\n把所有加悟性的东西都用上，领悟石壁，看看哪个基本技能百分比在增加，然后先暂停，把这个技能的百分比练得越高越好，但不要升级\n然后再领悟石壁，直到这技能升1级，回去找石破天，房间频道说"是"升级的这个技能，比如"是内功"，"是轻功"\n然后石破天恍然大悟，完成副本，再进去到下一层，一共6层\n到第六层的时候等石破天问完问题去石壁领悟，领悟很长时间出来提示说你头昏脑胀啥都没看懂，回去找石破天，房间频道说"不知道"\n石破天自己去领悟，你换上所有加命中的装备技能，去岛主房间等着\n出蓝色提示说石破天内息汹涌澎湃啥的，就比试石破天，开所有命中buff，然后一个锥法打残他结束比试\n然后等提示说石破天痛苦万分，点"帮他一把"\n然后就看戏就行了\n罚恶使者：一路砍，最后砍死岛主结束，伤害需要够秒掉第一个岛主然后天师起来秒第二个`
+        }, {
+            id: 33,
+            name: '净念禅宗',
+            drops: '伏魔杖残页、真言手印残页、无念禅功残页、如来神掌残页、金刚伏魔杖、邪帝舍利（仅困难）、和氏璧（仅困难）、长生诀残页',
+            stats: '没有，下面都写了，能过的流派很多，武当最舒服一路过困难就是',
+            recommend: '长生诀，附赠一块聚魂神器和氏璧和打坐神器邪帝舍利，长生前置是无念禅功，出率极低，如果不运镖有可能会出现长生出了无念没出的情况，所以一定要运镖啊！当铺见到了无念也可以买一手',
+            guide: `普通:分为三线路，一般面板要求不会很高,除了少林比较难，其它根本不会不会卡普通禅宗。\nps:正常人一般是不会选择盗帅线的，清醒一点啊！\n盗帅线【面板要求:你不需要知道，你是闲的才盗帅】:击杀崖底三人组，【老徐可以用无缝不老移花硬生生磨死】，动作栏点击跳上去【4000轻功】,去铜殿推门【9000臂力】，进去，砍死铜殿五秃驴,拿起和氏璧，回到钟楼，跳楼进入长生门，完结。\n僧王线【面板要求:攻击不做太大要求，命中10w左右是可以的】:进入正门，会提示【佛渡有缘人】，进入并强制退出后三次，第四次会提示不一样的信息，并且你的下一步为白石广场，进入白石广场后，并且你会退出至主殿，会被强制叫杀【利用躺尸即可解决这个问题】，躺尸后迅速换装备，预备下一步的动作，当提示【几个压阵的僧人去铜楼】，快速进入白石广场，向左进入钟楼，等待下一步动作，在钟楼等提示【你看到一个黑影扑向铜殿】，迅速此时往右走并冲入铜殿，迅速叫杀老徐。使用真武无缝缠，缠死就是了。老徐死后，获得僧王称号，获得和氏璧，返回钟楼跳楼，进入长生门，完结。\n少帅线【面板要求:正常武道，哪怕你只有单棍法，几乎没有门派要求，命中最低好像是14w，攻击可以13w酱紫】:需要面具【燕子坞购买】，同僧王一般，至钟楼，且提示【你看黑影冲出净念禅宗四大金刚的包围，往后山跑去】。此时迅速踏出钟楼，回到初始地方，到崖底叫杀寇仲躺尸，然后等躺尸cd然后出去，寇仲会跟出来，再躺尸，然后更换技能装备，你使用面具他会主动叫杀你，写个战斗触发,并迅速击杀寇仲【已知最低标准，九阴血刀六脉，无太大门派要求，控得住寇仲就行，实测可以用九阴海潮直接拍死】，击杀并伪装后，回到崖底，等待拓跋寒提示【老徐快回来了】，继续等待至老徐回来，并将和氏璧交给你时，回到白石广场【此时依然会被叫杀】，使用六脉眩晕其中一个和尚，迅速跑去入钟楼，跳楼进入长生门，完结。\n邪王（本支线为困难禅宗专属）:普通人过不去的，等你有慈航再来或有长生再来。\n更新慈航线:起手进入主殿抗杀，再去白石广场【需要大概两轮免，加上自闭的减免装备】，【武器为剑，放玄铁，慈航没有面板要求，但是需要几个无常丹，看着办】，砍小和尚，等待提示，随意昏迷一个小和尚，进去入白石广场砍死拦路三人组，再去铜殿推门【一万臂力要求】，【此时开门杀】，苟住就行了，进入铜殿内部，砍死五和尚，捡起和氏璧，原地邪王，完结。\n关于五个秃驴怎么杀最快，本人有个独门方法～～8秒开门杀抗过以后，开门杀之前是可以用混沌决的，抗住死不了，带双负面免疫，灵犀和黯然各5000，越高越好。抗杀过后，玄铁+门派技能+全输出用出去+天地重置+玄铁+再来一次），五秃驴就直接死了......直接带逆鳞冰魄，必死基本上。\n更新长生线:同上进入，内功放长生，臂力武道，逆鳞手（可有可无），招架高等级移花，一万臂力不好凑。\n更新少林线:要求极为苛刻（九阴内功，且御裸免为百分之八十，同时具有一万臂力）同上可过。\n更新阴阳线:这个嘛，流程相同，主殿抗杀一分钟，然后流程同长生线。记得带双免疫，灵犀与黯然，不然有可能暴毙哦ԅ(¯ㅂ¯ԅ)，控的太死了。\n困难:只推荐僧王，其它你也过不去【可以用武当长拳，去龙脉刷出，不需要叛师，不过好憨】\n僧王:这条线只能武当过【面板要求10-11w命中，攻击不做太大的要求，差不多就行了，我试过的最低是9.7w】同上面僧王路线，磨死老徐后，进入钟楼跳楼【跑出来个天僧拦路，天僧拦路可以躺尸清掉和氏璧buff 】，天僧负面减免大概是裸百分之七十左右，武当拳法和太极剑都可以过，还是无脑九阴移花太极缠，连，追魄【需要橙真武五星剑，三颗紫色玄灵（加容错，其实两个就够用，甚至我有一个号只用了一个），cd套】，攻击需要稍微高一点（七八万够用）【由于是用太极连输出，内力需要稍微高一点，大概三四百万就行】，如果使用虎抱头需要面板忙乱20秒左右，正常武道，且cd低于6秒【大概要buff后三十几万命中，这个是用虎抱头的要求，别看错了】。方可无缝，【不推荐】。杀死天僧后，跳楼进入长生门。完结\n僧王缠缠乐的时候可以写触发检测天僧身上九阴debuff丢追魄，然后记得在忙乱要消失的时候身上一定要有绿字移花，什么时候放视你的移花等级而定（等级越高持续时间越久），我当时10万命8万攻310万内就过了，这个面板不难凑，当时没血刀还用着双刀流凑面板呢，都能过`
+        }, {
+            id: 34,
+            name: '慈航静斋',
+            drops: '彼岸剑法残页、灵犀步残页、飞翼剑（仅普通）、彼岸花（仅困难）、慈航剑典残页',
+            stats: '首先，你需要血九（血刀融五虎），最好是加上长生毒手',
+            recommend: '慈航剑典（以后干什么都要慈航，尽早出尽早爽，前置太玄功，侠客岛刷出），附赠灵犀步（免控悟性轻功），彼岸花（命中破防项链），飞翼剑需要刷普通1250次，自己决定刷不刷，刷出来后推演武道练技能什么的都会快很多',
+            guide: `普通:下面的所有关键词【一拳，神照】，更改为六脉（其实也可以不用改，无非就是面板再高一丢丢，神照也是可以打打的）。六脉是可以过的，实测，别问多少面板，一样的【如果我改过了，你当没看见这条就行了】\n【裸命中18w保底，按道理是用六脉，不够稳过慈航的，19w再去】\nps:不要bb说什么百免可以过，浪翻云覆雨剑法概率绝对破防，庞班天魔策消除内功，你百免个锤子能过。还有什么九阴血祭，清醒一点好吧？\n浪子线【面板需求:裸18w命中保底最低，攻击不够吃攻击药，命中不够吃命中药，破防不够吃破防药，就这么简单，命中可以用五神比试出芙蓉，一般吃大力丸或者破军丹就行了】:进入慈航七重门，分别是生，老，病，死，爱别离，怨憎恨，求不得，分为七苦，路线不固定，所有没有办法发出来【抱歉】，可以在门上的描述上看见。【看不见就是瞎，推荐做眼球摘除手术】\n往左走遇见浪翻云，跳出提示三条【选第三条，我来挑战你】，提示时间未到不着急，向右走，遇见祁冰云【选二，我来寻浪翻云】，再选【可以代劳】，拿到遗书，往左走。遇见浪翻云，交给他，此时提示【赐教，也就是比试】，比试【残血，九阴红血刀六脉落花一套就六脉打死，打不死就是命中不够吃个凝神，攻击不够，下次再来，】，比试胜利进入拦江岛，遇庞班，【九阴血刀六脉落花定】，可以使用躺尸，反正三条命死了就行。击杀庞班后，回到初始地【进入桃源小径，进入石窟】，领悟即可，完结\n国师线:没有长生不需要看了，你弄不死三条命有慈航的浪翻云的。\n同浪子线，不过提示应该选择为【我来观战，寻求突破的机缘】走流程，比试庞班【且目测只有一次机会，我是试了只能一次，把我气的啊】，【九阴血刀六脉落花或者一拳，直接捶死，进入拦江岛，先手混沌【触发:无缝混沌。无缝毒手】，浪翻云攻速极高，一会就把自己弄死了。回到初始地，同进入石窟领悟，完结。\n困难:需要一点运气和实力。\n剑魔线:同浪子线流程一样，不过需要裸面板【命中18-20w/攻击 14-16w，要求开九阴后170无视防御，磕药可以解决破防问题】，比试出芙蓉，残血叫杀庞班，九阴红血刀六脉【或者更高的面版用一拳捶死也不是不行，更看脸罢了】落花捶死连续三次【需要一丢丢运气】，击杀后获得剑魔称号，并回到初始地，同上，领悟，完结\n剑魔线第二种打法:限定武当！参考武当缠天僧忙乱时间+2-3秒，就是可以对庞班无缝缠的时间，面板攻击需要高点，内力高点，免得刮痧刮半天。刮痧就能刮过去，同上领悟，完结。\n魔师:长生专属线，同上无差别。`
+        }, {
+            id: 35,
+            name: '阴阳谷',
+            drops: '玄晶、破军、贪狼、七杀、紫薇、阴阳环、阴阳九转残页',
+            stats: '九阴融血祭或者长生毒手，没长生需要乾坤',
+            recommend: '无，九转对成神路上的帮助不如慈航，成神后打boss也不如慈航，阴阳环有8%免伤，工具人或者过生门可以刷',
+            guide: `阴阳谷只有普通，双线称号，挺简单。\n烛龙:【最低面板要求:17w命中，13w攻击，红九阴（九阴融血祭）】\n像血祭一般来说正常武帝500W血量是过不去的，需要穿免伤装备抵押【1点免10w血】\n动作栏跳下去，往上走，描述大石头，抱起来。往下走，一直往下直到最深处【大概在960w血左右，可以使用长生天地决回血，或者学个100枯木，慢慢回血\n【非长生】往下，直到遇见幽莹为止，不会主动叫杀你的，叫杀幽荧他会强制控【忙乱】你，所以乾坤起手。砍死他后上走然后右走爬藤蔓看提示有一个山洞马上跳下去，烛照会主动叫杀准备好触发【带乾坤，不然暴毙】。杀完烛照一直往下走砍死烛九阴，完成。【没有什么特别高的面板要求，破防高就行，吃个破军丹，正常武道加上九阴融合血祭就行，书不够，可以不点太高的绝门棍，反正也没差】\n【如果你是长生】起手混沌就行，流程同上【触发挂无缝毒手，无缝混沌，拳脚放3000黯然就行】，同上，完成。烛龙称号获取\n幽冥:长生线专属\n同上流程，抱起大石头往下走，遇见第二次见到光，游过去，来到玄冰洞，来到平台，爬藤蔓，遇见洞窟时马上跳下去，再往下走，来到阴阳谷。等待烛九阴。【还是使用无缝混沌，毒手】。击杀烛九阴后，出来两个崽，【混沌起手，黯然拳脚，磨死就是了，不需要智商】。死后，获得幽冥称号。完结`
+        }, {
+            id: 36,
+            name: '战神殿',
+            drops: '魔龙战甲、金狴骨冠、木凤羽靴、火猊斗篷、神器碎片、战神图录残页',
+            stats: '普通:没什么好说的，你既然看到这里，就说你有足够的面板，【正常武道】',
+            recommend: '无',
+            guide: `普通:副本进门之后去最左边 文字描述有神石跟石板2个互动选项 点开神石出现\n【和已知困难战神过法一样，不过更简单，这里就直接抄点了，忘勿怪】\n进门使用武功【九阴血刀】【弯刀九阴空明】【慈航刀典】【九阴倚天】【九阴玄铁空明】\n东方七星宿： 角、亢、氐、房、心、尾、箕 七个都算东 但是角亢北移就是东北，尾箕南落就算东南，没提到移动就算正东。下面南西北相同的解谜，自己列张表好分辨点。\n每次进去这句话的星宿会变，这就需要我们接出八个对应的星宿方位再按顺序点八卦\n点石板出来上大图下面的八卦，方位按上北下南左西右东这样确认。\n等点完8个八卦后 再点神石就提示一颗孤零零的星宿 这个方位是打完第三波进入战神殿的位置提示（可以再打完第二波守卫等天地cd的时候回来看提示）。\n点完8个方位之后，会出来神殿守卫第一二波5个守卫 第三波8个守卫（360秒之内解决才行）， 向东移动一步就会自动进入战斗 ，设置好脚本吧移动自动出招秒第一波守卫（移花九阴定影入魔弯刀空明六脉纵横落花乱拳），打架的时候带九阴 秒完一波内功换长生天地再换回九阴 再向东移动 中间有1个空位再秒第二波守卫，秒完回去看神石，等天地cd（换长生可以带赵敏戒指狗圈武当头减少天地冷却 打架换回疤面或者李秋水 这个换不换自己判定输出够就行）好了之后换九阴，最后一波再最右侧宫殿，秒完第三波 地图上出现一个八卦 按神石提示方位跳进去。【ps:这个可以慢慢打，困难计时一分钟，普通一分钟不止，估计两三分钟，没测试】。\n先不管他 先进入大殿向右在刀皇殿门口石阶点蔓藤爬上去掏鸟窝出来木凤，木凤打法就是血刀长生乾坤暗器，由于木凤不吃控制，老实用暗器弄死【用乾坤回血】。干死后拿到鸟窝。\n回到起始处，回大殿路上瀑布跳下来的到达的地方 点潜下去 多点几次 出来魔龙自动进入战斗（昏迷骑他，他会把你甩到一个地方。），穿鸟窝，跳河，完结\n困难:还是说一下怎么进门吧\n进入战神殿，描述点铁门，下去，一直往左，点神石，描述里再找石板\n神石描述:\n东方青龙七宿角亢氏房心尾箕，角亢北移，尾箕南落\n南方朱雀七宿井鬼柳星张翼轸，井鬼西行，轸宿东望\n西方白虎七宿奎娄胃昴毕觜参，奎娄北移，参宿南落\n北方玄武七宿斗牛女虚危室壁，斗牛西行，室宿东望。\n石板是八卦，八方，上北下南左西右东，东南东北这些都有的\n进门使用武功【九阴血刀】【九阴倚天】（刀典）【一分钟内通关，有逆鳞带逆鳞】\n回状态后，用进门命令一直点。秒第二波后，重述上述操作\n第三波击杀后 【出现八方位置，用你记住的星宿的对应位置，点对应的方向，进入后，动作栏点跳下去】\n进去往上，上去战神殿后先祭拜，动作栏，天地不仁以万物为刍狗点几次就行，直接选2，出现反派，不理他，不去净化。【不祭拜，你后面再nb也没用】\n祭拜完 回大殿路上瀑布跳下来的到达的地方 点潜下去 多点几次 出来魔龙自动进入战斗（这怪可以秒但是不能秒的时候是昏迷状态 这触发普通战神的剧情不会掉落困难需要的道具，一般长生毒手弹死）打完拿到水石头\n大殿向左有个矿坑点下挖矿 离开房间再回去出现怪（长生毒手弹死） 打死拿到金石头\n大殿向下融火窟有个怪（长生毒手弹死）拿到火石头\n大殿向右再刀皇殿门口石阶点蔓藤爬上去掏鸟窝出来木凤（长生毒手？确实可以但是你得混沌抗得住5200以上长生混沌2%锁血肯定可以 然而5000就可以武神这时候3%锁血 混沌就不好扛了 这里推荐杀手带乾坤 木凤没有减免不吃负面 开嗜血落花（非杀手也没事，无非就是刮痧一点）打死（峨眉的话，可以选择倚天刮死） 全程乾坤回血）拿到木石头\n回到大殿点圆盘 镶嵌出来\n打之前这里记得带昏迷拳脚【长生推荐如来，几乎必中】，因为刀皇内功长生诀弹不死需要昏迷住跑路之后换技能打\n无缝混沌套带上六脉 灵犀长生万毒手就上去弹吧 该吃药的就吃药\nPs 剑神跟战神攻速快会早死许多 兵主内功是战神图录 会根据你混沌锁血的10%左右回血抵消掉万毒手的反弹 所以丑比手越高越好练高吧 （带自制刀的 开嗜血 昏迷他 自己身上没破碎跟残缺的时候 可以一套打个100来万伤害）\n只剩刀皇的时候 昏迷住跑路 这个时候设置下一键打蚩尤的长生黯然灵犀万毒手cd装备技能\n8000万血的刀皇，命中够高的可以拳脚用忙乱全程忙乱着打，【多高呢，捶庞班不？】\n所以选择不老移花 不老等级可以根据你吃紫色玄灵丹之后移花的cd来 如果移花cd小于迟钝加的释放时间 你就可以弄个触发 等自己身上绿色移花buff没了就放移花【就是常驻自身移花buff，对面的常驻迟钝debuff，懂？】\n移花cd长的 建议不老等级练高 吃cd药 这个时候移花就得cd好了就放 加入刚出移花就被格挡取消了就得注意 下次放出移花就昏迷（六脉昏迷4s）住 让绿色移花多存在几秒 保持下个移花cd再他出招之前接上 用昏迷来调节移花的前移 全程迟钝 移花全档掉技能 大概十几分钟就能打完2条命了【打不完，就是你药的问题，别省着吃黄色玄灵，傻逼才吃黄色，宁愿吃亏用紫色，快点打完】\n打完刀皇 立马一键换装 点开混沌蚩尤强制先手战神二技能昏迷 (不慎被打死了等10分钟不灭cd结束后，复活起来，继续疯狂点混沌，点出混沌就开始弹)\n蚩尤高攻速 普攻多段攻击 脚本会翻车【大概十几，二十几分钟】 【自己盯着】\n打完蚩尤 进入悬空石 就是踏九重天了\n慈航过法:【来自千玄，白衣，香香】\n洗面板出59身法【保持0出招】\n进门。自己看上面吧，都不是瞎子。\n进门:无脑输出（剑心倚天）（九阴倚天）（九阴血刀）（九阴玄铁空明）\n装备要求:\n追求破防与最终伤害【嗯，你要是凑不够，打锤子战神】\n阉人针【你要是有剑自制类似于绣花针，我也没话说】 丑比头（李秋水的面膜） 赵敏戒指\n逆鳞手 冰魄【必备六星冰魄，千羽趁早分解】\n关于打蚩尤需要的免伤：真武靴 反甲/峨眉衣服【尼姑衣服，是因为你血量不够才需要，或者你内力御个1200w，我也没话说】 舍利 火龙腰带【免伤版本，可有可无】\n明玉御免【补高点】【再融合六扇门轻功，追风】\n60免，大概在一千两百万左右的伤害【蚩尤吼】，抗不过去的话，应该是你血量问题，或者是蚩尤触发双吼【根据千玄截图】\n关于蚩尤的击杀方式\n由于蚩尤起手是吼【喵喵叫】。抗住了才有后面的事\n抗过了，要秒开剑心，移花挡住第二个吼【问千玄的】\n第一重 要求聚四魂\n第二重 长生门\n第三重 死门\n第四重 消耗1000万内力\n第五重 【花里胡哨，不知道，我发出来你们猜猜看】颠倒的方向侵蚀着你的认知，你努力保持清明，固守本心\n第六重 5000 红内功\n第七重 500[0 红轻功]\n[第八重 5000 红招架]\n[第九重 5个5]000红（血刀五虎 长生 拳脚黯然融绿色拳脚 招架玄铁融躺尸 轻功明玉融合云龙心法 这样321本 割鸡的 轻功葵花融合云龙 320本 轻功用灵犀直接融合踏歌 340）。恭喜你武神了。\n完结，踏入武神行列`
+        }];
 
-        // ---- DOM 引用 ----
+        // ================================================================
+        //  ★★★ 页面渲染与交互逻辑 ★★★
+        // ================================================================
+
         const gridGuides = document.getElementById('guidesGrid');
         const modalOverlay = document.getElementById('modalOverlay');
         const modalBody = document.getElementById('modalBody');
@@ -111,7 +1055,7 @@
 
         // ---- 渲染攻略卡片 ----
         function renderGuides() {
-            if (!dungeonData.length) {
+            if (dungeonData.length === 0) {
                 gridGuides.innerHTML = `<div class="empty-state"><div class="big-icon">📜</div><h3>暂无攻略</h3></div>`;
                 return;
             }
@@ -151,20 +1095,43 @@
             document.body.style.overflow = 'hidden';
         }
 
-        // ---- 关闭、复制、Toast、转义函数与 index.html 相同，此处复用 ----
-        function closeModal() { modalOverlay.classList.remove('active'); document.body.style.overflow = ''; }
-        function copyToClipboard(text) { /* ... 同 index.html ... */ }
-        function fallbackCopy(text) { /* ... 同 index.html ... */ }
-        let toastTimer = null;
-        function showToast(msg) { /* ... 同 index.html ... */ }
-        function escapeHtml(str) { if (!str) return ''; const div=document.createElement('div'); div.textContent=str; return div.innerHTML; }
+        // ---- 关闭模态框 ----
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
 
-        modalOverlay.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+        // ---- Toast ----
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toastMsg.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        // ---- 转义 ----
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ---- 点击模态框外部关闭 ----
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
         modalClose.addEventListener('click', closeModal);
 
+        // ---- 初始化 ----
         renderGuides();
-        console.log('🐉 副本攻略已加载');
+        console.log('📜 副本攻略已加载！');
     </script>
+
 </body>
 </html>
