@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="武仙传说丹药配方查询。">
+    <meta name="theme-color" content="#0b0a08">
+    <title>武仙脚本库 · 丹药查询</title>
+    <style>
+        /* ============================================================
+           黑金主题配色 (Black & Gold) — 全局共用样式
+           ============================================================ */
+        :root {
+            --bg: #0b0a08;
+            --bg-deep: #050403;
+            --surface: rgba(24, 20, 16, .86);
+            --surface-strong: #1f1812;
+            --surface-soft: rgba(255, 215, 140, .06);
+            --line: rgba(212, 163, 115, .22);
+            --text: #f2eee9;
+            --muted: #b8aa98;
+            --gold: #d4a373;
+            --gold-bright: #eac784;
+            --gold-deep: #b8863a;
+            --gold-glow: rgba(212, 163, 115, .35);
+            --shadow: 0 28px 80px rgba(0, 0, 0, .6);
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --radius-sm: 14px;
+            --container: 1160px;
+            --font: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        body {
+            min-width: 320px;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 5%, rgba(212, 163, 115, .10), transparent 30rem),
+                radial-gradient(circle at 90% 20%, rgba(184, 134, 58, .07), transparent 35rem),
+                linear-gradient(180deg, var(--bg) 0%, #12100c 48%, var(--bg-deep) 100%);
+            font-family: var(--font);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: .18;
+            background-image:
+                linear-gradient(rgba(212, 163, 115, .06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 163, 115, .06) 1px, transparent 1px);
+            background-size: 52px 52px;
+            mask-image: linear-gradient(to bottom, black, transparent 78%);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .container {
+            width: min(calc(100% - 40px), var(--container));
+            margin-inline: auto;
+        }
+
+        /* ===== 头部 ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid rgba(212, 163, 115, .18);
+            background: rgba(11, 10, 8, .82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .header-inner {
+            min-height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            color: var(--gold-bright);
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(212, 163, 115, .5);
+            border-radius: 13px;
+            color: #1f1a14;
+            background: linear-gradient(135deg, #f7e0b5, var(--gold));
+            box-shadow: 0 10px 30px rgba(212, 163, 115, .28);
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 23px;
+            font-weight: 900;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            display: block;
+            padding: 9px 13px;
+            border-radius: 11px;
+            color: var(--muted);
+            font-size: 14px;
+            transition: color .2s ease, background .2s ease;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover,
+        .nav-links a[aria-current="page"],
+        .nav-links a.active-section {
+            color: var(--gold-bright);
+            background: rgba(212, 163, 115, .12);
+        }
+
+        /* ===== 英雄区 ===== */
+        .hero {
+            position: relative;
+            padding-block: 72px 48px;
+            text-align: center;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -12%;
+            top: 2%;
+            width: 480px;
+            height: 480px;
+            z-index: -1;
+            border: 1px solid rgba(212, 163, 115, .13);
+            border-radius: 50%;
+            box-shadow: 0 0 0 48px rgba(212, 163, 115, .03), 0 0 0 112px rgba(212, 163, 115, .02);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            padding: 7px 16px;
+            border: 1px solid rgba(212, 163, 115, .35);
+            border-radius: 999px;
+            color: #f5e2c7;
+            background: rgba(212, 163, 115, .10);
+            font-size: 12px;
+            font-weight: 750;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 16px var(--gold);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(40px, 5.4vw, 68px);
+            line-height: 1.08;
+            letter-spacing: -.055em;
+        }
+
+        .hero h1 span {
+            display: block;
+            color: transparent;
+            background: linear-gradient(100deg, #f7e5c4 6%, var(--gold-bright) 48%, #f7d89e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .hero-copy {
+            max-width: 640px;
+            margin: 20px auto 0;
+            color: var(--muted);
+            font-size: clamp(16px, 1.6vw, 19px);
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 24px;
+            margin-top: 28px;
+            color: #b8aa98;
+            font-size: 13px;
+        }
+
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-meta span::before {
+            content: "✦";
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        /* ===== 通用 Section ===== */
+        .section {
+            padding-block: 56px;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-kicker {
+            margin: 0 0 6px;
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: clamp(28px, 3.6vw, 40px);
+            line-height: 1.18;
+            letter-spacing: -.035em;
+        }
+
+        .section-heading>p {
+            max-width: 400px;
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* ===== 搜索过滤条 ===== */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 20px;
+            margin-bottom: 30px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--line);
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .2s;
+            min-width: 180px;
+            flex: 1;
+        }
+
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            border-color: var(--gold);
+        }
+
+        .filter-bar select option {
+            background: #1a1612;
+            color: var(--text);
+        }
+
+        .filter-bar .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .filter-bar .filter-label span {
+            color: var(--gold-bright);
+        }
+
+        /* ===== 卡片网格 ===== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 26px 28px 28px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+            cursor: default;
+            transition: transform .25s ease, border-color .25s ease, background .25s ease, box-shadow .3s ease;
+        }
+
+        .card-item::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            right: -70px;
+            bottom: -80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 163, 115, .12), transparent 68%);
+            transition: transform .3s ease;
+            pointer-events: none;
+        }
+
+        .card-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--gold);
+            background: rgba(30, 24, 18, .94);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+        }
+
+        .card-item:hover::after {
+            transform: scale(1.3);
+        }
+
+        .card-item .card-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            margin-bottom: 18px;
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 14px;
+            color: var(--gold-bright);
+            background: linear-gradient(145deg, rgba(212, 163, 115, .16), rgba(212, 163, 115, .05));
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 21px;
+            font-weight: 900;
+        }
+
+        .card-item h3 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: -.015em;
+        }
+
+        .card-item .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0 12px;
+        }
+
+        .card-item .tag {
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(212, 163, 115, .14);
+            color: #f5e2c7;
+            border: 1px solid rgba(212, 163, 115, .12);
+        }
+
+        .card-item .tag.event {
+            background: rgba(212, 163, 115, .10);
+            color: #eacba1;
+            border-color: rgba(212, 163, 115, .08);
+        }
+
+        .card-item .card-desc {
+            margin: 4px 0 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .card-item .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold-bright);
+            font-size: 14px;
+            font-weight: 750;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, .78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: fadeIn .25s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-box {
+            max-width: 820px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(145deg, rgba(22, 18, 14, .96), rgba(10, 8, 6, .98));
+            border: 1px solid rgba(212, 163, 115, .2);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, .7);
+            padding: 0;
+            animation: slideUp .3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 30px 16px;
+            border-bottom: 1px solid rgba(212, 163, 115, .15);
+            position: sticky;
+            top: 0;
+            background: rgba(10, 8, 6, .92);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            z-index: 2;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: -.02em;
+            color: var(--gold-bright);
+        }
+
+        .modal-close {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: none;
+            border-radius: 50%;
+            background: rgba(212, 163, 115, .08);
+            color: var(--muted);
+            font-size: 22px;
+            cursor: pointer;
+            transition: background .2s, color .2s, transform .2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(212, 163, 115, .18);
+            color: var(--gold-bright);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 24px 30px 30px;
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .modal-body .guide-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-body .guide-section strong {
+            color: var(--gold-bright);
+        }
+
+        .modal-body .guide-section .content {
+            margin-top: 6px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(0, 0, 0, .3);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--gold);
+            font-size: 14px;
+        }
+
+        .modal-body .materials-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            margin-top: 8px;
+        }
+
+        .modal-body .materials-list .mat-item {
+            background: rgba(212, 163, 115, .15);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            border: 1px solid rgba(212, 163, 115, .1);
+        }
+
+        /* ===== 页脚 ===== */
+        .site-footer {
+            padding-block: 28px 38px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            color: #8a7e70;
+            font-size: 12px;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 26px;
+            flex-wrap: wrap;
+        }
+
+        .footer-brand {
+            color: #b8aa98;
+            font-weight: 750;
+        }
+
+        .notice {
+            max-width: 720px;
+            margin: 0;
+            text-align: right;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+            border: 2px dashed rgba(212, 163, 115, .15);
+            border-radius: var(--radius-md);
+        }
+
+        .empty-state .big-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: .5;
+        }
+
+        .empty-state h3 {
+            color: var(--text);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(22, 18, 14, .94);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 12px;
+            padding: 12px 28px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+            opacity: 0;
+            transition: opacity .4s ease, transform .4s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast .check {
+            color: var(--gold);
+            margin-right: 10px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .header-inner {
+                min-height: auto;
+                padding-block: 13px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+            .nav-links {
+                max-width: 560px;
+            }
+            .section-heading {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .section-heading>p {
+                max-width: 100%;
+            }
+            .hero::after {
+                width: 300px;
+                height: 300px;
+                right: -10%;
+            }
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-bar input,
+            .filter-bar select {
+                min-width: unset;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .container {
+                width: min(calc(100% - 28px), var(--container));
+            }
+            .site-header {
+                position: relative;
+            }
+            .header-inner {
+                display: block;
+            }
+            .nav-links {
+                justify-content: flex-start;
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(212, 163, 115, .12);
+            }
+            .nav-links a {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            .hero {
+                padding-block: 48px 32px;
+            }
+            .hero h1 {
+                font-size: clamp(34px, 10vw, 48px);
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-box {
+                max-height: 95vh;
+                border-radius: var(--radius-md);
+            }
+            .modal-header {
+                padding: 16px 18px 12px;
+            }
+            .modal-body {
+                padding: 16px 18px 22px;
+            }
+            .footer-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .notice {
+                text-align: left;
+            }
+            .filter-bar {
+                padding: 14px 16px;
+            }
+        }
+
+        /* ===== 滚动条美化 ===== */
+        .modal-box::-webkit-scrollbar,
+        .code-block-wrap pre::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        .modal-box::-webkit-scrollbar-track,
+        .code-block-wrap pre::-webkit-scrollbar-track {
+            background: rgba(212, 163, 115, .06);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb,
+        .code-block-wrap pre::-webkit-scrollbar-thumb {
+            background: rgba(212, 163, 115, .3);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb:hover,
+        .code-block-wrap pre::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 163, 115, .5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 头部 ===== -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="index.html" aria-label="武仙脚本库首页">
+                <span class="brand-mark" aria-hidden="true">武</span>
+                <span>武仙脚本库</span>
+            </a>
+            <nav aria-label="主导航">
+                <ul class="nav-links" id="mainNav">
+                    <li><a href="index.html">脚本列表</a></li>
+                    <li><a href="guides.html">副本攻略</a></li>
+                    <li><a href="pills.html" class="active-section">丹药查询</a></li>
+                    <li><a href="#notice">声明</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===== 主体 ===== -->
+    <main>
+
+        <!-- 英雄区 -->
+        <section class="container hero" aria-labelledby="hero-title">
+            <div>
+                <div class="eyebrow">Pills & Elixirs</div>
+                <h1 id="hero-title">武仙传说 · <span>丹方查询</span></h1>
+                <p class="hero-copy">按名称搜索或按品质筛选，快速查看丹药效果与材料。</p>
+                <div class="hero-meta">
+                    <span>无需登录</span>
+                    <span>手机友好</span>
+                    <span>持续更新</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 丹药查询 Section ===== -->
+        <section class="section" id="pills-section" aria-labelledby="pills-title">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">Pills & Elixirs</p>
+                        <h2 id="pills-title">丹方查询</h2>
+                    </div>
+                    <p>按名称搜索或按品质筛选，快速查看丹药效果与材料。</p>
+                </div>
+                <!-- 过滤栏 -->
+                <div class="filter-bar" id="pillFilterBar">
+                    <div class="filter-label"><span>🔍</span> 搜索</div>
+                    <input type="text" id="pillSearch" placeholder="输入丹药名称…" aria-label="搜索丹药">
+                    <div class="filter-label"><span>🏷️</span> 品质</div>
+                    <select id="pillQuality" aria-label="筛选品质">
+                        <option value="all">全部</option>
+                        <option value="绿色">绿色</option>
+                        <option value="蓝色">蓝色</option>
+                        <option value="黄色">黄色</option>
+                        <option value="紫色">紫色</option>
+                        <option value="橙色">橙色</option>
+                    </select>
+                </div>
+                <!-- 结果网格 -->
+                <div class="cards-grid" id="pillsGrid">
+                    <!-- 由 JavaScript 动态渲染 -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== 通用模态框 ===== -->
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="modalTitle">丹方详情</h2>
+                <button class="modal-close" id="modalClose" aria-label="关闭详情">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 由 JavaScript 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"><span class="check">✦</span><span id="toastMsg">已复制</span></div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="site-footer" id="notice">
+        <div class="container footer-inner">
+            <div class="footer-brand">武仙脚本库 · 丹药查询</div>
+            <p class="notice">本站内容由舟行整理分享，仅供学习交流。</p>
+        </div>
+    </footer>
+
+    <script>
+        // ================================================================
+        //  ★★★ 丹药数据（从丹方（橙色齐）.xlsx 提取） ★★★
+        // ================================================================
+        const pillsData = [
+            { id: 1, quality: '绿色', name: '大还丹', effect: '5%气血', materials: '石楠叶,金银花,金银花,金银花,当归' },
+            { id: 2, quality: '绿色', name: '大力丸', effect: '3%攻击', materials: '山楂叶,当归,山楂叶,当归,金银花' },
+            { id: 3, quality: '绿色', name: '凝神丹', effect: '3%命中', materials: '当归,柴胡,柴胡,柴胡,芦荟' },
+            { id: 4, quality: '绿色', name: '归心散', effect: '3%招架', materials: '芦荟,山楂叶,柴胡,柴胡,柴胡' },
+            { id: 5, quality: '绿色', name: '石龟丹', effect: '3%防御', materials: '山楂叶,芦荟,柴胡,石楠叶,山楂叶' },
+            { id: 6, quality: '绿色', name: '风行散', effect: '3%躲闪', materials: '当归,柴胡,芦荟,芦荟,金银花' },
+            { id: 7, quality: '绿色', name: '风雷丹', effect: '3%暴击', materials: '石楠叶,石楠叶,芦荟,柴胡,金银花' },
+            { id: 8, quality: '绿色', name: '赤火丹', effect: '5%爆伤', materials: '柴胡,山楂叶,山楂叶,石楠叶,金银花' },
+            { id: 9, quality: '绿色', name: '赤血丹', effect: '3%终伤', materials: '石楠叶,柴胡,山楂叶,山楂叶,山楂叶' },
+            { id: 10, quality: '绿色', name: '玄武丹', effect: '3%减伤', materials: '石楠叶,石楠叶,芦荟,鲢鱼,石楠叶' },
+            { id: 11, quality: '绿色', name: '破军丹', effect: '3%无视防御', materials: '金银花,柴胡,当归,金银花,草鱼' },
+            { id: 12, quality: '绿色', name: '风神丹', effect: '10%攻速', materials: '金银花,当归,石楠叶,金银花,金银花' },
+            { id: 13, quality: '绿色', name: '生机丸', effect: '3%内力消耗降低', materials: '金银花,山楂叶,石楠叶,石楠叶,金银花' },
+            { id: 14, quality: '绿色', name: '玄冰丹', effect: '3%绝招释放速度', materials: '山楂叶,当归,柴胡,芦荟,石楠叶' },
+            { id: 15, quality: '绿色', name: '玄灵丹', effect: '3%绝招冷却', materials: '芦荟,石楠叶,柴胡,芦荟,柴胡' },
+            { id: 16, quality: '绿色', name: '归元散', effect: '5%忙乱', materials: '柴胡,石楠叶,石楠叶,柴胡,柴胡' },
+            { id: 17, quality: '绿色', name: '风行丹', effect: '5%忽视忙乱', materials: '当归,芦荟,山楂叶,金银花,金银花' },
+            { id: 18, quality: '绿色', name: '造化丹', effect: '5%负面效果抵抗', materials: '山楂叶,山楂叶,当归,山楂叶,芦荟' },
+            { id: 19, quality: '绿色', name: '无常丹', effect: '5%内力', materials: '芦荟,芦荟,石楠叶,金银花,金银花' },
+            { id: 20, quality: '绿色', name: '清心丹', effect: '10%学习', materials: '山楂叶,石楠叶,柴胡,芦荟,山楂叶' },
+            { id: 21, quality: '绿色', name: '冰心丹', effect: '10%练习', materials: '当归,金银花,金银花,当归,芦荟' },
+            { id: 22, quality: '绿色', name: '蕴象丹', effect: '10%打坐', materials: '当归,石楠叶,柴胡,山楂叶,金银花' },
+            { id: 23, quality: '绿色', name: '突破丹', effect: '快速升级技能', materials: '当归,芦荟,山楂叶,鲤鱼,金银花,石楠叶,柴胡,黑龙鱼' },
+            { id: 24, quality: '蓝色', name: '大还丹', effect: '15%气血', materials: '柴胡,熟地黄,柴胡,石楠叶,石楠叶,茯苓' },
+            { id: 25, quality: '蓝色', name: '大力丸', effect: '5%攻击', materials: '茯苓,黄金鳉,金银花,熟地黄,柴胡,熟地黄' },
+            { id: 26, quality: '蓝色', name: '凝神丹', effect: '5%命中', materials: '沉香,熟地黄,金银花,黄金鳉,熟地黄,金银花' },
+            { id: 27, quality: '蓝色', name: '归心散', effect: '5%招架', materials: '金银花,熟地黄,沉香,茯苓,石楠叶,金银花' },
+            { id: 28, quality: '蓝色', name: '石龟丹', effect: '5%防御', materials: '柴胡,金银花,沉香,茯苓,熟地黄,茯苓' },
+            { id: 29, quality: '蓝色', name: '风行散', effect: '5%躲闪', materials: '金银花,柴胡,茯苓,沉香,石楠叶,沉香' },
+            { id: 30, quality: '蓝色', name: '风雷丹', effect: '5%暴击', materials: '沉香,熟地黄,柴胡,石楠叶,熟地黄,沉香' },
+            { id: 31, quality: '蓝色', name: '赤火丹', effect: '10%爆伤', materials: '茯苓,茯苓,柴胡,沉香,金银花,熟地黄' },
+            { id: 32, quality: '蓝色', name: '赤血丹', effect: '5%终伤', materials: '茯苓,金银花,黄金鳉,茯苓,鳊鱼,柴胡' },
+            { id: 33, quality: '蓝色', name: '玄武丹', effect: '5%减伤', materials: '石楠叶,沉香,柴胡,舫鱼,石楠叶,沉香' },
+            { id: 34, quality: '蓝色', name: '破军丹', effect: '5%无视防御', materials: '石楠叶,茯苓,熟地黄,柴胡,黄颡鱼,鲮鱼' },
+            { id: 35, quality: '蓝色', name: '风神丹', effect: '20%攻速', materials: '沉香,柴胡,茯苓,金银花,茯苓,金银花' },
+            { id: 36, quality: '蓝色', name: '生机丸', effect: '5%内力消耗降低', materials: '茯苓,沉香,茯苓,熟地黄,熟地黄,沉香' },
+            { id: 37, quality: '蓝色', name: '玄冰丹', effect: '5%绝招释放速度', materials: '柴胡,熟地黄,柴胡,石楠叶,黄颡鱼,茯苓' },
+            { id: 38, quality: '蓝色', name: '玄灵丹', effect: '5%绝招冷却', materials: '石楠叶,柴胡,熟地黄,金银花,石楠叶,金银花' },
+            { id: 39, quality: '蓝色', name: '归元散', effect: '10%忙乱', materials: '柴胡,茯苓,柴胡,柴胡,金银花,熟地黄' },
+            { id: 40, quality: '蓝色', name: '风行丹', effect: '10%忽视忙乱', materials: '金银花,石楠叶,茯苓,石楠叶,沉香,石楠叶' },
+            { id: 41, quality: '蓝色', name: '造化丹', effect: '10%负面效果抵抗', materials: '沉香,黄金鳉,茯苓,茯苓,熟地黄,太湖银鱼' },
+            { id: 42, quality: '蓝色', name: '无常丹', effect: '15%内力', materials: '金银花,茯苓,石楠叶,金银花,石楠叶,金银花' },
+            { id: 43, quality: '蓝色', name: '清心丹', effect: '20%学习', materials: '柴胡,茯苓,熟地黄,石楠叶,金银花,柴胡' },
+            { id: 44, quality: '蓝色', name: '冰心丹', effect: '20%练习', materials: '沉香,茯苓,石楠叶,熟地黄,石楠叶,沉香' },
+            { id: 45, quality: '蓝色', name: '蕴象丹', effect: '20%打坐', materials: '柴胡,金银花,沉香,金银花,熟地黄,沉香' },
+            { id: 46, quality: '蓝色', name: '突破丹', effect: '快速升级技能', materials: '石楠叶,茯苓,沉香,茯苓,石楠叶,罗汉鱼,沉香,鲂鱼' },
+            { id: 47, quality: '黄色', name: '大还丹', effect: '20%气血', materials: '冬虫夏草,熟地黄,络石藤,茯苓,熟地黄,九香虫,络石藤' },
+            { id: 48, quality: '黄色', name: '大力丸', effect: '10%攻击 5Min', materials: '熟地黄,茯苓,熟地黄,冬虫夏草,茯苓,络石藤,黄金鳉' },
+            { id: 49, quality: '黄色', name: '凝神丹', effect: '10%命中 5Min', materials: '沉香,络石藤,九香虫,太湖银鱼,熟地黄,九香虫,九香虫' },
+            { id: 50, quality: '黄色', name: '归心散', effect: '10%招架 5Min', materials: '熟地黄,沉香,冬虫夏草,熟地黄,九香虫,冬虫夏草,熟地黄' },
+            { id: 51, quality: '黄色', name: '石龟丹', effect: '10%防御 5Min', materials: '沉香,茯苓,熟地黄,络石藤,冬虫夏草,冬虫夏草,络石藤' },
+            { id: 52, quality: '黄色', name: '风行散', effect: '10%躲闪 5Min', materials: '络石藤,熟地黄,冬虫夏草,茯苓,冬虫夏草,沉香,络石藤' },
+            { id: 53, quality: '黄色', name: '风雷丹', effect: '10%暴击 5Min', materials: '络石藤,九香虫,茯苓,沉香,沉香,络石藤,络石藤' },
+            { id: 54, quality: '黄色', name: '赤火丹', effect: '20%爆伤 5Min', materials: '茯苓,九香虫,茯苓,冬虫夏草,沉香,络石藤,沉香' },
+            { id: 55, quality: '黄色', name: '赤血丹', effect: '10%终伤 5Min', materials: '熟地黄,冬虫夏草,反天刀,虹鳟,沉香,九香虫,络石藤' },
+            { id: 56, quality: '黄色', name: '玄武丹', effect: '10%减伤 5Min', materials: '九香虫,冬虫夏草,络石藤,九香虫,熟地黄,九香虫,熟地黄' },
+            { id: 57, quality: '黄色', name: '破军丹', effect: '10%无视防御 5Min', materials: '茯苓,熟地黄,太湖银鱼,茯苓,九香虫,虹鳟,沉香' },
+            { id: 58, quality: '黄色', name: '风神丹', effect: '30%攻速 5Min', materials: '沉香,九香虫,络石藤,络石藤,沉香,沉香,沉香' },
+            { id: 59, quality: '黄色', name: '生机丸', effect: '10%内力消耗降低 5Min', materials: '九香虫,熟地黄,九香虫,冬虫夏草,茯苓,络石藤,沉香' },
+            { id: 60, quality: '黄色', name: '玄冰丹', effect: '10%绝招释放速度 5Min', materials: '茯苓,熟地黄,冬虫夏草,九香虫,熟地黄,黄金鳉,茯苓' },
+            { id: 61, quality: '黄色', name: '玄灵丹', effect: '10%绝招冷却 5Min', materials: '冬虫夏草,冬虫夏草,络石藤,络石藤,络石藤,茯苓,沉香' },
+            { id: 62, quality: '黄色', name: '归元散', effect: '20%忙乱 5Min', materials: '沉香,沉香,冬虫夏草,茯苓,冬虫夏草,茯苓,熟地黄' },
+            { id: 63, quality: '黄色', name: '风行丹', effect: '20%忽视忙乱 5Min', materials: '茯苓,络石藤,熟地黄,熟地黄,熟地黄,冬虫夏草,九香虫' },
+            { id: 64, quality: '黄色', name: '造化丹', effect: '20%负面效果抵抗 5Min', materials: '络石藤,沉香,熟地黄,茯苓,黄颡鱼,九香虫,太湖银鱼' },
+            { id: 65, quality: '黄色', name: '无常丹', effect: '20%内力', materials: '沉香,沉香,络石藤,冬虫夏草,茯苓,沉香,茯苓' },
+            { id: 66, quality: '黄色', name: '清心丹', effect: '30%学习 60Min', materials: '茯苓,熟地黄,九香虫,冬虫夏草,沉香,络石藤,沉香' },
+            { id: 67, quality: '黄色', name: '冰心丹', effect: '30%练习 60Min', materials: '熟地黄,沉香,冬虫夏草,沉香,九香虫,络石藤,茯苓' },
+            { id: 68, quality: '黄色', name: '蕴象丹', effect: '30%打坐 60Min', materials: '沉香,冬虫夏草,冬虫夏草,沉香,熟地黄,九香虫,茯苓' },
+            { id: 69, quality: '黄色', name: '突破丹', effect: '快速升级技能', materials: '熟地黄,熟地黄,熟地黄,太湖银鱼,络石藤,孔雀鱼,九香虫,银龙鱼,冬虫夏草' },
+            { id: 70, quality: '紫色', name: '大还丹', effect: '40%气血', materials: '九香虫,凌霄花,九香虫,络石藤,人参,九香虫,人参,冬虫夏草' },
+            { id: 71, quality: '紫色', name: '大力丸', effect: '15%攻击 10Min', materials: '九香虫,九香虫,人参,何首乌,银龙鱼,凌霄花,冬虫夏草,黑龙鱼' },
+            { id: 72, quality: '紫色', name: '凝神丹', effect: '15%命中 10Min', materials: '何首乌,人参,人参,人参,九香虫,凌霄花,罗汉鱼,络石藤' },
+            { id: 73, quality: '紫色', name: '归心散', effect: '15%招架 10Min', materials: '何首乌,九香虫,九香虫,九香虫,九香虫,人参,冬虫夏草,何首乌' },
+            { id: 74, quality: '紫色', name: '石龟丹', effect: '15%防御 10Min', materials: '人参,人参,九香虫,何首乌,络石藤,凌霄花,凌霄花,何首乌' },
+            { id: 75, quality: '紫色', name: '风行散', effect: '15%躲闪 10Min', materials: '何首乌,人参,冬虫夏草,冬虫夏草,何首乌,冬虫夏草,凌霄花,人参' },
+            { id: 76, quality: '紫色', name: '风雷丹', effect: '10%暴击 10Min', materials: '人参,人参,冬虫夏草,络石藤,凌霄花,黑龙鱼,络石藤,何首乌' },
+            { id: 77, quality: '紫色', name: '赤火丹', effect: '20%爆伤 10Min', materials: '何首乌,何首乌,络石藤,凌霄花,络石藤,银龙鱼,人参,何首乌' },
+            { id: 78, quality: '紫色', name: '赤血丹', effect: '15%终伤 10Min', materials: '凌霄花,九香虫,黑龙鱼,冬虫夏草,虹鳟,络石藤,冬虫夏草,孔雀鱼' },
+            { id: 79, quality: '紫色', name: '玄武丹', effect: '10%减伤 10Min', materials: '罗汉鱼,九香虫,九香虫,九香虫,络石藤,冬虫夏草,九香虫,九香虫' },
+            { id: 80, quality: '紫色', name: '破军丹', effect: '15%无视防御 10Min', materials: '人参,凌霄花,九香虫,络石藤,反天刀,九香虫,罗汉鱼,何首乌' },
+            { id: 81, quality: '紫色', name: '风神丹', effect: '25%攻速 10Min', materials: '人参,络石藤,九香虫,何首乌,何首乌,络石藤,何首乌,络石藤' },
+            { id: 82, quality: '紫色', name: '生机丸', effect: '15%内力消耗降低 10Min', materials: '冬虫夏草,何首乌,冬虫夏草,何首乌,人参,九香虫,冬虫夏草,人参' },
+            { id: 83, quality: '紫色', name: '玄冰丹', effect: '15%绝招释放速度 10Min', materials: '冬虫夏草,人参,九香虫,九香虫,反天刀,人参,冬虫夏草,络石藤' },
+            { id: 84, quality: '紫色', name: '玄灵丹', effect: '15%绝招冷却 10Min', materials: '人参,何首乌,黑龙鱼,络石藤,络石藤,络石藤,络石藤,孔雀鱼' },
+            { id: 85, quality: '紫色', name: '归元散', effect: '20%忙乱 10Min', materials: '人参,九香虫,络石藤,罗汉鱼,络石藤,冬虫夏草,凌霄花,冬虫夏草' },
+            { id: 86, quality: '紫色', name: '风行丹', effect: '20%忽视忙乱 10Min', materials: '凌霄花,何首乌,凌霄花,冬虫夏草,九香虫,冬虫夏草,人参,凌霄花' },
+            { id: 87, quality: '紫色', name: '造化丹', effect: '20%负面效果抵抗 10Min', materials: '九香虫,冬虫夏草,络石藤,何首乌,反天刀,冬虫夏草,络石藤,孔雀鱼' },
+            { id: 88, quality: '紫色', name: '无常丹', effect: '40%内力', materials: '凌霄花,凌霄花,络石藤,冬虫夏草,九香虫,络石藤,凌霄花,凌霄花' },
+            { id: 89, quality: '紫色', name: '清心丹', effect: '40%学习 60Min', materials: '冬虫夏草,九香虫,九香虫,络石藤,人参,人参,何首乌,凌霄花' },
+            { id: 90, quality: '紫色', name: '冰心丹', effect: '40%练习 60Min', materials: '人参,何首乌,凌霄花,络石藤,人参,凌霄花,凌霄花,冬虫夏草' },
+            { id: 91, quality: '紫色', name: '蕴象丹', effect: '40%打坐 60Min', materials: '人参,凌霄花,冬虫夏草,冬虫夏草,何首乌,何首乌,九香虫,人参' },
+            { id: 92, quality: '紫色', name: '突破丹', effect: '快速升级技能', materials: '冬虫夏草,九香虫,冬虫夏草,虹鳟,虹鳟,孔雀鱼,络石藤,何首乌,凌霄花,黑龙鱼' },
+            { id: 93, quality: '橙色', name: '大还丹', effect: '50%气血', materials: '何首乌,灵芝,灵芝,盘龙参,何首乌,凌霄花,人参,盘龙参,凌霄花' },
+            { id: 94, quality: '橙色', name: '无常', effect: '恢复50%内力', materials: '灵芝,凌霄花,灵芝,天仙藤,人参,何首乌,凌霄花,灵芝,灵芝' },
+            { id: 95, quality: '橙色', name: '大力', effect: '20%攻击', materials: '何首乌,凌霄花,盘龙参,盘龙参,巨骨舌鱼,人参,人参,人参,天仙藤' },
+            { id: 96, quality: '橙色', name: '石龟', effect: '20%防御', materials: '天仙藤,人参,凌霄花,人参,何首乌,盘龙参,何首乌,盘龙参,人参' },
+            { id: 97, quality: '橙色', name: '凝神', effect: '20%命中', materials: '天仙藤,盘龙参,盘龙参,何首乌,灵芝,凌霄花,盘龙参,凌霄花,银龙鱼' },
+            { id: 98, quality: '橙色', name: '归心', effect: '20%招架', materials: '天仙藤,灵芝,天仙藤,凌霄花,盘龙参,凌霄花,凌霄花,何首乌,天仙藤' },
+            { id: 99, quality: '橙色', name: '风行', effect: '20%闪躲', materials: '天仙藤,灵芝,盘龙参,何首乌,人参,凌霄花,灵芝,盘龙参,帝王老虎魟' },
+            { id: 100, quality: '橙色', name: '蕴象', effect: '50%打坐效率', materials: '灵芝,人参,何首乌,何首乌,盘龙参,凌霄花,盘龙参,凌霄花,天仙藤' },
+            { id: 101, quality: '橙色', name: '清心', effect: '50%学习效率', materials: '何首乌,凌霄花,何首乌,天仙藤,天仙藤,何首乌,盘龙参,人参,凌霄花' },
+            { id: 102, quality: '橙色', name: '冰心', effect: '50%练习效率', materials: '灵芝,盘龙参,天仙藤,人参,盘龙参,凌霄花,灵芝,天仙藤,灵芝' },
+            { id: 103, quality: '橙色', name: '玄冰', effect: '20%绝招释放速度', materials: '灵芝,天仙藤,凌霄花,何首乌,天仙藤,天仙藤,何首乌,灵芝,黑龙鱼' },
+            { id: 104, quality: '橙色', name: '玄灵', effect: '30%绝招冷却', materials: '天仙藤,人参,巨骨舌鱼,盘龙参,人参,灵芝,人参,凌霄花,银龙鱼' },
+            { id: 105, quality: '橙色', name: '生机', effect: '35%内力消耗降低', materials: '灵芝,盘龙参,何首乌,灵芝,天仙藤,凌霄花,人参,天仙藤,凌霄花' },
+            { id: 106, quality: '橙色', name: '风雷', effect: '20%暴击', materials: '凌霄花,何首乌,天仙藤,黑龙鱼,巨骨舌鱼,何首乌,天仙藤,何首乌,人参' },
+            { id: 107, quality: '橙色', name: '风神', effect: '30%攻速', materials: '人参,灵芝,人参,凌霄花,何首乌,人参,凌霄花,盘龙参,灵芝' },
+            { id: 108, quality: '橙色', name: '赤火', effect: '30%爆伤', materials: '何首乌,盘龙参,凌霄花,人参,凌霄花,盘龙参,天仙藤,盘龙参,何首乌' },
+            { id: 109, quality: '橙色', name: '赤血', effect: '20%终伤', materials: '凌霄花,凌霄花,银龙鱼,凌霄花,七星刀鱼,天仙藤,盘龙参,何首乌,帝王老虎魟' },
+            { id: 110, quality: '橙色', name: '破军', effect: '30%无视防御', materials: '灵芝,灵芝,银龙鱼,盘龙参,人参,七星刀鱼,人参,天仙藤,帝王老虎魟' },
+            { id: 111, quality: '橙色', name: '玄武', effect: '20%减伤', materials: '天仙藤,盘龙参,七星刀鱼,巨骨舌鱼,灵芝,帝王老虎魟,灵芝,盘龙参,天仙藤' },
+            { id: 112, quality: '橙色', name: '归元', effect: '40%忙乱', materials: '灵芝,天仙藤,灵芝,罗汉鱼,何首乌,灵芝,银龙鱼,何首乌,盘龙参' },
+            { id: 113, quality: '橙色', name: '风行', effect: '30%忽视忙乱', materials: '何首乌,何首乌,灵芝,天仙藤,天仙藤,人参,盘龙参,罗汉鱼,灵芝' },
+            { id: 114, quality: '橙色', name: '造化', effect: '30%负面抵抗', materials: '盘龙参,盘龙参,七星刀鱼,凌霄花,黑龙鱼,天仙藤,天仙藤,人参,灵芝' },
+            { id: 115, quality: '橙色', name: '突破', effect: '快速升级技能', materials: '灵芝,盘龙参,天仙藤,七星刀鱼,巨骨舌鱼,帝王老虎魟,罗汉鱼,何首乌,凌霄花,人参' }
+        ];
+
+        // ================================================================
+        //  ★★★ 页面渲染与交互逻辑 ★★★
+        // ================================================================
+
+        const gridPills = document.getElementById('pillsGrid');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalClose = document.getElementById('modalClose');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const pillSearch = document.getElementById('pillSearch');
+        const pillQuality = document.getElementById('pillQuality');
+
+        // ---- 渲染丹药卡片（带过滤） ----
+        function renderPills(filter = { search: '', quality: 'all' }) {
+            const search = filter.search.trim().toLowerCase();
+            const quality = filter.quality;
+            let filtered = pillsData;
+            if (search) {
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(search));
+            }
+            if (quality !== 'all') {
+                filtered = filtered.filter(p => p.quality === quality);
+            }
+            if (filtered.length === 0) {
+                gridPills.innerHTML = `<div class="empty-state"><div class="big-icon">🧪</div><h3>没有找到匹配的丹药</h3><p>请尝试其他关键词或品质</p></div>`;
+                return;
+            }
+            let html = '';
+            filtered.forEach(p => {
+                const materialsArr = p.materials.split(',').filter(m => m.trim() !== '');
+                html += `
+                <div class="card-item" data-id="${p.id}" data-type="pill">
+                  <span class="card-icon">💊</span>
+                  <h3>${escapeHtml(p.name)}</h3>
+                  <div class="card-tags">
+                    <span class="tag" style="background:${p.quality === '橙色' ? 'rgba(212,163,115,.3)' : 'rgba(212,163,115,.14)'}">${escapeHtml(p.quality)}</span>
+                    <span class="tag event">${escapeHtml(p.effect)}</span>
+                  </div>
+                  <p class="card-desc" style="font-size:12px;">材料：${materialsArr.slice(0, 4).join('、')}${materialsArr.length > 4 ? '…' : ''}</p>
+                  <span class="card-link">查看详情 →</span>
+                </div>`;
+            });
+            gridPills.innerHTML = html;
+            gridPills.querySelectorAll('.card-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = parseInt(el.dataset.id, 10);
+                    const pill = pillsData.find(p => p.id === id);
+                    if (pill) openPillModal(pill);
+                });
+            });
+        }
+
+        // ---- 打开丹药详情 ----
+        function openPillModal(pill) {
+            modalTitle.textContent = pill.name + ' 丹方';
+            const materialsArr = pill.materials.split(',').filter(m => m.trim() !== '');
+            let html = `
+              <div class="guide-section"><strong>品质</strong> ${escapeHtml(pill.quality)}</div>
+              <div class="guide-section"><strong>效果</strong> ${escapeHtml(pill.effect)}</div>
+              <div class="guide-section"><strong>材料</strong>
+                <div class="materials-list">`;
+            materialsArr.forEach(m => {
+                html += `<span class="mat-item">${escapeHtml(m.trim())}</span>`;
+            });
+            html += `</div></div>
+              <div class="guide-section"><strong>完整配方（逗号分隔）</strong>
+                <div class="content" style="font-size:14px;">${escapeHtml(pill.materials)}</div>
+                <button class="copy-btn" style="margin-top:8px; padding:6px 16px; border:none; border-radius:8px; background:var(--gold); color:#1f1a14; font-weight:600; cursor:pointer;" onclick="copyToClipboard(decodeURIComponent('${encodeURIComponent(pill.materials)}'))">📋 复制材料</button>
+              </div>
+            `;
+            modalBody.innerHTML = html;
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ---- 关闭模态框 ----
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ---- 复制功能 ----
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => showToast('已复制')).catch(() => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy');
+                showToast('已复制'); } catch (e) { showToast('复制失败'); }
+            document.body.removeChild(ta);
+        }
+
+        // ---- Toast ----
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toastMsg.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        // ---- 转义 ----
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ---- 过滤输入事件 ----
+        pillSearch.addEventListener('input', () => {
+            renderPills({ search: pillSearch.value, quality: pillQuality.value });
+        });
+        pillQuality.addEventListener('change', () => {
+            renderPills({ search: pillSearch.value, quality: pillQuality.value });
+        });
+
+        // ---- 点击模态框外部关闭 ----
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+        modalClose.addEventListener('click', closeModal);
+
+        // ---- 初始化 ----
+        renderPills({ search: '', quality: 'all' });
+        console.log('💊 丹药查询已加载！');
+    </script>
+
+</body>
+</html>
