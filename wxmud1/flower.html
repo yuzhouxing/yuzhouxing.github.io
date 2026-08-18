@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="武仙传说开花计算器 —— 根据内力、根骨计算开花潜力。">
+    <meta name="theme-color" content="#0b0a08">
+    <title>武仙脚本库 · 开花计算器</title>
+    <style>
+        /* ============================================================
+           黑金主题配色 (Black & Gold) — 全局共用样式
+           ============================================================ */
+        :root {
+            --bg: #0b0a08;
+            --bg-deep: #050403;
+            --surface: rgba(24, 20, 16, .86);
+            --surface-strong: #1f1812;
+            --surface-soft: rgba(255, 215, 140, .06);
+            --line: rgba(212, 163, 115, .22);
+            --text: #f2eee9;
+            --muted: #b8aa98;
+            --gold: #d4a373;
+            --gold-bright: #eac784;
+            --gold-deep: #b8863a;
+            --gold-glow: rgba(212, 163, 115, .35);
+            --shadow: 0 28px 80px rgba(0, 0, 0, .6);
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --radius-sm: 14px;
+            --container: 1160px;
+            --font: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        body {
+            min-width: 320px;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 5%, rgba(212, 163, 115, .10), transparent 30rem),
+                radial-gradient(circle at 90% 20%, rgba(184, 134, 58, .07), transparent 35rem),
+                linear-gradient(180deg, var(--bg) 0%, #12100c 48%, var(--bg-deep) 100%);
+            font-family: var(--font);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: .18;
+            background-image:
+                linear-gradient(rgba(212, 163, 115, .06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 163, 115, .06) 1px, transparent 1px);
+            background-size: 52px 52px;
+            mask-image: linear-gradient(to bottom, black, transparent 78%);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .container {
+            width: min(calc(100% - 40px), var(--container));
+            margin-inline: auto;
+        }
+
+        /* ===== 头部 ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid rgba(212, 163, 115, .18);
+            background: rgba(11, 10, 8, .82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .header-inner {
+            min-height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            color: var(--gold-bright);
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(212, 163, 115, .5);
+            border-radius: 13px;
+            color: #1f1a14;
+            background: linear-gradient(135deg, #f7e0b5, var(--gold));
+            box-shadow: 0 10px 30px rgba(212, 163, 115, .28);
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 23px;
+            font-weight: 900;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            display: block;
+            padding: 9px 13px;
+            border-radius: 11px;
+            color: var(--muted);
+            font-size: 14px;
+            transition: color .2s ease, background .2s ease;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover,
+        .nav-links a[aria-current="page"],
+        .nav-links a.active-section {
+            color: var(--gold-bright);
+            background: rgba(212, 163, 115, .12);
+        }
+
+        /* ===== 英雄区 ===== */
+        .hero {
+            position: relative;
+            padding-block: 72px 48px;
+            text-align: center;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -12%;
+            top: 2%;
+            width: 480px;
+            height: 480px;
+            z-index: -1;
+            border: 1px solid rgba(212, 163, 115, .13);
+            border-radius: 50%;
+            box-shadow: 0 0 0 48px rgba(212, 163, 115, .03), 0 0 0 112px rgba(212, 163, 115, .02);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            padding: 7px 16px;
+            border: 1px solid rgba(212, 163, 115, .35);
+            border-radius: 999px;
+            color: #f5e2c7;
+            background: rgba(212, 163, 115, .10);
+            font-size: 12px;
+            font-weight: 750;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 16px var(--gold);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(40px, 5.4vw, 68px);
+            line-height: 1.08;
+            letter-spacing: -.055em;
+        }
+
+        .hero h1 span {
+            display: block;
+            color: transparent;
+            background: linear-gradient(100deg, #f7e5c4 6%, var(--gold-bright) 48%, #f7d89e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .hero-copy {
+            max-width: 640px;
+            margin: 20px auto 0;
+            color: var(--muted);
+            font-size: clamp(16px, 1.6vw, 19px);
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 24px;
+            margin-top: 28px;
+            color: #b8aa98;
+            font-size: 13px;
+        }
+
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-meta span::before {
+            content: "✦";
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        /* ===== 计算器主体 ===== */
+        .section {
+            padding-block: 56px;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-kicker {
+            margin: 0 0 6px;
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: clamp(28px, 3.6vw, 40px);
+            line-height: 1.18;
+            letter-spacing: -.035em;
+        }
+
+        .section-heading>p {
+            max-width: 400px;
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .calculator-box {
+            max-width: 640px;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            padding: 36px 40px;
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--gold-bright);
+            font-size: 15px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--gold);
+        }
+
+        .form-group .hint {
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .calc-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #f7e0b5, var(--gold));
+            color: #1f1a14;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s;
+            box-shadow: 0 8px 24px rgba(212, 163, 115, .2);
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(212, 163, 115, .35);
+        }
+
+        .result-area {
+            margin-top: 28px;
+            padding: 20px 24px;
+            border-radius: var(--radius-sm);
+            background: rgba(0, 0, 0, .25);
+            border-left: 4px solid var(--gold);
+        }
+
+        .result-area .score {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--gold-bright);
+            letter-spacing: .02em;
+        }
+
+        .result-area .threshold-list {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+        }
+
+        .result-area .threshold-item {
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            background: rgba(212, 163, 115, .1);
+            border: 1px solid rgba(212, 163, 115, .2);
+            color: var(--muted);
+        }
+
+        .result-area .threshold-item.pass {
+            background: rgba(212, 163, 115, .25);
+            border-color: var(--gold);
+            color: var(--gold-bright);
+        }
+
+        .result-area .threshold-item.fail {
+            opacity: .5;
+        }
+
+        .formula-hint {
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, .06);
+            padding-top: 16px;
+        }
+
+        /* ===== 页脚 ===== */
+        .site-footer {
+            padding-block: 28px 38px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            color: #8a7e70;
+            font-size: 12px;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 26px;
+            flex-wrap: wrap;
+        }
+
+        .footer-brand {
+            color: #b8aa98;
+            font-weight: 750;
+        }
+
+        .notice {
+            max-width: 720px;
+            margin: 0;
+            text-align: right;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .header-inner {
+                min-height: auto;
+                padding-block: 13px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+            .nav-links {
+                max-width: 560px;
+            }
+            .section-heading {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .section-heading>p {
+                max-width: 100%;
+            }
+            .hero::after {
+                width: 300px;
+                height: 300px;
+                right: -10%;
+            }
+            .calculator-box {
+                padding: 24px 20px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .container {
+                width: min(calc(100% - 28px), var(--container));
+            }
+            .site-header {
+                position: relative;
+            }
+            .header-inner {
+                display: block;
+            }
+            .nav-links {
+                justify-content: flex-start;
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(212, 163, 115, .12);
+            }
+            .nav-links a {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            .hero {
+                padding-block: 48px 32px;
+            }
+            .hero h1 {
+                font-size: clamp(34px, 10vw, 48px);
+            }
+            .calculator-box {
+                padding: 18px 16px;
+            }
+            .result-area .score {
+                font-size: 24px;
+            }
+            .footer-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .notice {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 头部 ===== -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="index.html" aria-label="武仙脚本库首页">
+                <span class="brand-mark" aria-hidden="true">武</span>
+                <span>武仙脚本库</span>
+            </a>
+            <nav aria-label="主导航">
+                <ul class="nav-links" id="mainNav">
+                    <li><a href="index.html">脚本列表</a></li>
+                    <li><a href="guides.html">副本攻略</a></li>
+                    <li><a href="pills.html">丹药查询</a></li>
+                    <li><a href="flower.html" class="active-section">开花计算器</a></li>
+                    <li><a href="#notice">声明</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===== 主体 ===== -->
+    <main>
+
+        <!-- 英雄区 -->
+        <section class="container hero" aria-labelledby="hero-title">
+            <div>
+                <div class="eyebrow">Flower Calculator</div>
+                <h1 id="hero-title">武仙传说 · <span>开花计算器</span></h1>
+                <p class="hero-copy">输入内力、先天根骨、后天根骨，计算开花潜力，判断可开地花、人花、天花。</p>
+                <div class="hero-meta">
+                    <span>实时计算</span>
+                    <span>一键判断</span>
+                    <span>手机友好</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 计算器 Section ===== -->
+        <section class="section" id="calculator-section">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">Calculator</p>
+                        <h2 id="calc-title">开花潜力计算</h2>
+                    </div>
+                    <p>公式：得分 = 内力 ÷ 100 + 先天根骨 × 后天根骨 ÷ 10</p>
+                </div>
+
+                <div class="calculator-box">
+                    <div class="form-group">
+                        <label for="innerForce">内力</label>
+                        <input type="number" id="innerForce" placeholder="例如：500000" value="500000">
+                        <div class="hint">输入当前内力值（整数）</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="innateRoot">先天根骨</label>
+                        <input type="number" id="innateRoot" placeholder="例如：30" value="30">
+                        <div class="hint">输入先天根骨属性值</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="acquiredRoot">后天根骨</label>
+                        <input type="number" id="acquiredRoot" placeholder="例如：40" value="40">
+                        <div class="hint">输入后天根骨属性值</div>
+                    </div>
+                    <button class="calc-btn" id="calcBtn">计算开花潜力</button>
+
+                    <div class="result-area" id="resultArea">
+                        <div class="score" id="scoreDisplay">—</div>
+                        <div class="threshold-list" id="thresholdList">
+                            <span class="threshold-item">🌸 地花 5000</span>
+                            <span class="threshold-item">🌸 人花 6500</span>
+                            <span class="threshold-item">🌸 天花 8000</span>
+                        </div>
+                        <div class="formula-hint">
+                            祝你三花聚顶，早日入圣~
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="site-footer" id="notice">
+        <div class="container footer-inner">
+            <div class="footer-brand">武仙脚本库 · 开花计算器</div>
+            <p class="notice">本站内容由舟行整理分享，仅供学习交流。</p>
+        </div>
+    </footer>
+
+    <script>
+        // ================================================================
+        //  ★★★ 开花计算器逻辑 ★★★
+        // ================================================================
+
+        const innerForceInput = document.getElementById('innerForce');
+        const innateRootInput = document.getElementById('innateRoot');
+        const acquiredRootInput = document.getElementById('acquiredRoot');
+        const calcBtn = document.getElementById('calcBtn');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const thresholdItems = document.querySelectorAll('.threshold-item');
+
+        // 阈值定义
+        const THRESHOLDS = [
+            { name: '地花', value: 5000 },
+            { name: '人花', value: 6500 },
+            { name: '天花', value: 8000 }
+        ];
+
+        function calculate() {
+            // 获取数值，转为数字，空值或无效视为0
+            const inner = parseFloat(innerForceInput.value) || 0;
+            const innate = parseFloat(innateRootInput.value) || 0;
+            const acquired = parseFloat(acquiredRootInput.value) || 0;
+
+            // 计算得分：内力/100 + 先天根骨 * 后天根骨 / 10
+            const score = inner / 100 + (innate * acquired) / 10;
+
+            // 更新得分显示（保留两位小数）
+            scoreDisplay.textContent = score.toFixed(2);
+
+            // 更新每个阈值状态
+            thresholdItems.forEach((item, index) => {
+                const threshold = THRESHOLDS[index];
+                const pass = score >= threshold.value;
+                // 移除之前的 pass/fail 类
+                item.classList.remove('pass', 'fail');
+                if (pass) {
+                    item.classList.add('pass');
+                } else {
+                    item.classList.add('fail');
+                }
+                // 更新文本内容（保留花名和数值）
+                item.textContent = `🌸 ${threshold.name} ${threshold.value}`;
+            });
+        }
+
+        // 绑定点击事件
+        calcBtn.addEventListener('click', calculate);
+
+        // 按回车键自动计算（监听输入框的keydown）
+        const inputs = [innerForceInput, innateRootInput, acquiredRootInput];
+        inputs.forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    calculate();
+                }
+            });
+        });
+
+        // 页面加载后自动计算一次（使用默认值）
+        window.addEventListener('load', calculate);
+    </script>
+
+</body>
+</html>
