@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="武仙传说禁地攻略">
+    <meta name="theme-color" content="#0b0a08">
+    <title>武仙脚本库 · 禁地攻略</title>
+    <style>
+        /* ============================================================
+           黑金主题配色 (Black & Gold) — 全局共用样式
+           ============================================================ */
+        :root {
+            --bg: #0b0a08;
+            --bg-deep: #050403;
+            --surface: rgba(24, 20, 16, .86);
+            --surface-strong: #1f1812;
+            --surface-soft: rgba(255, 215, 140, .06);
+            --line: rgba(212, 163, 115, .22);
+            --text: #f2eee9;
+            --muted: #b8aa98;
+            --gold: #d4a373;
+            --gold-bright: #eac784;
+            --gold-deep: #b8863a;
+            --gold-glow: rgba(212, 163, 115, .35);
+            --shadow: 0 28px 80px rgba(0, 0, 0, .6);
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --radius-sm: 14px;
+            --container: 1160px;
+            --font: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        body {
+            min-width: 320px;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 5%, rgba(212, 163, 115, .10), transparent 30rem),
+                radial-gradient(circle at 90% 20%, rgba(184, 134, 58, .07), transparent 35rem),
+                linear-gradient(180deg, var(--bg) 0%, #12100c 48%, var(--bg-deep) 100%);
+            font-family: var(--font);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: .18;
+            background-image:
+                linear-gradient(rgba(212, 163, 115, .06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 163, 115, .06) 1px, transparent 1px);
+            background-size: 52px 52px;
+            mask-image: linear-gradient(to bottom, black, transparent 78%);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .container {
+            width: min(calc(100% - 40px), var(--container));
+            margin-inline: auto;
+        }
+
+        /* ===== 头部 ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid rgba(212, 163, 115, .18);
+            background: rgba(11, 10, 8, .82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .header-inner {
+            min-height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            color: var(--gold-bright);
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(212, 163, 115, .5);
+            border-radius: 13px;
+            color: #1f1a14;
+            background: linear-gradient(135deg, #f7e0b5, var(--gold));
+            box-shadow: 0 10px 30px rgba(212, 163, 115, .28);
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 23px;
+            font-weight: 900;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            display: block;
+            padding: 9px 13px;
+            border-radius: 11px;
+            color: var(--muted);
+            font-size: 14px;
+            transition: color .2s ease, background .2s ease;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover,
+        .nav-links a[aria-current="page"],
+        .nav-links a.active-section {
+            color: var(--gold-bright);
+            background: rgba(212, 163, 115, .12);
+        }
+
+        /* ===== 英雄区 ===== */
+        .hero {
+            position: relative;
+            padding-block: 72px 48px;
+            text-align: center;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -12%;
+            top: 2%;
+            width: 480px;
+            height: 480px;
+            z-index: -1;
+            border: 1px solid rgba(212, 163, 115, .13);
+            border-radius: 50%;
+            box-shadow: 0 0 0 48px rgba(212, 163, 115, .03), 0 0 0 112px rgba(212, 163, 115, .02);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            padding: 7px 16px;
+            border: 1px solid rgba(212, 163, 115, .35);
+            border-radius: 999px;
+            color: #f5e2c7;
+            background: rgba(212, 163, 115, .10);
+            font-size: 12px;
+            font-weight: 750;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 16px var(--gold);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(40px, 5.4vw, 68px);
+            line-height: 1.08;
+            letter-spacing: -.055em;
+        }
+
+        .hero h1 span {
+            display: block;
+            color: transparent;
+            background: linear-gradient(100deg, #f7e5c4 6%, var(--gold-bright) 48%, #f7d89e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .hero-copy {
+            max-width: 640px;
+            margin: 20px auto 0;
+            color: var(--muted);
+            font-size: clamp(16px, 1.6vw, 19px);
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px 24px;
+            margin-top: 28px;
+            color: #b8aa98;
+            font-size: 13px;
+        }
+
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-meta span::before {
+            content: "✦";
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        /* ===== 通用 Section ===== */
+        .section {
+            padding-block: 56px;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-kicker {
+            margin: 0 0 6px;
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: clamp(28px, 3.6vw, 40px);
+            line-height: 1.18;
+            letter-spacing: -.035em;
+        }
+
+        .section-heading>p {
+            max-width: 400px;
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* ===== 卡片网格 ===== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .card-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 26px 28px 28px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+            cursor: default;
+            transition: transform .25s ease, border-color .25s ease, background .25s ease, box-shadow .3s ease;
+        }
+
+        .card-item::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            right: -70px;
+            bottom: -80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 163, 115, .12), transparent 68%);
+            transition: transform .3s ease;
+            pointer-events: none;
+        }
+
+        .card-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--gold);
+            background: rgba(30, 24, 18, .94);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+        }
+
+        .card-item:hover::after {
+            transform: scale(1.3);
+        }
+
+        .card-item .card-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            margin-bottom: 18px;
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 14px;
+            color: var(--gold-bright);
+            background: linear-gradient(145deg, rgba(212, 163, 115, .16), rgba(212, 163, 115, .05));
+            font-family: "STKaiti", "KaiTi", serif;
+            font-size: 21px;
+            font-weight: 900;
+        }
+
+        .card-item h3 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: -.015em;
+        }
+
+        .card-item .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0 12px;
+        }
+
+        .card-item .tag {
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(212, 163, 115, .14);
+            color: #f5e2c7;
+            border: 1px solid rgba(212, 163, 115, .12);
+        }
+
+        .card-item .tag.event {
+            background: rgba(212, 163, 115, .10);
+            color: #eacba1;
+            border-color: rgba(212, 163, 115, .08);
+        }
+
+        .card-item .card-desc {
+            margin: 4px 0 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .card-item .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold-bright);
+            font-size: 14px;
+            font-weight: 750;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, .78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: fadeIn .25s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-box {
+            max-width: 820px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(145deg, rgba(22, 18, 14, .96), rgba(10, 8, 6, .98));
+            border: 1px solid rgba(212, 163, 115, .2);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, .7);
+            padding: 0;
+            animation: slideUp .3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 30px 16px;
+            border-bottom: 1px solid rgba(212, 163, 115, .15);
+            position: sticky;
+            top: 0;
+            background: rgba(10, 8, 6, .92);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            z-index: 2;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: -.02em;
+            color: var(--gold-bright);
+        }
+
+        .modal-close {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: none;
+            border-radius: 50%;
+            background: rgba(212, 163, 115, .08);
+            color: var(--muted);
+            font-size: 22px;
+            cursor: pointer;
+            transition: background .2s, color .2s, transform .2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(212, 163, 115, .18);
+            color: var(--gold-bright);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 24px 30px 30px;
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .modal-body .guide-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-body .guide-section strong {
+            color: var(--gold-bright);
+        }
+
+        .modal-body .guide-section .content {
+            margin-top: 6px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(0, 0, 0, .3);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--gold);
+            font-size: 14px;
+        }
+
+        /* ===== 页脚 ===== */
+        .site-footer {
+            padding-block: 28px 38px;
+            border-top: 1px solid rgba(212, 163, 115, .12);
+            color: #8a7e70;
+            font-size: 12px;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 26px;
+            flex-wrap: wrap;
+        }
+
+        .footer-brand {
+            color: #b8aa98;
+            font-weight: 750;
+        }
+
+        .notice {
+            max-width: 720px;
+            margin: 0;
+            text-align: right;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+            border: 2px dashed rgba(212, 163, 115, .15);
+            border-radius: var(--radius-md);
+        }
+
+        .empty-state .big-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: .5;
+        }
+
+        .empty-state h3 {
+            color: var(--text);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(22, 18, 14, .94);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 163, 115, .2);
+            border-radius: 12px;
+            padding: 12px 28px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+            opacity: 0;
+            transition: opacity .4s ease, transform .4s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast .check {
+            color: var(--gold);
+            margin-right: 10px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .header-inner {
+                min-height: auto;
+                padding-block: 13px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+            .nav-links {
+                max-width: 560px;
+            }
+            .section-heading {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .section-heading>p {
+                max-width: 100%;
+            }
+            .hero::after {
+                width: 300px;
+                height: 300px;
+                right: -10%;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .container {
+                width: min(calc(100% - 28px), var(--container));
+            }
+            .site-header {
+                position: relative;
+            }
+            .header-inner {
+                display: block;
+            }
+            .nav-links {
+                justify-content: flex-start;
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(212, 163, 115, .12);
+            }
+            .nav-links a {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            .hero {
+                padding-block: 48px 32px;
+            }
+            .hero h1 {
+                font-size: clamp(34px, 10vw, 48px);
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-box {
+                max-height: 95vh;
+                border-radius: var(--radius-md);
+            }
+            .modal-header {
+                padding: 16px 18px 12px;
+            }
+            .modal-body {
+                padding: 16px 18px 22px;
+            }
+            .footer-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .notice {
+                text-align: left;
+            }
+        }
+
+        /* ===== 滚动条美化 ===== */
+        .modal-box::-webkit-scrollbar,
+        .code-block-wrap pre::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        .modal-box::-webkit-scrollbar-track,
+        .code-block-wrap pre::-webkit-scrollbar-track {
+            background: rgba(212, 163, 115, .06);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb,
+        .code-block-wrap pre::-webkit-scrollbar-thumb {
+            background: rgba(212, 163, 115, .3);
+            border-radius: 9px;
+        }
+
+        .modal-box::-webkit-scrollbar-thumb:hover,
+        .code-block-wrap pre::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 163, 115, .5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 头部 ===== -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="index.html" aria-label="武仙脚本库首页">
+                <span class="brand-mark" aria-hidden="true">武</span>
+                <span>武仙脚本库</span>
+            </a>
+            <nav aria-label="主导航">
+                <ul class="nav-links" id="mainNav">
+                    <li><a href="index.html">脚本列表</a></li>
+                    <li><a href="guides.html">副本攻略</a></li>
+                    <li><a href="forbidden.html" class="active-section">禁地攻略</a></li>
+                    <li><a href="pills.html">丹药查询</a></li>
+                    <li><a href="flower.html">开花计算器</a></li>
+                    <li><a href="#notice">声明</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===== 主体 ===== -->
+    <main>
+
+        <!-- 英雄区 -->
+        <section class="container hero" aria-labelledby="hero-title">
+            <div>
+                <div class="eyebrow">Forbidden Area Guides</div>
+                <h1 id="hero-title">武仙传说 · <span>禁地攻略</span></h1>
+                <p class="hero-copy">禁地详细攻略，包含面板要求、掉落、完整流程与注意事项。</p>
+                <div class="hero-meta">
+                    <span>无需登录</span>
+                    <span>手机友好</span>
+                    <span>持续更新</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== 禁地攻略列表 Section ===== -->
+        <section class="section" id="forbidden-section" aria-labelledby="forbidden-title">
+            <div class="container">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">Forbidden Areas</p>
+                        <h2 id="forbidden-title">禁地攻略大全</h2>
+                    </div>
+                    <p>点击卡片查看详细禁地流程、掉落、面板要求和注意事项。</p>
+                </div>
+                <div class="cards-grid" id="forbiddenGrid">
+                    <!-- 由 JavaScript 动态渲染 -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== 通用模态框 ===== -->
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="modalTitle">禁地攻略详情</h2>
+                <button class="modal-close" id="modalClose" aria-label="关闭详情">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 由 JavaScript 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"><span class="check">✦</span><span id="toastMsg">已复制</span></div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="site-footer" id="notice">
+        <div class="container footer-inner">
+            <div class="footer-brand">武仙脚本库 · 禁地攻略</div>
+            <p class="notice">本站内容由舟行整理分享，仅供学习交流。</p>
+        </div>
+    </footer>
+
+    <script>
+        // ================================================================
+        //  ★★★ 禁地攻略数据 ★★★
+        // ================================================================
+        const forbiddenData = [{
+            id: 1,
+            name: '忘忧谷',
+            stats: '容貌在35以上直接结婚，否则需花费1万多玄晶',
+            drops: '每月开启两天，一天最多进10次副本。每次开启副本最多获得25张残页和一个青青契约以及紫刀。',
+            recommend: '青青契约（随从，无王语嫣可刷）',
+            guide: `【准备部分】
+        如果需要结婚：需要准备10瓶醉仙酿、五棵忘忧草（每次副本可以获得一颗）、外加一把满精炼黄弯刀。
+        忘忧草在副本拔草时候获取，手慢被打死了没关系，天师符复活继续拔草。
+        注意：娶青青时候不能死了。醉仙酿直接去醉仙楼买。
+
+        【副本入口】
+        解锁移花宫后，先向南走一步，然后朝西一直走，期间没血了可以停下来回回血。
+        等到出现跳上去后，点击进入副本。
+
+        【副本部分】
+        副本中需要残血过剧情，如果你没有残血，可以卸-装特殊内功。
+        进入副本后，点击房间描述中的图画，选项 2 2 1 2 2 1。
+        若遇撞石壁时请装备好武器再点选（武器只能刀或剑哈），直到见到青青。
+        青青往哪儿走你就往哪儿走，注意一定要快速跟上，否则会失败，一路跟到谷底。
+
+        提前点击上方的草出现拔出来，青青跳岩石后会出现"我也上去"和"青青小心点"两个选项。
+        选择"我也上去"，然后点拔出来，采到忘忧草，必须手速快或者用脚本辅助。
+        老头出来后，选择"挡住他"（必须残血），然后被老头打昏迷进谷。
+
+        【容貌在35以下路线】
+        醒来后先把黄弯刀精炼到满星并装备上，然后等两分钟去小楼。
+        看见青衣人后先问"青青呢"，问完之后再点"告辞"，这时候会跳出给他六星黄小楼的选项，给他看。
+        他会给回你一把5.5精的黄弯刀。
+
+        黄弯刀如何获取：昏迷醒来时候去找小楼先问"青青呢"，问完之后再点"告辞"，小楼会给一把黄弯刀。
+        所以要在进一次本，直接点"告辞"会给5页紫圆页弯刀残页。
+
+        看完之后去谷口找青青，选"我要带你出去"，之后回花厅。
+        到花厅之后看剧情，给青青五颗忘忧草及十瓶醉仙酿，然后等青青回来。
+        现在只需要等五分钟，五分钟后进出一下房间，青青会回来（青青没出去的话等一等，在进出花厅）。
+        这期间如果青青没出去或没回来，可以随意进出花厅看看，不会导致失败，但是不要走到山洞。
+
+        继续跟剧情，等青青回来入队。入队后带着青青来谷口，这时候会被拦下。
+        选择"保护青青"，昏迷30s后就能娶到青青啦。
+
+        【容貌在35以上路线】
+        见到仇小楼后选择"我答应"，去谷口找到青青。
+        对话选择"不答应"的话能得到1把黄色的小楼一夜听春雨。
+        选择"我带你走"，然后去花厅找到青青触发剧情，给青青道具。
+        然后西走一步回来就能看到有计时出现，可以练习技能等待，千万别发呆导致掉线。
+        等够5分钟以上，只要不掉线超时也没有关系，西走一步再回来触发下一步剧情。
+        等待几分钟青青就会出现，然后显示青青决定跟上你一起行。
+        出谷口，黑衣人拦截，选"保护青青"，昏迷后醒来契约青青就会在身上了。
+        使用后随从青青身上会有1把紫色小楼一夜听春雨和20页圆月弯刀残页。
+
+        【仇小楼击杀攻略】
+        先杀仇小楼25次，第26次杀死仇小楼时地图会出现地窖，立即点击进去地窖，选择"放过他"，获得20页圆月弯刀残页。
+        技能恢复好后选择"不放过"，仇小楼会自动叫杀。
+        打败后会有人问你要刀：
+        - 选择"给你"，可得到20页圆月弯刀残页
+        - 选择"不给"，可得到1把橙色的小楼一夜听春雨
+        （第2次击杀失败的话，天师符复活依然可以再杀，不耽误剧情）
+        如果在放不放过的选项上长时间未点或者没法选了，可以再击杀仇小楼一次，还是可以触发给不给刀的剧情。
+
+        【⚠️ 注意事项】
+        · 满血挡刀你会死！
+        · 采药慢了会被老头叫杀你会死！
+        · 选挡刀也别点慢了，青青可能会死！
+        · 仇小楼可以在其他剧情之后再击杀，不耽误击杀次数累计。
+        · 在谷口挡刀昏迷后，清醒时会出现在花厅，等青青和婆婆还没说话的时候立即出房间，可以直接进入小楼击杀仇小楼以节约时间。`
+        }];
+
+        // ================================================================
+        //  ★★★ 页面渲染与交互逻辑 ★★★
+        // ================================================================
+
+        const gridForbidden = document.getElementById('forbiddenGrid');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalClose = document.getElementById('modalClose');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        // ---- 渲染禁地攻略卡片 ----
+        function renderForbidden() {
+            if (forbiddenData.length === 0) {
+                gridForbidden.innerHTML = `<div class="empty-state"><div class="big-icon">🏚️</div><h3>暂无禁地攻略</h3><p>敬请期待后续更新。</p></div>`;
+                return;
+            }
+            let html = '';
+            forbiddenData.forEach(d => {
+                html += `
+                <div class="card-item" data-id="${d.id}" data-type="forbidden">
+                  <span class="card-icon">🏚️</span>
+                  <h3>${escapeHtml(d.name)}</h3>
+                  <div class="card-tags">
+                    <span class="tag">${escapeHtml(d.stats || '无面板要求')}</span>
+                  </div>
+                  <p class="card-desc">${escapeHtml((d.drops || '').slice(0, 80))}${d.drops && d.drops.length > 80 ? '…' : ''}</p>
+                  <span class="card-link">查看攻略 →</span>
+                </div>`;
+            });
+            gridForbidden.innerHTML = html;
+            gridForbidden.querySelectorAll('.card-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = parseInt(el.dataset.id, 10);
+                    const guide = forbiddenData.find(d => d.id === id);
+                    if (guide) openForbiddenModal(guide);
+                });
+            });
+        }
+
+        // ---- 打开禁地攻略详情 ----
+        function openForbiddenModal(guide) {
+            modalTitle.textContent = guide.name + ' 攻略';
+            let html = '';
+            if (guide.drops) html += `<div class="guide-section"><strong>掉落</strong><div class="content">${escapeHtml(guide.drops)}</div></div>`;
+            if (guide.stats) html += `<div class="guide-section"><strong>面板要求</strong><div class="content">${escapeHtml(guide.stats)}</div></div>`;
+            if (guide.recommend) html += `<div class="guide-section"><strong>推荐刷取</strong><div class="content">${escapeHtml(guide.recommend)}</div></div>`;
+            html += `<div class="guide-section"><strong>详细攻略</strong><div class="content" style="white-space:pre-wrap;">${escapeHtml(guide.guide)}</div></div>`;
+            modalBody.innerHTML = html;
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ---- 关闭模态框 ----
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ---- Toast ----
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toastMsg.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        // ---- 转义 ----
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ---- 点击模态框外部关闭 ----
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+        modalClose.addEventListener('click', closeModal);
+
+        // ---- 初始化 ----
+        renderForbidden();
+        console.log('🏚️ 禁地攻略已加载！');
+    </script>
+
+</body>
+</html>
