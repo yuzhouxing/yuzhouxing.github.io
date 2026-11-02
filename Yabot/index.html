@@ -1,0 +1,772 @@
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雅圈机器人 · 安装说明</title>
+<meta name="description" content="一个在本地运行的评论辅助工具。读帖子、写草稿，你确认后再发。">
+<style>
+  :root{
+    --bg:#ffffff; --bg2:#f7f8fa; --bg3:#fbfbfd;
+    --line:#e7e9ee; --line2:#f0f2f5;
+    --text:#14161a; --text2:#586070; --text3:#8f97a5;
+    --brand:#4f6ef7; --brand-d:#3a55df; --brand-soft:#eef2ff; --brand-line:#c9d4fe;
+    --purple:#7c5cf0;
+    --ok:#0e9f6e; --ok-soft:#e9f8f2;
+    --warn:#c2740a; --warn-soft:#fdf6e9;
+    --err:#d33a35; --err-soft:#fdeeed;
+    --radius:13px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth; scroll-padding-top:84px}
+  /* 移动端顶部有导航(62) + 横排目录(~50)，锚点要再往下让一点 */
+  @media(max-width:900px){ html{scroll-padding-top:124px} }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--text); line-height:1.75; font-size:16px; background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--brand); text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{
+    background:#f3f5f8; padding:2px 6px; border-radius:4px;
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.87em; color:#c2410c;
+  }
+  .path{
+    background:#fff7ed; border:1px solid #fed7aa; color:#9a3412;
+    padding:1px 6px; border-radius:4px;
+    font-family:ui-monospace,Consolas,monospace; font-size:.86em;
+  }
+
+  /* 滚动进度条 */
+  .progress{
+    position:fixed; top:0; left:0; height:2px; width:0; z-index:200;
+    background:linear-gradient(90deg,var(--brand),var(--purple));
+    transition:width .1s linear;
+  }
+
+  /* 顶栏 */
+  .nav{
+    position:sticky; top:0; z-index:100; background:rgba(255,255,255,.86);
+    backdrop-filter:saturate(180%) blur(14px); -webkit-backdrop-filter:saturate(180%) blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-in{
+    max-width:1120px; margin:0 auto; padding:0 26px; height:62px;
+    display:flex; align-items:center; gap:11px;
+  }
+  .nav-in img{width:27px; height:27px; border-radius:7px; display:block; object-fit:cover}
+  .nav-in .nm{font-weight:680; font-size:15px; letter-spacing:-.2px}
+  .nav-r{margin-left:auto; display:flex; gap:4px; align-items:center}
+  .nav-r a{
+    color:var(--text2); font-size:14.5px; padding:7px 13px; border-radius:8px;
+    transition:.15s;
+  }
+  .nav-r a:hover{background:var(--bg2); color:var(--text); text-decoration:none}
+  .nav-r .cta{
+    background:var(--brand); color:#fff; font-weight:600; margin-left:6px;
+    box-shadow:0 2px 10px rgba(79,110,247,.28);
+  }
+  .nav-r .cta:hover{background:var(--brand-d); color:#fff}
+  @media(max-width:820px){
+    .nav-r a:not(.cta){display:none}
+    .nav-in{padding:0 18px}
+  }
+
+  /* Hero */
+  .hero{
+    max-width:1120px; margin:0 auto; padding:76px 26px 60px;
+    display:grid; grid-template-columns:1.1fr .9fr; gap:56px; align-items:center;
+  }
+  @media(max-width:900px){
+    .hero{grid-template-columns:1fr; gap:34px; padding:52px 20px 44px}
+  }
+  .kicker{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:12.5px; font-weight:600; letter-spacing:.4px;
+    color:var(--brand-d); background:var(--brand-soft);
+    padding:5px 12px; border-radius:20px; margin-bottom:20px;
+  }
+  .kicker i{width:5px; height:5px; border-radius:50%; background:var(--brand); display:block}
+  .hero h1{
+    font-size:46px; font-weight:760; line-height:1.18; letter-spacing:-1.2px;
+    margin-bottom:20px;
+  }
+  .hero h1 em{
+    font-style:normal;
+    background:linear-gradient(115deg,var(--brand),var(--purple));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  @media(max-width:640px){ .hero h1{font-size:31px; letter-spacing:-.6px} }
+  .hero .desc{
+    font-size:16.5px; color:var(--text2); line-height:1.8;
+    max-width:520px; margin-bottom:14px;
+  }
+  .hero .author{font-size:13.5px; color:var(--text3); margin-bottom:30px}
+  .hero-btns{display:flex; gap:11px; flex-wrap:wrap; margin-bottom:26px}
+  .btn{
+    display:inline-flex; align-items:center; gap:7px;
+    padding:12px 24px; border-radius:10px; font-size:15px; font-weight:600;
+    transition:.16s; border:1px solid transparent; cursor:pointer;
+  }
+  .btn:hover{text-decoration:none}
+  .btn-p{
+    background:var(--brand); color:#fff;
+    box-shadow:0 3px 14px rgba(79,110,247,.3);
+  }
+  .btn-p:hover{background:var(--brand-d); transform:translateY(-1px); box-shadow:0 5px 20px rgba(79,110,247,.36)}
+  .btn-s{background:#fff; color:var(--text); border-color:var(--line)}
+  .btn-s:hover{background:var(--bg2); border-color:#d6dae2}
+
+  .facts{display:flex; gap:20px; flex-wrap:wrap; font-size:13.5px; color:var(--text3)}
+  .facts span{display:flex; align-items:center; gap:6px}
+  .facts b{color:var(--text); font-weight:650}
+
+  /* Hero 视觉：模拟界面 */
+  .mock{
+    background:var(--bg3); border:1px solid var(--line); border-radius:16px;
+    padding:16px; box-shadow:0 14px 44px rgba(18,22,36,.07), 0 2px 8px rgba(18,22,36,.03);
+  }
+  .mock-bar{display:flex; align-items:center; gap:6px; padding:0 4px 13px}
+  .mock-bar i{width:8px; height:8px; border-radius:50%; background:#dfe3ea; display:block}
+  .mock-bar span{
+    margin-left:8px; font-size:11px; color:var(--text3); letter-spacing:.3px;
+    font-family:ui-monospace,monospace;
+  }
+  .mock-body{
+    background:#fff; border-radius:10px; padding:6px; border:1px solid var(--line2);
+  }
+  .row{
+    display:flex; gap:9px; padding:9px 10px; border-radius:7px; font-size:12.5px;
+    line-height:1.6; align-items:flex-start;
+  }
+  .row + .row{margin-top:2px}
+  .row .k{
+    font-size:10.5px; color:var(--text3); white-space:nowrap; padding-top:2px;
+    font-family:ui-monospace,monospace; min-width:32px;
+  }
+  .row .v{color:var(--text2)}
+  .row .v b{color:var(--text); font-weight:650}
+  .row.hi{background:var(--brand-soft)}
+  .row.hi .v b{color:var(--brand-d)}
+  .row.done .k{color:var(--ok)}
+
+  /* 布局：目录 + 内容 */
+  .layout{
+    max-width:1120px; margin:0 auto; padding:0 26px 40px;
+    display:grid; grid-template-columns:212px 1fr; gap:52px; align-items:start;
+  }
+  @media(max-width:900px){ .layout{grid-template-columns:1fr; gap:0; padding:0 20px 30px} }
+  @media(max-width:640px){ .layout{padding:0 18px 24px} }
+
+  .toc{position:sticky; top:84px; padding-top:8px}
+  @media(max-width:900px){
+    .toc{
+      position:sticky; top:62px; z-index:40; background:#fff;
+      padding:10px 0; margin:0 -20px;
+      display:flex; gap:4px; overflow-x:auto; scrollbar-width:none;
+      border-bottom:1px solid var(--line);
+      -webkit-overflow-scrolling:touch;
+    }
+  }
+  @media(max-width:640px){
+    .toc{margin:0 -18px; padding:9px 0}
+  }
+  @media(max-width:900px){
+    .toc::-webkit-scrollbar{display:none}
+    .toc a{white-space:nowrap; border-left:none !important; border-bottom:2px solid transparent; margin:0}
+    .toc a.on{border-bottom-color:var(--brand); background:none; border-radius:6px 6px 0 0}
+  }
+  .toc .tt{
+    font-size:11px; font-weight:700; color:var(--text3); letter-spacing:.8px;
+    text-transform:uppercase; margin-bottom:11px; padding-left:12px;
+  }
+  @media(max-width:900px){ .toc .tt{display:none} }
+  .toc a{
+    display:block; font-size:14px; color:var(--text2); padding:7px 12px;
+    border-radius:7px; border-left:2px solid transparent; transition:.14s;
+    line-height:1.5;
+  }
+  .toc a:hover{background:var(--bg2); color:var(--text); text-decoration:none}
+  .toc a.on{
+    background:var(--brand-soft); color:var(--brand-d);
+    border-left-color:var(--brand); font-weight:600;
+  }
+
+  /* 内容区 */
+  .content{min-width:0; padding-top:8px}
+  .block{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+    padding:30px 32px; margin-bottom:18px;
+  }
+  @media(max-width:640px){ .block{padding:22px 18px; border-radius:11px} }
+  .block > h2{
+    font-size:21px; font-weight:710; letter-spacing:-.3px;
+    display:flex; align-items:center; gap:12px; margin-bottom:6px;
+  }
+  .block > h2 .n{
+    flex-shrink:0; font-size:11px; font-weight:700; letter-spacing:.6px;
+    color:#fff; background:linear-gradient(135deg,var(--brand),var(--purple));
+    padding:4px 9px; border-radius:6px;
+  }
+  @media(max-width:640px){ .block > h2{font-size:18px} .block > h2 .n{font-size:10px; padding:3px 7px} }
+  .block .sum{font-size:15px; color:var(--text2); margin-bottom:4px}
+  .block h3{
+    font-size:15px; font-weight:660; margin:24px 0 8px;
+  }
+  .block h3:first-of-type{margin-top:18px}
+  .block p{font-size:15px; color:var(--text2); margin-bottom:8px}
+  .block p:last-child{margin-bottom:0}
+
+  ol.list{counter-reset:c; list-style:none; margin:12px 0}
+  ol.list > li{
+    counter-increment:c; position:relative; padding-left:28px; margin-bottom:10px;
+    font-size:15px; color:var(--text2); line-height:1.75;
+  }
+  ol.list > li::before{
+    content:counter(c); position:absolute; left:0; top:4px;
+    width:18px; height:18px; border-radius:50%; background:var(--brand-soft);
+    color:var(--brand-d); font-size:11px; font-weight:700;
+    display:grid; place-items:center;
+  }
+  ul.dot{margin:12px 0 12px 20px}
+  ul.dot li{font-size:15px; color:var(--text2); margin-bottom:8px}
+
+  .box{
+    background:var(--bg2); border:1px solid var(--line); border-radius:9px;
+    padding:14px 16px; margin:14px 0;
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+    font-size:13px; line-height:1.85; color:var(--text2);
+    white-space:pre-wrap; word-break:break-word;
+    overflow-x:auto;
+  }
+  .box .cm{color:var(--text3)}
+
+  .tip{
+    border-radius:10px; padding:13px 16px; margin:14px 0;
+    font-size:14px; line-height:1.75; border-left:3px solid;
+  }
+  .tip b{display:block; margin-bottom:3px; font-weight:660}
+  .tip.i{background:var(--brand-soft); border-color:var(--brand); color:#333a9e}
+  .tip.g{background:var(--ok-soft); border-color:var(--ok); color:#07654a}
+  .tip.w{background:var(--warn-soft); border-color:var(--warn); color:#8a5208}
+  .tip.e{background:var(--err-soft); border-color:var(--err); color:#9b2a26}
+
+  /* 概览三卡 */
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px}
+  @media(max-width:760px){ .grid3{grid-template-columns:1fr} }
+  .mini{
+    border:1px solid var(--line); border-radius:10px; padding:16px;
+    background:var(--bg3);
+  }
+  .mini .h{font-size:14.5px; font-weight:660; margin-bottom:5px}
+  .mini .b{font-size:13.5px; color:var(--text2); line-height:1.65}
+
+  /* 下载卡 */
+  .dl{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px}
+  @media(max-width:700px){ .dl{grid-template-columns:1fr} }
+  .dl-c{
+    border:1px solid var(--line); border-radius:11px; padding:20px;
+    display:flex; flex-direction:column; transition:.16s;
+  }
+  .dl-c:hover{transform:translateY(-2px); box-shadow:0 8px 26px rgba(18,22,36,.07)}
+  .dl-c.main{border-color:var(--brand-line); background:linear-gradient(180deg,#fbfcff,#fff)}
+  .dl-c .h{display:flex; align-items:baseline; gap:9px; margin-bottom:7px}
+  .dl-c .h b{font-size:16px; font-weight:680}
+  .dl-c .h span{font-size:12.5px; color:var(--text3)}
+  .dl-c p{font-size:14px; color:var(--text2); margin-bottom:16px; flex:1}
+  .dl-c .btn{width:100%; justify-content:center; padding:10px 18px; font-size:14px}
+
+  /* FAQ */
+  .faq{border-top:1px solid var(--line2)}
+  .faq:first-of-type{border-top:none}
+  .faq-q{
+    display:flex; align-items:center; gap:10px; padding:15px 0;
+    cursor:pointer; font-size:15px; font-weight:620; color:var(--text);
+    user-select:none; -webkit-user-select:none;
+  }
+  .faq-q:hover{color:var(--brand-d)}
+  .faq-q .arw{
+    margin-left:auto; flex-shrink:0; color:var(--text3); font-size:12px;
+    transition:transform .22s;
+  }
+  .faq.on .faq-q .arw{transform:rotate(90deg); color:var(--brand)}
+  .faq-a{
+    max-height:0; overflow:hidden; transition:max-height .26s ease;
+    font-size:14.5px; color:var(--text2); line-height:1.8;
+  }
+  .faq.on .faq-a{max-height:520px}
+  .faq-a > div{padding-bottom:16px}
+  .faq-a p{margin-bottom:7px}
+  .faq-a p:last-child{margin-bottom:0}
+
+  /* 页脚 */
+  footer{
+    border-top:1px solid var(--line); background:var(--bg2);
+    padding:34px 26px 44px; margin-top:20px;
+  }
+  .foot-in{
+    max-width:1120px; margin:0 auto; display:flex; justify-content:space-between;
+    gap:16px; flex-wrap:wrap; font-size:13.5px; color:var(--text3); line-height:1.9;
+  }
+
+  /* 回到顶部 */
+  .to-top{
+    position:fixed; right:24px; bottom:24px; width:40px; height:40px;
+    border-radius:50%; background:#fff; border:1px solid var(--line);
+    display:grid; place-items:center; cursor:pointer; color:var(--text2);
+    box-shadow:0 3px 16px rgba(18,22,36,.12);
+    opacity:0; pointer-events:none; transition:.2s; z-index:90; font-size:15px;
+  }
+  .to-top.show{opacity:1; pointer-events:auto}
+  .to-top:hover{background:var(--bg2); color:var(--text)}
+  @media(max-width:640px){ .to-top{right:16px; bottom:16px} }
+</style>
+</head>
+<body>
+
+<div class="progress" id="bar" style="width: 88.0203%;"></div>
+
+<nav class="nav">
+  <div class="nav-in">
+    <img src="icon.png" alt="">
+    <span class="nm">雅圈机器人</span>
+    <div class="nav-r">
+      <a href="#overview">简介</a>
+      <a href="#s1">安装</a>
+      <a href="#download">下载</a>
+      <a href="#faq">问题</a>
+      <a class="cta" href="#download">下载安装包</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div>
+    <div class="kicker"><i></i>本地运行 · 不上传任何数据</div>
+    <h1>读完帖子<br>帮你写一句<em>像样的话</em></h1>
+    <p class="desc">
+      它读完帖子的正文，生成几条候选回复。你挑一条发出去。
+      程序在你自己的电脑上跑，数据不离开本机。
+    </p>
+    <p class="author">由 阿哲朗读 制作</p>
+    <div class="hero-btns">
+      <a class="btn btn-p" href="#download">下载 2.6 GB</a>
+      <a class="btn btn-s" href="#s1">安装步骤</a>
+    </div>
+    <div class="facts">
+      <span>Windows 10 / 11</span>
+      <span>约 <b>10 分钟</b> 装完</span>
+      <span>需要 <b>2.6 GB</b></span>
+      <span>内存 <b>8 GB</b> 起</span>
+    </div>
+  </div>
+
+  <div class="mock">
+    <div class="mock-bar"><i></i><i></i><i></i><span>实时活动</span></div>
+    <div class="mock-body">
+      <div class="row">
+        <span class="k">抓取</span>
+        <span class="v">入库 <b>1</b> 条新帖</span>
+      </div>
+      <div class="row">
+        <span class="k">生成</span>
+        <span class="v">[588720004] 纯原创 · 微恐慎入 → <b>生成中…</b></span>
+      </div>
+      <div class="row hi">
+        <span class="k">完成</span>
+        <span class="v">"清柠说生命建立在死亡上也会痛苦，<b>太细了</b>。"</span>
+      </div>
+      <div class="row done">
+        <span class="k">✓</span>
+        <span class="v">今日已发 <b>7 / 10</b></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="toc" id="toc">
+    <div class="tt">目录</div>
+    <a href="#overview" class="">它是什么</a>
+    <a href="#s1" class="">1 · 下载解压</a>
+    <a href="#s2" class="">2 · 启动程序</a>
+    <a href="#s3" class="">3 · 登录</a>
+    <a href="#s4" class="">4 · 开始运行</a>
+    <a href="#download" class="on">下载</a>
+    <a href="#faq" class="">常见问题</a>
+    <a href="#note" class="">注意事项</a>
+  </aside>
+
+  <div class="content">
+
+    <section class="block" id="overview">
+      <h2>它是什么</h2>
+      <p class="sum">一个装在自己电脑上的评论辅助工具。</p>
+      <div class="grid3">
+        <div class="mini">
+          <div class="h">读帖</div>
+          <div class="b">读完整篇正文，判断这条帖子有没有可回的内容。</div>
+        </div>
+        <div class="mini">
+          <div class="h">写草稿</div>
+          <div class="b">按 15 到 35 字写一句，只讲一个具体的点。</div>
+        </div>
+        <div class="mini">
+          <div class="h">等你确认</div>
+          <div class="b">草稿进队列，你逐条看过再决定发不发。</div>
+        </div>
+      </div>
+      <div class="tip i">
+        <b>自动发布是可选项</b>
+        默认关闭。打开后按固定间隔发送，每天有上限。
+        第一次用建议先手动发几条看看效果。
+      </div>
+    </section>
+
+    <section class="block" id="s1">
+      <h2><span class="n">STEP 1</span>下载并解压</h2>
+      <p class="sum">下一个 2.6 GB 的压缩包，解压到 D 盘。</p>
+
+      <h3>下载哪个</h3>
+      <ul class="dot">
+        <li><b>完整版</b>（2.6 GB）—— 自带 AI 模型，装完直接能用，不需要注册任何账号。</li>
+        <li><b>精简版</b>（10.8 MB）—— 不含模型，需要自己申请在线 AI 服务并填 Key。适合内存 8 GB 以下的电脑。</li>
+      </ul>
+      <p>大多数人下完整版就行。下面按完整版写。</p>
+
+      <h3>解压到哪</h3>
+      <p>
+        解压出来是一个叫「雅圈机器人」的文件夹。整个文件夹一起用，不要把它里面的文件单独拖出来。
+        推荐放在 <span class="path">D:\yaquan</span> 或 <span class="path">D:\雅圈机器人</span>。
+      </p>
+      <div class="tip e">
+        <b>不要放在桌面或者「下载」文件夹</b>
+        这两个路径里带中文和空格。程序启动时按路径找模型文件，中文路径会让它找不到，
+        然后报一堆看不懂的错。
+      </div>
+
+      <h3>解压完检查一下</h3>
+      <p>打开文件夹，应该看到这些东西：</p>
+      <div class="box">启动.bat        <span class="cm">← 双击这个启动</span>
+启动模型.bat     <span class="cm">← 模型单独启动（启动.bat 出问题时用）</span>
+shortcut.vbs     <span class="cm">← 创建桌面图标，会自动运行</span>
+runtime\         <span class="cm">← Python 运行环境，不要删</span>
+model\           <span class="cm">← AI 模型文件，不要删（精简版没有这个文件夹）</span>
+手册.html        <span class="cm">← 更详细的图文说明</span></div>
+      <p style="color:var(--text3);font-size:14.5px">
+        如果 <code>runtime</code> 或 <code>model</code> 这两个文件夹不在，说明解压不完整，重新解压一次。
+      </p>
+    </section>
+
+    <section class="block" id="s2">
+      <h2><span class="n">STEP 2</span>启动程序</h2>
+      <p class="sum">双击 <b>启动.bat</b>，等模型加载完。</p>
+
+      <ol class="list">
+        <li>双击文件夹里的 <b>启动.bat</b>。会弹出一个黑色窗口，跑几行英文之后自动关掉，这是正常的。</li>
+        <li>
+          任务栏会多出一个叫 <b>YaQuan Model</b> 的窗口。
+          <b>这个窗口不要关</b>——AI 模型就在里面跑着。可以最小化，关掉的话生成功能就停了。
+        </li>
+        <li>等 20 到 60 秒。第一次启动要加载 2.5 GB 的模型文件，慢一点正常，之后每次启动会快一些。</li>
+        <li>加载完成后，浏览器会自动打开控制台页面。</li>
+        <li>
+          桌面上会自动多出一个「雅圈机器人」图标（小雅头像）。
+          以后开机直接双击它就行，不用再进文件夹。
+        </li>
+      </ol>
+
+      <h3>确认启动成功</h3>
+      <p>
+        看控制台页面右上角的小圆点。其中「模型」那个如果变成<b>绿色</b>，说明 AI 已经准备好了。
+        灰色或者黄色的话，再等一会儿。
+      </p>
+
+      <div class="tip w">
+        <b>Windows 弹出蓝色窗口说「已保护你的电脑」</b>
+        点「更多信息」，再点「仍要运行」。因为这是从网上下载的文件，Windows 不认识它。
+        只会在第一次弹，之后不再出现。
+      </div>
+
+      <div class="tip w">
+        <b>如果双击没反应</b>
+        先试同文件夹里的 <b>启动模型.bat</b>。它会在前台运行，屏幕上直接显示错误原因。
+      </div>
+    </section>
+
+    <section class="block" id="s3">
+      <h2><span class="n">STEP 3</span>填入登录凭证</h2>
+      <p class="sum">发评论需要用到你的账号身份。这里不需要密码，只要复制浏览器里的一串字符。</p>
+
+      <h3>第一步：从浏览器复制</h3>
+      <ol class="list">
+        <li>用电脑浏览器打开 <code>www.ximalaya.com</code>，登录你的账号。</li>
+        <li>按键盘上的 <code>F12</code>，打开开发者工具。也可以在页面上右键，选「检查」。</li>
+        <li>在弹出的面板顶部找 <b>Application</b> 标签，点它。有的浏览器叫「应用」或者「存储」。</li>
+        <li>左边栏找到 <b>Cookies</b>，点开，选中 <code>https://www.ximalaya.com</code>。</li>
+        <li>
+          右边会出现一张表格。找到名字是 <code>1&amp;_token</code> 的那一行
+          （注意中间有下划线，不是 <code>1&amp;token</code>）。
+          双击它的 <b>Value</b> 那一格，全选，复制。
+        </li>
+      </ol>
+      <p>复制到的内容长这样，以你的数字 ID 开头：</p>
+      <div class="box">600272609&amp;40DEAF20140NE085189F0D141F6D255F1C95891511B...
+<span class="cm">（一百多个字符，要完整复制，不能漏）</span></div>
+
+      <h3>第二步：粘进控制台</h3>
+      <ol class="list">
+        <li>回到浏览器里的控制台页面，点左边菜单的 <b>登录</b>。</li>
+        <li>把刚才复制的内容粘进输入框。不需要自己加 <code>1&amp;_token=</code> 前缀，程序会自动补。</li>
+        <li>点 <b>保存并验证</b>。</li>
+        <li>提示「已保存，账号 uid 600272609」，同时右上角「登录」变绿，就说明好了。</li>
+      </ol>
+
+      <div class="tip i">
+        <b>找不到在哪复制</b>
+        控制台「登录」页里有个「怎么看凭证？」按钮，点开就是同样的图文步骤，可以对着做。
+      </div>
+
+      <div class="tip e">
+        <b>这段字符等于你的账号钥匙</b>
+        不要发给别人，不要截图发到群里。任何拿到它的人都可以用你的账号发评论。
+      </div>
+    </section>
+
+    <section class="block" id="s4">
+      <h2><span class="n">STEP 4</span>开始运行</h2>
+      <p class="sum">打开自动发布，再启动监测。但建议先手动跑一条看看效果。</p>
+
+      <h3>先手动试一次</h3>
+      <ol class="list">
+        <li>在<b>概览</b>页点「抓一批」，等 10 到 30 秒。会提示新增了几条帖子。</li>
+        <li>点「生成一条」，等 30 到 90 秒。下面的「实时活动」会显示它正在生成哪一条。</li>
+        <li>切到<b>队列</b>页，点「待发布」标签，就能看到生成好的评论。</li>
+        <li>读一遍。觉得可以就点「发送」；不满意点「重生成」让它重想一句；实在不行点「跳过」。</li>
+      </ol>
+
+      <div class="tip g">
+        <b>为什么一定要先手动试</b>
+        评论发出去之后删不掉——喜马拉雅没有开放删除接口，程序做不到。
+        发错了只能你自己去网页上手动删。所以先手动发一两条，确认内容质量和显示都正常，再交给它自动跑。
+      </div>
+
+      <h3>再开自动</h3>
+      <ol class="list">
+        <li>去<b>发布</b>页，把「自动发布」开关打开。不开的话程序只会生成，不会发出去。</li>
+        <li>顺便设置「每日上限」，建议 10 到 20 条，不要设太高。</li>
+        <li>回<b>概览</b>页，点「启动监测」。</li>
+        <li>右上角「监测」变绿，下面的「实时活动」开始滚动输出，就说明它在工作了。</li>
+      </ol>
+
+      <h3>它默认的工作节奏</h3>
+      <div class="box">抓取    每 10 分钟一次，随机 1 条新帖 + 1 条老帖
+生成    持续进行，一条大约 30-90 秒
+发布    每 10 分钟一次，每批最多 2 条
+上限    每天 10 条，到顶当天停止</div>
+      <p>这些数字都能在对应的页面里改。改完要点「停止监测」再「启动监测」才会生效。</p>
+    </section>
+
+    <section class="block" id="download">
+      <h2>下载</h2>
+      <p class="sum">两个版本都不需要安装 Python，解压即用，删掉文件夹就是卸载。</p>
+      <div class="dl">
+        <div class="dl-c main">
+          <div class="h"><b>完整版</b><span>2.6 GB</span></div>
+          <p>自带 4B 模型。不用注册账号、不用买 API、断网也能用。</p>
+          <a class="btn btn-p" href="#" onclick="return false">网盘下载</a>
+        </div>
+        <div class="dl-c">
+          <div class="h"><b>精简版</b><span>10.8 MB</span></div>
+          <p>不含模型。需要自己申请在线 AI 服务并填 API Key，按量计费。</p>
+          <a class="btn btn-s" href="#" onclick="return false">网盘下载</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="faq">
+      <h2>常见问题</h2>
+      <p class="sum">点击展开。按顺序排查，大部分问题都能解决。</p>
+
+      <div class="faq">
+        <div class="faq-q">双击图标没反应，浏览器也没打开 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>先检查 <code>runtime</code> 和 <code>model</code> 两个文件夹还在不在，别把文件单独拖出来用。</p>
+          <p>然后双击 <b>启动模型.bat</b>，它会在前台运行，屏幕上直接显示错误原因。</p>
+          <p>还是不行的话，打开文件夹里的 <code>server.log</code>，看最后几行写了什么。</p>
+        </div></div>
+      </div>
+
+      <div class="faq">
+        <div class="faq-q">「模型」一直显示离线 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>① 看任务栏有没有「YaQuan Model」窗口，没有就双击 <b>启动模型.bat</b>。</p>
+          <p>② 有窗口但灯不绿，再等 60 秒，第一次加载比较慢。</p>
+          <p>③ 超过两分钟还不行，大概率是内存不够。关掉浏览器和其他程序再试。</p>
+        </div></div>
+      </div>
+
+      <div class="faq">
+        <div class="faq-q">桌面上没有「雅圈机器人」图标 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>图标是第一次双击 <b>启动.bat</b> 时自动创建的。</p>
+          <p>如果没有出现，双击文件夹里的 <b>shortcut.vbs</b> 手动补一次。</p>
+          <p>被安全软件拦住的话，右键桌面 → 新建 → 快捷方式，填启动.bat 的完整路径也行。</p>
+        </div></div>
+      </div>
+
+      <div class="faq">
+        <div class="faq-q">「登录」显示未登录 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>凭证没填对或者过期了。重新按第 3 步复制一次。</p>
+          <p>注意名字是 <code>1&amp;_token</code>（中间有下划线），整段复制不要漏字符。</p>
+        </div></div>
+      </div>
+
+      <div class="faq">
+        <div class="faq-q">开了监测但没有评论发出去 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>最常见的原因是「自动发布」开关没打开，去发布页检查一下。</p>
+          <p>其次看「今日已发」是否已经到每日上限。</p>
+        </div></div>
+      </div>
+
+      <div class="faq">
+        <div class="faq-q">发送失败，提示请求错误 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>凭证过期了，或者发得太频繁被限制。</p>
+          <p>先停一天，重新复制一次凭证，并把每日上限调低一些（比如 5 条）再试。</p>
+        </div></div>
+      </div>
+
+      <div class="faq">
+        <div class="faq-q">生成的评论不太通顺 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>4B 的小模型能力有限。可以去「提示词」页调整人设和规则，让它更接近你的说话方式。</p>
+          <p>对单条不满意直接点「重生成」。如果长期效果不好，可以换精简版用在线的大模型。</p>
+        </div></div>
+      </div>
+
+      <div class="faq">
+        <div class="faq-q">电脑重启后要重新配置吗 <span class="arw">▶</span></div>
+        <div class="faq-a"><div>
+          <p>不用。设置和凭证都存在文件夹里，开机双击桌面图标就行。</p>
+          <p>图标没了就去文件夹双击 <b>启动.bat</b>，它会自动把图标补回来。</p>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="block" id="note">
+      <h2>注意事项</h2>
+
+      <h3>评论发出后无法撤回</h3>
+      <p>程序没有删除功能。发之前请自己确认内容，或者先手动发一条试试水。</p>
+
+      <h3>这是自动化操作</h3>
+      <p>
+        平台用户协议通常不鼓励自动化批量操作，账号有可能被限制。
+        建议把每日上限控制在 10 到 20 条，不要在短时间集中发送。
+      </p>
+
+      <h3>关于用途</h3>
+      <p>
+        这个工具用来给认真写东西的人留一句具体的反馈。
+        如果拿它刷数量，圈子里很容易看出来。
+      </p>
+
+      <h3>数据在本地</h3>
+      <p>
+        帖子、评论、登录凭证都存在你自己电脑的 <code>posts.db</code> 和 <code>cookie.txt</code> 里，
+        不会上传到任何服务器。不想要了直接删掉整个文件夹即可。
+      </p>
+    </section>
+
+  </div>
+</div>
+
+<footer>
+  <div class="foot-in">
+    <span>雅圈机器人 · 阿哲朗读 · 2026</span>
+    <span>遇到问题请附上 <code>server.log</code> 最后几十行</span>
+  </div>
+</footer>
+
+<button class="to-top show" id="up" aria-label="回到顶部">↑</button>
+
+<script>
+// 顶部滚动进度
+var bar = document.getElementById('bar');
+function onScroll(){
+  var h = document.documentElement.scrollHeight - window.innerHeight;
+  bar.style.width = (h > 0 ? (window.scrollY / h * 100) : 0) + '%';
+}
+window.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+// 目录高亮
+(function(){
+  var toc = document.getElementById('toc');
+  if(!toc) return;
+  var links = [].slice.call(toc.querySelectorAll('a'));
+  var targets = links.map(function(a){
+    return document.getElementById(a.getAttribute('href').slice(1));
+  });
+  var ticking = false;
+
+  function update(){
+    // 顶部被遮挡的高度：导航 62px，窄屏再加上横排目录
+    var navH = 62;
+    var tocH = window.innerWidth <= 900 ? toc.offsetHeight : 0;
+    var offset = navH + tocH + 24;
+
+    var y = window.scrollY + offset;
+    var idx = -1;
+    targets.forEach(function(t, i){
+      if(!t) return;
+      var top = t.getBoundingClientRect().top + window.scrollY;
+      if(top <= y) idx = i;
+    });
+
+    // 页面到底时，最后一项一定是当前项
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    if(max > 0 && max - window.scrollY < 10) idx = targets.length - 1;
+
+    links.forEach(function(a, i){ a.classList.toggle('on', i === idx); });
+
+    // 窄屏：把当前项横向滚到中间
+    if(idx >= 0 && window.innerWidth <= 900 && toc.scrollWidth > toc.clientWidth){
+      var el = links[idx];
+      var left = el.offsetLeft - (toc.clientWidth - el.offsetWidth) / 2;
+      toc.scrollTo({left: Math.max(0, left), behavior:'smooth'});
+    }
+    ticking = false;
+  }
+
+  function onScroll(){
+    if(!ticking){ ticking = true; requestAnimationFrame(update); }
+  }
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  update();
+})();
+
+// FAQ 折叠
+document.querySelectorAll('.faq-q').forEach(function(q){
+  q.addEventListener('click', function(){
+    q.parentElement.classList.toggle('on');
+  });
+});
+
+// 回到顶部
+var up = document.getElementById('up');
+window.addEventListener('scroll', function(){
+  up.classList.toggle('show', window.scrollY > 620);
+}, {passive:true});
+up.addEventListener('click', function(){
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+</script>
+
+
+
+</body></html>
