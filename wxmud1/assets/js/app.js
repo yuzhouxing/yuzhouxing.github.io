@@ -44,6 +44,9 @@
   const progress = $('#progress'), topbar = $('#topbar');
   const cmdk = $('#cmdk'), cmdkInput = $('#cmdkInput'), cmdkList = $('#cmdkList');
   const qmodal = $('#qmodal'), qmCopy = $('#qmCopy');
+  const playEl = $('#play'), gameFrame = $('#gameFrame'), floatEl = $('#float');
+  const flBody = $('#flBody'), flHead = $('#flHead'), flPill = $('#flPill');
+  const playTip = $('#playTip'), playBar = $('#playBar');
 
   /* ---------- 索引 ---------- */
   const index = GUIDES.map(g => {
@@ -524,11 +527,301 @@
     });
   }
 
+  /* ---------- 伴随模式：游戏铺满 + 攻略浮窗 ---------- */
+  const GAME_URL = 'https://www.wxmud1.com/';
+  const FL_KEY = 'wx_float_v1';
+  const FL_ALPHA = [0.94, 0.78, 0.62];   // 浮窗底色不透明度，越低越透视
+  const FL_FONT = [12.5, 13.5, 14.5];
+  const mqMobile = window.matchMedia('(max-width:760px)');
+
+  const fl = loadFloat();
+  let playId = null;
+  let gameBooted = false;
+  let readerYBeforePlay = 0;
+  let dragState = null;
+  let tipTimerA = null, tipTimerB = null;
+
+  function loadFloat() {
+    const mob = window.matchMedia('(max-width:760px)').matches;
+    const def = {
+      x: null, y: 46, w: 434,
+      h: mob ? Math.round(window.innerHeight * 0.46) : 546,
+      alpha: 0, font: 1
+    };
+    try {
+      const o = JSON.parse(localStorage.getItem(FL_KEY) || 'null');
+      if (o && typeof o === 'object') return Object.assign(def, o);
+    } catch (_) {}
+    return def;
+  }
+  function saveFloat() {
+    try { localStorage.setItem(FL_KEY, JSON.stringify(fl)); } catch (_) {}
+  }
+
+  function applyFloat() {
+    floatEl.style.setProperty('--flbg', 'rgba(10,12,18,' + FL_ALPHA[fl.alpha] + ')');
+    floatEl.style.setProperty('--flfs', FL_FONT[fl.font] + 'px');
+
+    if (mqMobile.matches) {
+      floatEl.style.left = '';
+      floatEl.style.right = '';
+      floatEl.style.top = '';
+      floatEl.style.width = '';
+      floatEl.style.height = Math.min(Math.max(140, fl.h), Math.round(window.innerHeight * 0.86)) + 'px';
+      return;
+    }
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = Math.min(Math.max(300, fl.w), vw - 16);
+    const hh = Math.min(Math.max(170, fl.h), vh - 80);
+    let x = fl.x == null ? vw - w - 20 : fl.x;
+    let y = fl.y == null ? 46 : fl.y;
+    x = Math.min(Math.max(6, x), vw - w - 6);
+    y = Math.min(Math.max(38, y), vh - 54);
+    fl.w = w; fl.h = hh; fl.x = x; fl.y = y;
+    floatEl.style.right = 'auto';
+    floatEl.style.left = x + 'px';
+    floatEl.style.top = y + 'px';
+    floatEl.style.width = w + 'px';
+    floatEl.style.height = hh + 'px';
+  }
+
+  /* 浮窗正文：只要可读版本，不含目录 / 点赞 / 留言 */
+  function buildFloatBody(g) {
+    const frag = document.createDocumentFragment();
+    const meta = el('div', 'fl-meta');
+    meta.style.setProperty('--accent', ACCENT[g.cat] || 'var(--gold)');
+    meta.innerHTML =
+      '<span class="fl-cat">' + esc(catName(g.cat)) + '</span><span class="fl-dot"></span>' +
+      '<span>' + (g.chars ? fmt(g.chars) + ' 字' : '') +
+      (g.chars && g.imgs ? ' / ' : '') + (g.imgs ? g.imgs + ' 图' : '') + '</span>';
+    frag.appendChild(meta);
+
+    g.blocks.forEach(b => {
+      if (b.t === 'p') {
+        const p = el('p');
+        p.innerHTML = esc(b.text)
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/`([^`]+)`/g, '<code>$1</code>');
+        frag.appendChild(p);
+      } else if (b.t === 'h') {
+        const lvl = Math.min(Math.max(b.lvl || 3, 2), 3);
+        const h = el('h' + lvl);
+        h.textContent = b.text;
+        frag.appendChild(h);
+      } else if (b.t === 'img') {
+        const img = el('img');
+        img.src = b.src;
+        img.alt = g.title;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        frag.appendChild(img);
+      } else if (b.t === 'table') {
+        const tb = el('table');
+        const maxc = Math.max(...b.rows.map(r => r.length));
+        tb.innerHTML = b.rows.map((row, ri) => {
+          const tag = ri === 0 && b.rows.length > 1 && maxc > 1 ? 'th' : 'td';
+          return '<tr>' + row.map(c => '<' + tag + '>' + esc(c) + '</' + tag + '>').join('') + '</tr>';
+        }).join('');
+        frag.appendChild(tb);
+      } else if (b.t === 'code') {
+        const pre = el('pre'), code = el('code');
+        code.textContent = b.text;
+        pre.appendChild(code);
+        frag.appendChild(pre);
+      } else if (b.t === 'sep') {
+        frag.appendChild(el('div', 'fl-sep'));
+      }
+    });
+
+    flBody.innerHTML = '';
+    flBody.appendChild(frag);
+    flBody.scrollTop = 0;
+  }
+
+  function setFloatVisible(v) {
+    floatEl.hidden = !v;
+    flPill.hidden = v;
+    const t = $('#pbToggle');
+    if (t) t.textContent = v ? '收起浮窗' : '显示浮窗';
+  }
+
+  function flashTip(msg, hold) {
+    clearTimeout(tipTimerA); clearTimeout(tipTimerB);
+    playTip.textContent = msg;
+    playTip.hidden = false;
+    playTip.classList.remove('fade');
+    tipTimerA = setTimeout(() => playTip.classList.add('fade'), hold || 1300);
+    tipTimerB = setTimeout(() => { playTip.hidden = true; playTip.classList.remove('fade'); }, (hold || 1300) + 500);
+  }
+
+  function firstPlayTip() {
+    let seen = false;
+    try { seen = !!localStorage.getItem('wx_play_tip_v1'); } catch (_) {}
+    if (seen) return;
+    try { localStorage.setItem('wx_play_tip_v1', '1'); } catch (_) {}
+    flashTip(mqMobile.matches
+      ? '上下拖动标题栏调高度，点「—」收起，Esc 退出'
+      : '拖标题栏移动，右下角缩放，点「—」收起，Esc 退出', 4200);
+  }
+
+  function enterPlay(id) {
+    const g = BY_ID[id];
+    if (!g) { location.hash = '#/'; return; }
+    playId = id;
+
+    document.body.classList.add('playing');
+    playEl.hidden = false;
+    $('#pbTitle').textContent = g.title;
+    $('#flTitle').textContent = g.title;
+    flPill.textContent = '攻略 · ' + g.title.slice(0, 10);
+    document.title = g.title + ' · 伴随模式';
+
+    buildFloatBody(g);
+    setFloatVisible(true);
+    applyFloat();
+
+    if (!gameBooted) {
+      gameFrame.src = GAME_URL;
+      gameBooted = true;
+    }
+    firstPlayTip();
+  }
+
+  function exitPlay() {
+    if (!playId) return;
+    const id = playId;
+    playId = null;
+    playEl.hidden = true;
+    document.body.classList.remove('playing');
+    window.__restoreY = readerYBeforePlay;
+    location.hash = '#/g/' + id;
+  }
+
+  /* 拖动 / 移动端拉伸 */
+  flHead.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    const mob = mqMobile.matches;
+    dragState = mob
+      ? { mode: 'sheet', startY: e.clientY, h: floatEl.offsetHeight, moved: false }
+      : { mode: 'move', dx: e.clientX - floatEl.offsetLeft, dy: e.clientY - floatEl.offsetTop, moved: false };
+    try { flHead.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  flHead.addEventListener('pointermove', e => {
+    if (!dragState) return;
+    if (dragState.mode === 'move') {
+      const nx = e.clientX - dragState.dx;
+      const ny = e.clientY - dragState.dy;
+      if (Math.abs(nx - floatEl.offsetLeft) > 2 || Math.abs(ny - floatEl.offsetTop) > 2) dragState.moved = true;
+      const w = floatEl.offsetWidth, h = floatEl.offsetHeight;
+      floatEl.style.left = Math.min(Math.max(4, nx), window.innerWidth - w - 4) + 'px';
+      floatEl.style.top = Math.min(Math.max(36, ny), window.innerHeight - h - 4) + 'px';
+      floatEl.classList.add('dragging');
+    } else {
+      const dh = dragState.startY - e.clientY;
+      if (Math.abs(dh) > 3) dragState.moved = true;
+      const h = Math.min(Math.max(140, dragState.h + dh), Math.round(window.innerHeight * 0.86));
+      fl.h = h;
+      floatEl.style.height = h + 'px';
+    }
+  });
+  flHead.addEventListener('pointerup', () => {
+    if (!dragState) return;
+    const st = dragState;
+    dragState = null;
+    floatEl.classList.remove('dragging');
+    if (st.mode === 'move' && st.moved) {
+      fl.x = floatEl.offsetLeft;
+      fl.y = floatEl.offsetTop;
+      saveFloat();
+    } else if (st.moved) {
+      saveFloat();
+    }
+  });
+  flHead.addEventListener('pointercancel', () => {
+    dragState = null;
+    floatEl.classList.remove('dragging');
+  });
+
+  /* 右下角缩放 */
+  $('#flGrip').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const grip = e.currentTarget;
+    const start = { x: e.clientX, y: e.clientY, w: floatEl.offsetWidth, h: floatEl.offsetHeight };
+    try { grip.setPointerCapture(e.pointerId); } catch (_) {}
+    const move = ev => {
+      fl.w = Math.min(Math.max(300, start.w + ev.clientX - start.x), window.innerWidth - 16);
+      fl.h = Math.min(Math.max(170, start.h + ev.clientY - start.y), window.innerHeight - 80);
+      applyFloat();
+    };
+    const up = () => {
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', up);
+      saveFloat();
+    };
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', up);
+  });
+
+  /* 浮窗工具栏 */
+  floatEl.querySelectorAll('.fl-btn').forEach(btn => {
+    btn.onclick = () => {
+      const act = btn.dataset.act;
+      if (act === 'alpha') {
+        fl.alpha = (fl.alpha + 1) % FL_ALPHA.length;
+        applyFloat(); saveFloat();
+        flashTip('背景不透明度 ' + Math.round(FL_ALPHA[fl.alpha] * 100) + '%');
+      } else if (act === 'font') {
+        fl.font = (fl.font + 1) % FL_FONT.length;
+        applyFloat(); saveFloat();
+        flashTip('字号 ' + FL_FONT[fl.font] + 'px');
+      } else if (act === 'min') {
+        setFloatVisible(false);
+      }
+    };
+  });
+
+  flPill.onclick = () => setFloatVisible(true);
+  $('#pbToggle').onclick = () => setFloatVisible(floatEl.hidden);
+  $('#pbBack').onclick = () => exitPlay();
+  $('#pbReload').onclick = () => {
+    gameFrame.src = GAME_URL;
+    flashTip('正在重新加载游戏');
+  };
+  const goPlay = () => {
+    if (!currentGuideId) return;
+    readerYBeforePlay = window.scrollY;
+    location.hash = '#/play/' + currentGuideId;
+  };
+  $('#playBtn').onclick = goPlay;
+  $('#playFab').onclick = goPlay;
+
+  window.addEventListener('resize', () => { if (!playEl.hidden) applyFloat(); });
+
   /* ---------- 路由 ---------- */
   function route() {
     const h = location.hash || '#/';
+    const mP = h.match(/^#\/play\/([a-f0-9]+)/);
     const mG = h.match(/^#\/g\/([a-f0-9]+)/);
     const mC = h.match(/^#\/c\/(\w+)/);
+
+    if (mP) {
+      const gid = ALIAS[mP[1]] || mP[1];
+      if (!BY_ID[gid]) { location.hash = '#/'; return; }
+      viewHome.hidden = true;
+      viewReader.hidden = true;
+      if (playEl.hidden || playId !== gid) enterPlay(gid);
+      updateNav();
+      return;
+    }
+
+    // 从伴随模式离开
+    if (!playEl.hidden) {
+      playEl.hidden = true;
+      playId = null;
+      document.body.classList.remove('playing');
+      document.title = '武仙传说 · 攻略总集';
+    }
 
     if (mG) {
       const gid = ALIAS[mG[1]] || mG[1];
@@ -537,6 +830,11 @@
       viewHome.hidden = true;
       viewReader.hidden = false;
       renderReader(gid);
+      if (window.__restoreY != null) {
+        const y = window.__restoreY;
+        window.__restoreY = null;
+        requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
+      }
     } else {
       viewReader.hidden = true;
       viewHome.hidden = false;
@@ -701,9 +999,9 @@
   cmdkInput.addEventListener('input', () => { cmdkIdx = 0; renderCmdk(); });
   cmdk.querySelector('[data-close]').onclick = closeCmdk;
 
-  // 图片灯箱
+  // 图片灯箱（正文与伴随浮窗共用）
   document.addEventListener('click', e => {
-    const img = e.target.closest('.article img');
+    const img = e.target.closest('.article img, .fl-body img');
     if (img && img.src) {
       lbImg.src = img.src;
       lightbox.hidden = false;
@@ -723,6 +1021,16 @@
   // 键盘
   document.addEventListener('keydown', e => {
     const inInput = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+
+    // 伴随模式：只保留 Esc（先关灯箱，再退出），其余按键留给游戏
+    if (!playEl.hidden) {
+      if (e.key === 'Escape') {
+        if (!lightbox.hidden) { lightbox.hidden = true; return; }
+        e.preventDefault();
+        exitPlay();
+      }
+      return;
+    }
 
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();

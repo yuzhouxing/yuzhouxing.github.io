@@ -126,6 +126,10 @@
     <div class="reader-head">
       <div class="crumb" id="crumb"></div>
       <div class="reader-actions">
+        <button class="play-btn" id="playBtn" type="button" title="把游戏铺满屏幕，攻略变成浮窗">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="4.2" width="18.8" height="13" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 20.4h6.8M12 17.2v3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="10.4" y="7.6" width="7" height="6.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+          伴随
+        </button>
         <a class="dl-btn" id="dlBtn" download>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 20h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           原档
@@ -163,6 +167,11 @@
     </section>
 
     <div class="pager" id="pager"></div>
+
+    <button class="play-fab" id="playFab" type="button" title="把游戏铺满屏幕，攻略变成浮窗">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="4.2" width="18.8" height="13" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 20.4h6.8M12 17.2v3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="10.4" y="7.6" width="7" height="6.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+      <span>边玩边看</span>
+    </button>
   </section>
 </main>
 
@@ -200,6 +209,46 @@
     </div>
   </div>
 </div>
+
+<!-- 伴随模式：游戏铺满 + 攻略浮窗 -->
+<section class="play" id="play" hidden aria-label="伴随模式">
+  <iframe id="gameFrame" title="武仙传说 网页版" allow="fullscreen; clipboard-read; clipboard-write; autoplay"></iframe>
+
+  <div class="play-bar" id="playBar">
+    <button class="pb-back" id="pbBack" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>退出伴随</span>
+    </button>
+    <span class="pb-title" id="pbTitle">攻略</span>
+    <div class="pb-right">
+      <button class="pb-btn" id="pbReload" type="button" title="重新加载游戏">重载</button>
+      <button class="pb-btn" id="pbToggle" type="button" title="显示 / 隐藏攻略浮窗">收起浮窗</button>
+    </div>
+  </div>
+
+  <div class="float" id="float">
+    <div class="fl-head" id="flHead">
+      <span class="fl-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="fl-title" id="flTitle">攻略</span>
+      <div class="fl-acts">
+        <button class="fl-btn" data-act="alpha" type="button" title="调整透明度" aria-label="调整透明度">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg>
+        </button>
+        <button class="fl-btn" data-act="font" type="button" title="调整字号" aria-label="调整字号">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19 10 5l6 14M6.4 14.4h7.2M17 19l3-8 3 8M17.9 16.4h4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="fl-btn" data-act="min" type="button" title="收起为胶囊" aria-label="收起">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="fl-body" id="flBody"></div>
+    <span class="fl-grip" id="flGrip" role="presentation"></span>
+  </div>
+
+  <button class="fl-pill" id="flPill" type="button" hidden>攻略</button>
+  <div class="play-tip" id="playTip" hidden></div>
+</section>
 
 <div class="lightbox" id="lightbox" hidden>
   <button class="lb-close" aria-label="关闭">✕</button>
