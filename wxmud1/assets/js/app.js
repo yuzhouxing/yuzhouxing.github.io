@@ -32,7 +32,10 @@
   const CloudOn = !!(Cloud && Cloud.hasCloud);   // 只有配了 Supabase 才启用互动功能
   const STATS = { map: {}, mode: 'local', degraded: false };
   let statsReady = false;   // 互动数据是否已就绪，未就绪时卡片留位不显示数字
+  let statsKnown = false;   // 数字是否可信；云端连不上时为 false，界面显示「—」而不是假 0
   const stOf = id => STATS.map[id] || { likes: 0, views: 0 };
+  // 数字文案：拿不到真实值就明确留白，绝不把「0」当作「连不上」的替身
+  const numTxt = v => (statsKnown ? fmt(v) : '—');
 
   const $ = s => document.querySelector(s);
   const el = (t, c) => { const n = document.createElement(t); if (c) n.className = c; return n; };
@@ -149,14 +152,14 @@
       const no = pad(GUIDES.indexOf(g) >= 0 ? sortedIndex(g) : i + 1);
       const st = stOf(g.id);
       const stat = CloudOn
-        ? '<span class="card-stat' + (statsReady ? '' : ' is-pending') + '">' +
-            '<span class="cs cs-like' + (st.likes > 0 ? ' has' : '') + '" title="' + st.likes + ' 人点赞">' +
+        ? '<span class="card-stat' + (statsReady ? '' : ' is-pending') + (statsKnown ? '' : ' is-unknown') + '">' +
+            '<span class="cs cs-like' + (st.likes > 0 && statsKnown ? ' has' : '') + '" title="' + (statsKnown ? st.likes + ' 人点赞' : '未连上云端，数字未知') + '">' +
               '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" fill="currentColor"/></svg>' +
-              '<b>' + fmt(st.likes) + '</b>' +
+              '<b>' + numTxt(st.likes) + '</b>' +
             '</span>' +
-            '<span class="cs cs-view' + (st.views > 0 ? ' has' : '') + '" title="' + st.views + ' 次浏览">' +
+            '<span class="cs cs-view' + (st.views > 0 && statsKnown ? ' has' : '') + '" title="' + (statsKnown ? st.views + ' 次浏览' : '未连上云端，数字未知') + '">' +
               '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.2 12S5.8 6.2 12 6.2 21.8 12 21.8 12 18.2 17.8 12 17.8 2.2 12 2.2 12Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>' +
-              '<b>' + fmt(st.views) + '</b>' +
+              '<b>' + numTxt(st.views) + '</b>' +
             '</span>' +
           '</span>'
         : '';
@@ -195,17 +198,20 @@
       const like = card.querySelector('.cs-like');
       const view = card.querySelector('.cs-view');
       if (like) {
-        like.querySelector('b').textContent = fmt(st.likes);
-        like.classList.toggle('has', st.likes > 0);
-        like.title = st.likes + ' 人点赞';
+        like.querySelector('b').textContent = numTxt(st.likes);
+        like.classList.toggle('has', st.likes > 0 && statsKnown);
+        like.title = statsKnown ? st.likes + ' 人点赞' : '未连上云端，数字未知';
       }
       if (view) {
-        view.querySelector('b').textContent = fmt(st.views);
-        view.classList.toggle('has', st.views > 0);
-        view.title = st.views + ' 次浏览';
+        view.querySelector('b').textContent = numTxt(st.views);
+        view.classList.toggle('has', st.views > 0 && statsKnown);
+        view.title = statsKnown ? st.views + ' 次浏览' : '未连上云端，数字未知';
       }
       const wrap = card.querySelector('.card-stat');
-      if (wrap && statsReady) wrap.classList.remove('is-pending');
+      if (wrap && statsReady) {
+        wrap.classList.remove('is-pending');
+        wrap.classList.toggle('is-unknown', !statsKnown);
+      }
     });
   }
 
@@ -214,7 +220,10 @@
     if (!CloudOn) return;
     Cloud.stats().then(s => {
       STATS.map = s.map || {};
+      STATS.mode = s.mode;
       statsReady = true;
+      statsKnown = s.mode === 'cloud';
+      paintNetBar();
       if (!viewHome.hidden) paintCardStats();
     }).catch(() => {});
   }
@@ -288,6 +297,13 @@
         likeBtn.querySelector('.like-txt').textContent = r.liked ? '已赞' : '点赞';
         likeBtn.querySelector('.like-num').textContent = r.likes;
         STATS.map[g.id] = { likes: r.likes, views: stOf(g.id).views };
+        if (r.mode === 'pending') {
+          likeBtn.classList.add('is-pending');
+          likeBtn.title = '已记在本机，联网后自动同步到云端';
+        } else {
+          likeBtn.classList.remove('is-pending');
+          likeBtn.title = '';
+        }
         if (r.liked) {
           likeBtn.classList.add('pop');
           setTimeout(() => likeBtn.classList.remove('pop'), 460);
@@ -538,6 +554,12 @@
     const h = location.hash || '#/';
     const mG = h.match(/^#\/g\/([a-f0-9]+)/);
     const mC = h.match(/^#\/c\/(\w+)/);
+
+    if (h === '#/check') { openCheck(); return; }
+    if (checkView && !checkView.hidden) {
+      checkView.hidden = true;
+      document.body.classList.remove('ck-open');
+    }
 
     if (mG) {
       const gid = ALIAS[mG[1]] || mG[1];
@@ -837,6 +859,142 @@
   toTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   document.body.appendChild(toTop);
 
+  /* ---------- 云端状态条 ---------- */
+  // 只要云端不连通就把话说明白，而不是让页面安安静静显示一片 0
+  const netBar = document.createElement('div');
+  netBar.className = 'netbar';
+  netBar.hidden = true;
+  netBar.innerHTML = '<span class="nb-dot" aria-hidden="true"></span><span class="nb-txt"></span>' +
+    '<button class="nb-btn" type="button">自检</button>';
+  document.body.appendChild(netBar);
+  const netTxt = netBar.querySelector('.nb-txt');
+  netBar.querySelector('.nb-btn').onclick = () => { location.hash = '#/check'; };
+
+  function paintNetBar() {
+    if (!CloudOn) { netBar.hidden = true; document.body.classList.remove('has-netbar'); return; }
+    const pending = Cloud.queueLen ? Cloud.queueLen() : 0;
+    if (STATS.mode === 'offline') {
+      netBar.hidden = false;
+      netBar.classList.add('is-bad');
+      netTxt.innerHTML = '云端未连上 · 数字显示为「—」' +
+        (pending ? ' · <b>' + pending + '</b> 条待补传' : '');
+    } else if (pending) {
+      netBar.hidden = false;
+      netBar.classList.remove('is-bad');
+      netTxt.innerHTML = '<b>' + pending + '</b> 条记录待补传，连上后自动同步';
+    } else {
+      netBar.hidden = true;
+    }
+    document.body.classList.toggle('has-netbar', !netBar.hidden);
+  }
+
+  /* ---------- 自检页 ---------- */
+  const checkView = document.createElement('section');
+  checkView.className = 'ck-view';
+  checkView.hidden = true;
+  checkView.innerHTML =
+    '<div class="ck-card" role="dialog" aria-label="数据同步自检">' +
+      '<div class="ck-head"><b>数据同步自检</b><button class="ck-x" type="button" aria-label="关闭">✕</button></div>' +
+      '<div class="ck-body"><p class="ck-wait">正在检测…</p></div>' +
+      '<div class="ck-foot">' +
+        '<button class="ck-run" type="button">重新检测</button>' +
+        '<button class="ck-copy" type="button">复制报告</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(checkView);
+  const ckBody = checkView.querySelector('.ck-body');
+  let ckReport = '';
+
+  checkView.querySelector('.ck-x').onclick = () => closeCheck();
+    checkView.querySelector('.ck-run').onclick = () => runCheck();
+  checkView.querySelector('.ck-copy').onclick = async () => {
+    const btn = checkView.querySelector('.ck-copy');
+    try {
+      await navigator.clipboard.writeText(ckReport);
+      btn.textContent = '已复制';
+    } catch (_) {
+      btn.textContent = '复制失败';
+    }
+    setTimeout(() => { btn.textContent = '复制报告'; }, 1600);
+  };
+
+  function openCheck() {
+    checkView.hidden = false;
+    document.body.classList.add('ck-open');
+    runCheck();
+  }
+  function closeCheck() {
+    checkView.hidden = true;
+    document.body.classList.remove('ck-open');
+    if (location.hash === '#/check') location.hash = '#/';
+  }
+
+  async function runCheck() {
+    if (!Cloud || !Cloud.probe) {
+      ckBody.innerHTML = '<p class="ck-wait">数据层未加载</p>';
+      return;
+    }
+    ckBody.innerHTML = '<p class="ck-wait">正在检测…</p>';
+    const r = await Cloud.probe();
+    const esc2 = esc;
+    const rows = r.steps.map(s =>
+      '<div class="ck-row ' + (s.ok ? 'ok' : 'bad') + '">' +
+        '<span class="ck-mark">' + (s.ok ? '✓' : '✕') + '</span>' +
+        '<span class="ck-name">' + esc2(s.name) + '</span>' +
+        '<span class="ck-ms">' + (s.ms || 0) + 'ms</span>' +
+        '<span class="ck-detail">' + esc2(s.detail || '') + '</span>' +
+      '</div>').join('');
+
+    const lo = r.local || {};
+    ckBody.innerHTML =
+      '<div class="ck-verdict ' + (r.verdict.indexOf('正常') >= 0 ? 'ok' : 'bad') + '">' + esc2(r.verdict) + '</div>' +
+      rows +
+      '<div class="ck-meta">' +
+        '<div><span>云端地址</span><b>' + esc2((r.base || '未配置').replace(/^https?:\/\//, '')) + '</b></div>' +
+        '<div><span>本机访客</span><b>' + esc2(r.vid || '') + '</b></div>' +
+        '<div><span>本机记录的赞</span><b>' + (lo.liked || 0) + '</b></div>' +
+        '<div><span>待补传队列</span><b>' + (r.pending || 0) + '</b></div>' +
+      '</div>' +
+      (lo.liked ? '<div class="ck-act"><button class="ck-push" type="button">把本机记录的 ' + lo.liked + ' 个赞补传到云端</button><span class="ck-msg"></span></div>' : '') +
+      '<p class="ck-note">浏览量按「访客 + 篇 + 天」去重，换设备不会继承别人的浏览记录；点赞是账号无关的，可以补传。</p>';
+
+    ckReport = [
+      '武仙攻略站 · 数据同步自检',
+      '时间 ' + new Date().toLocaleString(),
+      '结论 ' + r.verdict,
+      '地址 ' + (r.base || '未配置'),
+      '在线 ' + (r.online ? '是' : '否'),
+      ...r.steps.map(s => (s.ok ? '[OK] ' : '[FAIL] ') + s.name + ' ' + s.ms + 'ms ' + s.detail),
+      '本机点赞 ' + (lo.liked || 0) + ' · 浏览 ' + (lo.views || 0) + ' · 待补传 ' + (r.pending || 0),
+      '访客 ' + r.vid
+    ].join('\n');
+
+    const push = ckBody.querySelector('.ck-push');
+    if (push) push.onclick = async () => {
+      const msg = ckBody.querySelector('.ck-msg');
+      push.disabled = true;
+      if (msg) msg.textContent = '上传中…';
+      const res = await Cloud.pushLocalLikes();
+      if (msg) msg.textContent = res.ok ? ('已补传 ' + res.done + ' 条') : ('失败：' + res.error);
+      push.disabled = false;
+      if (res.ok) { statsReady = true; statsKnown = true; }
+    };
+
+    // 自检结果直接决定页面状态：通了就把「—」换回真实数字
+    const good = r.verdict.indexOf('正常') >= 0;
+    if (good) {
+      statsKnown = true;
+      STATS.mode = 'cloud';
+      paintNetBar();
+      refreshHomeStats();
+    } else if (r.configured) {
+      statsKnown = false;
+      STATS.mode = 'offline';
+      paintNetBar();
+      if (!viewHome.hidden) paintCardStats();
+    }
+  }
+
   /* ---------- 启动 ---------- */
   if (!isMac) { const k = $('#kbdHint'); if (k) k.textContent = 'Ctrl K'; }
   buildNav();
@@ -851,6 +1009,13 @@
       STATS.mode = s.mode;
       STATS.degraded = !!s.degraded;
       statsReady = true;
+      statsKnown = s.mode === 'cloud';
+      paintNetBar();
+      // 云端通了之后，把「早于接入云端」时点过的赞补上去（幂等，重复跑不会多算）
+      if (s.mode === 'cloud' && !localStorage.getItem('wx_pushed')) {
+        try { localStorage.setItem('wx_pushed', '1'); } catch (_) {}
+        if (Cloud.pushLocalLikes) Cloud.pushLocalLikes().catch(() => {});
+      }
       if (!viewHome.hidden) {
         const y = window.scrollY;
         renderGrid();
@@ -859,17 +1024,20 @@
       if (!viewReader.hidden && currentGuideId) {
         const st = stOf(currentGuideId);
         const ln = $('#likeNum'), vn = $('#viewNum');
-        if (ln) ln.textContent = st.likes;
-        if (vn) vn.textContent = st.views;
+        if (ln) ln.textContent = statsKnown ? st.likes : '—';
+        if (vn) vn.textContent = statsKnown ? st.views : '—';
       }
     }).catch(() => {});
 
     // 文章页点赞后即时回写首页数字
     if (Cloud.onChange) {
       Cloud.onChange(snap => {
-        if (!snap || !snap.map) return;
-        STATS.map = snap.map;
+        if (!snap) return;
+        if (snap.map) STATS.map = snap.map;
+        if (snap.mode) STATS.mode = snap.mode;
         statsReady = true;
+        statsKnown = snap.mode === 'cloud';
+        paintNetBar();
         if (!viewHome.hidden) paintCardStats();
       });
     }
