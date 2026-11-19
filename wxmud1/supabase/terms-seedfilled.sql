@@ -1,0 +1,27 @@
+-- 首批释义：给最高频的一批词条打底，避免点开全是空的
+update public.terms set body = '角色可学习的战斗技艺总称，分内功、轻功、拳脚、兵器等类别，通过拜师、秘籍或残页获得。', filled = true, editor = '编辑部', updated_at = now() where name = '武学';
+update public.terms set body = '决定物理伤害高低的属性。同等级下数值越高，对同一目标打出的伤害越高。', filled = true, editor = '编辑部', updated_at = now() where name = '攻击';
+update public.terms set body = '决定攻击能否打中的属性。低于对手躲闪时会出现较多未命中，需要靠装备或武学补齐。', filled = true, editor = '编辑部', updated_at = now() where name = '命中';
+update public.terms set body = '防御向属性，影响格挡对方攻击的概率与减伤幅度，通常与武器类型相关。', filled = true, editor = '编辑部', updated_at = now() where name = '招架';
+update public.terms set body = '直接削减受到伤害的属性。对固定数值伤害的技能效果有限，对普攻最明显。', filled = true, editor = '编辑部', updated_at = now() where name = '防御';
+update public.terms set body = '生命值上限，归零即倒地。可通过根骨、装备与丹药提升。', filled = true, editor = '编辑部', updated_at = now() where name = '气血';
+update public.terms set body = '释放技能消耗的资源。上限越高，越能支撑连续出招的长时间战斗。', filled = true, editor = '编辑部', updated_at = now() where name = '内力';
+update public.terms set body = '内力条的最大值。打坐、装备与心法都会影响它。', filled = true, editor = '编辑部', updated_at = now() where name = '内力上限';
+update public.terms set body = '影响闪避攻击的概率，与命中相对。数值高于对手命中时更容易躲开。', filled = true, editor = '编辑部', updated_at = now() where name = '躲闪';
+update public.terms set body = '影响物理攻击与部分兵器的伤害加成，是力量型路线的核心属性。', filled = true, editor = '编辑部', updated_at = now() where name = '臂力';
+update public.terms set body = '影响出手顺序、闪避与轻功效果，身法高的角色常能先手。', filled = true, editor = '编辑部', updated_at = now() where name = '身法';
+update public.terms set body = '影响气血与抗性成长，偏防守的属性。', filled = true, editor = '编辑部', updated_at = now() where name = '根骨';
+update public.terms set body = '影响学习武学、参悟秘籍的效率，也是部分门派收徒的门槛。', filled = true, editor = '编辑部', updated_at = now() where name = '悟性';
+update public.terms set body = '触发暴击的概率。暴击时按暴击伤害倍率结算额外伤害。', filled = true, editor = '编辑部', updated_at = now() where name = '暴击';
+update public.terms set body = '暴击发生时的额外伤害倍率，与暴击率配套堆叠收益最高。', filled = true, editor = '编辑部', updated_at = now() where name = '暴击伤害';
+update public.terms set body = '按比例减少受到的最终伤害，属于后期收益较高的防御词条。', filled = true, editor = '编辑部', updated_at = now() where name = '免伤';
+update public.terms set body = '削减受到伤害的总称，可能按固定值或百分比结算，具体看来源。', filled = true, editor = '编辑部', updated_at = now() where name = '伤害减免';
+update public.terms set body = '恢复气血与内力的主要方式。效率受地形、状态与相关心法影响，离线也在计算。', filled = true, editor = '编辑部', updated_at = now() where name = '打坐';
+update public.terms set body = '加入门派后向师父学习本门武学的前置步骤，部分高阶武学还有额外的条件。', filled = true, editor = '编辑部', updated_at = now() where name = '拜师';
+update public.terms set body = '决定可学武学路线与师门任务的组织，不同门派的招式体系和属性侧重差别很大。', filled = true, editor = '编辑部', updated_at = now() where name = '门派';
+update public.terms set body = '武学秘籍的碎片，凑齐指定数量可合成完整秘籍，多从副本与活动中产出。', filled = true, editor = '编辑部', updated_at = now() where name = '残页';
+update public.terms set body = '高难度副本区域，通常有等级、任务或门票前置，掉落也相应更好。', filled = true, editor = '编辑部', updated_at = now() where name = '禁地';
+update public.terms set body = '穿戴同系列装备可触发额外的套装属性，件数越多加成越高。', filled = true, editor = '编辑部', updated_at = now() where name = '套装';
+update public.terms set body = '装备上的附加属性条目，可洗练、替换或强化，是后期提升的主要来源。', filled = true, editor = '编辑部', updated_at = now() where name = '词条';
+update public.terms set body = '多人共同挑战副本的机制，队伍人数会影响难度与掉落分配。', filled = true, editor = '编辑部', updated_at = now() where name = '组队';
+update public.terms set body = '门派之间的定期对抗活动，胜负影响门派资源与排名。', filled = true, editor = '编辑部', updated_at = now() where name = '门派战';

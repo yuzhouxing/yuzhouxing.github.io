@@ -427,7 +427,16 @@
 
     currentGuideId = g.id;
     renderComments(g.id);
+
+    // 名词内链（词条还没加载完就先跳过，加载完会自动补一次）
+    if (window.WX_TERMS) window.WX_TERMS.link(article);
   }
+
+  // 词条数据到达后，给当前这篇文章补上内链
+  window.WX_TERMS_ONREADY = function () {
+    if (!currentGuideId || viewReader.hidden) return;
+    if (window.WX_TERMS) window.WX_TERMS.link(article);
+  };
 
   /* ---------- 留言 ---------- */
   let currentGuideId = null;
