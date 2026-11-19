@@ -875,181 +875,66 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
 .play-fab svg{width:14px;height:14px;flex:none}
 .play-fab[hidden]{display:none}
 
-/* 全屏层 */
-.play{position:fixed;inset:0;z-index:120;background:#05060a}
-.play[hidden]{display:none}
-.play iframe{
-  position:absolute;inset:0;width:100%;height:100%;border:0;display:block;
-  background:#05060a;
-}
-body.playing{overflow:hidden}
+/* ---------- 伴读模式 ---------- */
+/* 游戏必须开在独立窗口（跨源 iframe 里游戏初始化会被跳过，登录不可用），
+   所以这里只做"正文收窄"，让本页和游戏窗口并排 */
+body.playing{overflow:auto}
 body.playing .topbar,
-body.playing main,
 body.playing .progress,
 body.playing .scanline,
-body.playing .totop{display:none}
+body.playing .toc,
+body.playing .pager,
+body.playing .cmt,
+body.playing .reader-head,
+body.playing .play-fab,
+body.playing .totop{display:none !important}
+body.playing .view-reader{padding:62px 22px 40px;max-width:800px}
+body.playing .reader-layout{display:block;max-width:none}
+body.playing .article{padding:34px 40px 44px}
 
-/* 顶部窄条 */
-/* 三个独立胶囊，中间留空不遮游戏 */
-.play-bar{
-  position:absolute;top:0;left:0;right:0;height:44px;z-index:3;
-  display:flex;align-items:flex-start;gap:8px;padding:7px 9px;
-  pointer-events:none;
-  font-family:var(--mono);font-size:11px;color:var(--ink-3);
-  opacity:.86;transition:opacity .22s ease;
+/* 顶部伴读条 */
+.cmp-bar{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:44px;
+  display:flex;align-items:center;gap:10px;padding:0 12px;
+  background:rgba(6,7,11,.95);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(217,169,79,.16);
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
 }
-.play-bar:hover,.play-bar:focus-within{opacity:1}
-.play-bar > *{pointer-events:auto}
-.pb-back,.pb-right,.pb-title{
-  background:rgba(6,7,11,.88);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,.075);
-  box-shadow:0 6px 20px -10px rgba(0,0,0,.9);
-}
-.pb-back{
+.cmp-bar[hidden]{display:none}
+.cmp-back{
   display:inline-flex;align-items:center;gap:5px;flex:none;
-  height:28px;padding:0 10px;border-radius:4px;color:var(--ink-2);
-  transition:.18s ease;
+  height:28px;padding:0 11px;border-radius:4px;color:var(--ink-2);
+  border:1px solid rgba(255,255,255,.1);transition:.18s ease;
 }
-.pb-back:hover{color:var(--gold);border-color:rgba(217,169,79,.45);background:rgba(24,17,6,.92)}
-.pb-back svg{width:12px;height:12px}
-.pb-title{
-  flex:0 1 auto;max-width:40%;margin:0 auto;height:28px;line-height:26px;
-  padding:0 12px;border-radius:4px;
+.cmp-back:hover{color:var(--gold);border-color:rgba(217,169,79,.45);background:rgba(217,169,79,.07)}
+.cmp-back svg{width:12px;height:12px}
+.cmp-state{
+  flex:1;min-width:0;text-align:center;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--ink-2);letter-spacing:.06em;
+  color:var(--ink-2);letter-spacing:.04em;
 }
-.pb-right{display:flex;gap:0;flex:none;height:28px;border-radius:4px;overflow:hidden}
-.pb-btn{
-  padding:0 10px;font-family:var(--mono);font-size:11px;height:28px;
-  color:var(--ink-3);transition:.18s ease;border-left:1px solid rgba(255,255,255,.06);
+.cmp-state b{color:var(--gold);font-weight:500}
+.cmp-right{display:flex;gap:6px;flex:none}
+.cmp-btn{
+  height:28px;padding:0 11px;border-radius:4px;
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+  border:1px solid rgba(255,255,255,.1);transition:.18s ease;
 }
-.pb-btn:first-child{border-left:0}
-.pb-btn:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+.cmp-btn:hover{color:var(--ink);border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.05)}
+.cmp-btn:disabled{opacity:.38;cursor:default}
 
-/* 攻略浮窗 */
-.float{
-  position:absolute;z-index:4;
-  display:flex;flex-direction:column;
-  background:var(--flbg,rgba(10,12,18,.94));
-  border:1px solid rgba(217,169,79,.22);
-  border-radius:6px;
-  box-shadow:0 26px 70px -24px rgba(0,0,0,.95),0 0 0 1px rgba(0,0,0,.55);
-  backdrop-filter:blur(14px) saturate(1.1);
-  -webkit-backdrop-filter:blur(14px) saturate(1.1);
-  overflow:hidden;
-  transition:background .25s ease,box-shadow .25s ease;
-}
-.float.dragging{box-shadow:0 34px 90px -20px rgba(0,0,0,1),0 0 0 1px rgba(217,169,79,.45);cursor:grabbing}
-.float[hidden]{display:none}
-/* 底部渐隐，提示还有内容可滚动 */
-.float::after{
-  content:'';position:absolute;left:0;right:0;bottom:0;height:26px;z-index:1;
-  background:linear-gradient(180deg,transparent,var(--flbg,rgba(10,12,18,.94)));
-  pointer-events:none;border-radius:0 0 5px 5px;
-}
-
-.fl-head{
-  display:flex;align-items:center;gap:8px;flex:none;
-  height:34px;padding:0 5px 0 10px;
-  background:rgba(255,255,255,.028);
-  border-bottom:1px solid rgba(255,255,255,.06);
-  cursor:grab;user-select:none;touch-action:none;
-}
-.fl-head:active{cursor:grabbing}
-.fl-dots{display:flex;gap:3px;flex:none}
-.fl-dots i{width:5px;height:5px;border-radius:50%;background:rgba(217,169,79,.42)}
-.fl-title{
-  flex:1;min-width:0;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.03em;
-}
-.fl-acts{display:flex;gap:1px;flex:none}
-.fl-btn{
-  width:24px;height:24px;display:grid;place-items:center;border-radius:3px;
-  color:#8c867b;transition:.16s ease;
-}
-.fl-btn:hover{background:rgba(255,255,255,.08);color:var(--gold)}
-.fl-btn:active{background:rgba(217,169,79,.16)}
-.fl-btn svg{width:12px;height:12px}
-
-.fl-body{
-  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
-  padding:15px 15px 24px;
-  font-size:var(--flfs,13px);line-height:1.85;color:#a8a29a;
-  scrollbar-width:thin;scrollbar-color:rgba(217,169,79,.3) transparent;
-}
-.fl-body::-webkit-scrollbar{width:3px}
-.fl-body::-webkit-scrollbar-thumb{background:rgba(217,169,79,.3);border-radius:2px}
-.fl-body h2{
-  font-family:var(--serif);font-size:calc(var(--flfs,13px) + 3.5px);font-weight:600;
-  color:#efe8d7;margin:20px 0 8px;line-height:1.5;
-}
-.fl-body h2:first-child{margin-top:2px}
-.fl-body h3{
-  font-size:var(--flfs,13px);font-weight:600;color:#cfc7b6;
-  margin:15px 0 6px;line-height:1.6;
-}
-.fl-body p{margin:0 0 9px}
-.fl-body strong{color:#ded6c4;font-weight:600}
-.fl-body code{
-  font-family:var(--mono);font-size:.9em;color:#d9a94f;
-  background:rgba(255,255,255,.06);padding:1px 4px;border-radius:2px;
-}
-.fl-body pre{
-  margin:10px 0;padding:10px 12px;border-radius:3px;
-  background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.07);
-  overflow:auto;
-}
-.fl-body pre code{background:none;padding:0;color:#b6b0a5;font-size:.88em;line-height:1.7;white-space:pre}
-.fl-body table{
-  width:100%;border-collapse:collapse;margin:10px 0;
-  font-size:.92em;display:block;overflow-x:auto;
-}
-.fl-body th,.fl-body td{border:1px solid rgba(255,255,255,.09);padding:5px 8px;text-align:left;white-space:nowrap}
-.fl-body th{background:rgba(217,169,79,.08);color:#d3cbb9;font-weight:500}
-.fl-body img{max-width:100%;height:auto;border-radius:3px;margin:8px 0;display:block;cursor:zoom-in}
-.fl-body .fl-sep{height:1px;background:rgba(255,255,255,.08);margin:16px 0}
-.fl-meta{
-  display:flex;gap:8px;align-items:center;margin-bottom:12px;
-  padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06);
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-4);
-}
-.fl-meta .fl-cat{color:var(--accent,var(--gold))}
-.fl-meta .fl-dot{width:1px;height:9px;background:rgba(255,255,255,.12)}
-
-.fl-grip{
-  position:absolute;right:0;bottom:0;width:16px;height:16px;
-  cursor:nwse-resize;z-index:2;
-}
-.fl-grip::before{
-  content:'';position:absolute;right:4px;bottom:4px;width:7px;height:7px;
-  border-right:1px solid rgba(217,169,79,.45);
-  border-bottom:1px solid rgba(217,169,79,.45);
-}
-
-/* 收起后的小胶囊 */
-.fl-pill{
-  position:absolute;z-index:5;left:50%;transform:translateX(-50%);
-  bottom:16px;display:inline-flex;align-items:center;gap:6px;
-  padding:7px 14px;border-radius:20px;
-  font-family:var(--mono);font-size:11px;color:#1b1508;
-  background:linear-gradient(180deg,#e8c069,#c99b3f);
-  box-shadow:0 8px 26px -8px rgba(0,0,0,.9);
-  transition:transform .18s ease;
-}
-.fl-pill:hover{transform:translateX(-50%) translateY(-2px)}
-.fl-pill[hidden]{display:none}
-
-/* 首次进入提示 */
-.play-tip{
-  position:absolute;z-index:6;left:50%;transform:translateX(-50%);
-  bottom:24px;padding:9px 16px;border-radius:4px;
-  background:rgba(8,10,15,.92);border:1px solid rgba(217,169,79,.28);
+/* 提示 */
+.cmp-tip{
+  position:fixed;z-index:210;left:50%;transform:translateX(-50%);
+  bottom:26px;padding:9px 16px;border-radius:4px;
+  background:rgba(8,10,15,.95);border:1px solid rgba(217,169,79,.28);
   font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.04em;
   box-shadow:0 16px 40px -18px #000;
   pointer-events:none;transition:opacity .4s ease;
 }
-.play-tip.fade{opacity:0}
+.cmp-tip.fade{opacity:0}
+.cmp-tip[hidden]{display:none}
 
 /* ---------- 响应式 ---------- */
 @media (max-width:1080px){
@@ -1122,35 +1007,16 @@ body.playing .totop{display:none}
   .play-fab{padding:0;width:44px;height:44px;justify-content:center}
   .play-fab span{display:none}
 }
-/* 小屏：浮窗改为底部抽屉 */
+/* 小屏：伴读条收窄 */
 @media (max-width:760px){
-  .play-bar{height:42px;opacity:1;padding:6px 8px}
-  .pb-title{display:none}
-  .pb-back{padding:0;width:30px;justify-content:center;overflow:hidden}
-  .pb-back span{display:none}
-  .pb-right{margin-left:auto}
-  .float{
-    left:0!important;right:0!important;top:auto!important;bottom:0!important;
-    width:auto!important;
-    border-radius:10px 10px 0 0;
-    border-left:0;border-right:0;border-bottom:0;
-    box-shadow:0 -18px 50px -22px rgba(0,0,0,.95);
-  }
-  .fl-head{
-    height:40px;cursor:default;justify-content:space-between;
-    padding:0 6px 0 14px;position:relative;
-  }
-  .fl-head::before{
-    content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);
-    width:38px;height:3px;border-radius:2px;background:rgba(255,255,255,.16);
-  }
-  .fl-dots{display:none}
-  .fl-title{text-align:center;font-size:12px;padding-top:6px}
-  .fl-acts{padding-top:6px}
-  .fl-grip{display:none}
-  .fl-body{padding:14px 15px 28px}
-  .fl-pill{bottom:14px;padding:8px 16px}
-  .play-tip{left:16px;right:16px;transform:none;text-align:center;font-size:10.5px;line-height:1.6}
+  .cmp-bar{height:40px;padding:0 8px;gap:6px;font-size:10.5px}
+  .cmp-back{padding:0 9px}
+  .cmp-back span{display:none}
+  .cmp-right{gap:4px}
+  .cmp-btn{padding:0 8px;font-size:10.5px}
+  .cmp-tip{left:16px;right:16px;transform:none;text-align:center;font-size:10.5px;line-height:1.6}
+  body.playing .view-reader{padding:52px 14px 30px}
+  body.playing .article{padding:26px 20px 34px}
   .play-fab{right:14px;bottom:70px;padding:10px 14px;font-size:11px}
   .play-fab svg{width:13px;height:13px}
 }
