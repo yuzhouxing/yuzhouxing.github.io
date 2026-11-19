@@ -555,11 +555,6 @@
     const mG = h.match(/^#\/g\/([a-f0-9]+)/);
     const mC = h.match(/^#\/c\/(\w+)/);
 
-    if (h === '#/check') { openCheck(); return; }
-    if (checkView && !checkView.hidden) {
-      checkView.hidden = true;
-      document.body.classList.remove('ck-open');
-    }
 
     if (mG) {
       const gid = ALIAS[mG[1]] || mG[1];
@@ -860,15 +855,37 @@
   document.body.appendChild(toTop);
 
   /* ---------- 云端状态条 ---------- */
-  // 只要云端不连通就把话说明白，而不是让页面安安静静显示一片 0
+  // 连不上就说清楚：数据可能被这个浏览器拦了，换个浏览器能看到真实数字。
+  // 不再假装成 0，也不弹自检面板。
   const netBar = document.createElement('div');
   netBar.className = 'netbar';
   netBar.hidden = true;
   netBar.innerHTML = '<span class="nb-dot" aria-hidden="true"></span><span class="nb-txt"></span>' +
-    '<button class="nb-btn" type="button">自检</button>';
+    '<button class="nb-btn" type="button">复制链接</button>';
   document.body.appendChild(netBar);
   const netTxt = netBar.querySelector('.nb-txt');
-  netBar.querySelector('.nb-btn').onclick = () => { location.hash = '#/check'; };
+  const netBtn = netBar.querySelector('.nb-btn');
+
+  function copyPageUrl(btn) {
+    const url = location.origin + location.pathname + (location.hash && location.hash !== '#/' ? location.hash : '');
+    const done = ok => {
+      btn.textContent = ok ? '已复制' : '请手动复制';
+      setTimeout(() => { btn.textContent = '复制链接'; }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => done(true)).catch(() => done(false));
+    } else {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(ok);
+      } catch (_) { done(false); }
+    }
+  }
+  netBtn.onclick = () => copyPageUrl(netBtn);
 
   function paintNetBar() {
     if (!CloudOn) { netBar.hidden = true; document.body.classList.remove('has-netbar'); return; }
@@ -876,123 +893,17 @@
     if (STATS.mode === 'offline') {
       netBar.hidden = false;
       netBar.classList.add('is-bad');
-      netTxt.innerHTML = '云端未连上 · 数字显示为「—」' +
-        (pending ? ' · <b>' + pending + '</b> 条待补传' : '');
+      netTxt.innerHTML = '数据库可能被这个浏览器拦住了，<b>换个浏览器打开</b>可看到真实数字' +
+        (pending ? ' · 本机 <b>' + pending + '</b> 条待同步' : '');
     } else if (pending) {
       netBar.hidden = false;
       netBar.classList.remove('is-bad');
-      netTxt.innerHTML = '<b>' + pending + '</b> 条记录待补传，连上后自动同步';
+      netTxt.innerHTML = '本机有 <b>' + pending + '</b> 条记录待同步，连上后会自动补传';
     } else {
       netBar.hidden = true;
     }
+    netBtn.hidden = STATS.mode !== 'offline';
     document.body.classList.toggle('has-netbar', !netBar.hidden);
-  }
-
-  /* ---------- 自检页 ---------- */
-  const checkView = document.createElement('section');
-  checkView.className = 'ck-view';
-  checkView.hidden = true;
-  checkView.innerHTML =
-    '<div class="ck-card" role="dialog" aria-label="数据同步自检">' +
-      '<div class="ck-head"><b>数据同步自检</b><button class="ck-x" type="button" aria-label="关闭">✕</button></div>' +
-      '<div class="ck-body"><p class="ck-wait">正在检测…</p></div>' +
-      '<div class="ck-foot">' +
-        '<button class="ck-run" type="button">重新检测</button>' +
-        '<button class="ck-copy" type="button">复制报告</button>' +
-      '</div>' +
-    '</div>';
-  document.body.appendChild(checkView);
-  const ckBody = checkView.querySelector('.ck-body');
-  let ckReport = '';
-
-  checkView.querySelector('.ck-x').onclick = () => closeCheck();
-    checkView.querySelector('.ck-run').onclick = () => runCheck();
-  checkView.querySelector('.ck-copy').onclick = async () => {
-    const btn = checkView.querySelector('.ck-copy');
-    try {
-      await navigator.clipboard.writeText(ckReport);
-      btn.textContent = '已复制';
-    } catch (_) {
-      btn.textContent = '复制失败';
-    }
-    setTimeout(() => { btn.textContent = '复制报告'; }, 1600);
-  };
-
-  function openCheck() {
-    checkView.hidden = false;
-    document.body.classList.add('ck-open');
-    runCheck();
-  }
-  function closeCheck() {
-    checkView.hidden = true;
-    document.body.classList.remove('ck-open');
-    if (location.hash === '#/check') location.hash = '#/';
-  }
-
-  async function runCheck() {
-    if (!Cloud || !Cloud.probe) {
-      ckBody.innerHTML = '<p class="ck-wait">数据层未加载</p>';
-      return;
-    }
-    ckBody.innerHTML = '<p class="ck-wait">正在检测…</p>';
-    const r = await Cloud.probe();
-    const esc2 = esc;
-    const rows = r.steps.map(s =>
-      '<div class="ck-row ' + (s.ok ? 'ok' : 'bad') + '">' +
-        '<span class="ck-mark">' + (s.ok ? '✓' : '✕') + '</span>' +
-        '<span class="ck-name">' + esc2(s.name) + '</span>' +
-        '<span class="ck-ms">' + (s.ms || 0) + 'ms</span>' +
-        '<span class="ck-detail">' + esc2(s.detail || '') + '</span>' +
-      '</div>').join('');
-
-    const lo = r.local || {};
-    ckBody.innerHTML =
-      '<div class="ck-verdict ' + (r.verdict.indexOf('正常') >= 0 ? 'ok' : 'bad') + '">' + esc2(r.verdict) + '</div>' +
-      rows +
-      '<div class="ck-meta">' +
-        '<div><span>云端地址</span><b>' + esc2((r.base || '未配置').replace(/^https?:\/\//, '')) + '</b></div>' +
-        '<div><span>本机访客</span><b>' + esc2(r.vid || '') + '</b></div>' +
-        '<div><span>本机记录的赞</span><b>' + (lo.liked || 0) + '</b></div>' +
-        '<div><span>待补传队列</span><b>' + (r.pending || 0) + '</b></div>' +
-      '</div>' +
-      (lo.liked ? '<div class="ck-act"><button class="ck-push" type="button">把本机记录的 ' + lo.liked + ' 个赞补传到云端</button><span class="ck-msg"></span></div>' : '') +
-      '<p class="ck-note">浏览量按「访客 + 篇 + 天」去重，换设备不会继承别人的浏览记录；点赞是账号无关的，可以补传。</p>';
-
-    ckReport = [
-      '武仙攻略站 · 数据同步自检',
-      '时间 ' + new Date().toLocaleString(),
-      '结论 ' + r.verdict,
-      '地址 ' + (r.base || '未配置'),
-      '在线 ' + (r.online ? '是' : '否'),
-      ...r.steps.map(s => (s.ok ? '[OK] ' : '[FAIL] ') + s.name + ' ' + s.ms + 'ms ' + s.detail),
-      '本机点赞 ' + (lo.liked || 0) + ' · 浏览 ' + (lo.views || 0) + ' · 待补传 ' + (r.pending || 0),
-      '访客 ' + r.vid
-    ].join('\n');
-
-    const push = ckBody.querySelector('.ck-push');
-    if (push) push.onclick = async () => {
-      const msg = ckBody.querySelector('.ck-msg');
-      push.disabled = true;
-      if (msg) msg.textContent = '上传中…';
-      const res = await Cloud.pushLocalLikes();
-      if (msg) msg.textContent = res.ok ? ('已补传 ' + res.done + ' 条') : ('失败：' + res.error);
-      push.disabled = false;
-      if (res.ok) { statsReady = true; statsKnown = true; }
-    };
-
-    // 自检结果直接决定页面状态：通了就把「—」换回真实数字
-    const good = r.verdict.indexOf('正常') >= 0;
-    if (good) {
-      statsKnown = true;
-      STATS.mode = 'cloud';
-      paintNetBar();
-      refreshHomeStats();
-    } else if (r.configured) {
-      statsKnown = false;
-      STATS.mode = 'offline';
-      paintNetBar();
-      if (!viewHome.hidden) paintCardStats();
-    }
   }
 
   /* ---------- 启动 ---------- */
