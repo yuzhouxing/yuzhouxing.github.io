@@ -142,6 +142,26 @@
       <article class="article" id="article"></article>
     </div>
 
+    <!-- 留言 -->
+    <section class="cmt" id="comments" hidden>
+      <div class="cmt-card">
+        <div class="cmt-head">
+          <h2 class="cmt-title">留言<span class="cmt-count" id="cmtCount">0</span></h2>
+          <span class="cmt-hint" id="cmtHint">无需登录，留个称呼即可</span>
+        </div>
+        <form class="cmt-form" id="cmtForm" novalidate>
+          <input class="cmt-nick" id="cmtNick" maxlength="20" placeholder="你的称呼（可留空）" autocomplete="nickname">
+          <textarea class="cmt-body" id="cmtBody" maxlength="300" rows="3" placeholder="这篇哪里有用、哪里有错，说两句…"></textarea>
+          <div class="cmt-actions">
+            <span class="cmt-tip" id="cmtTip"></span>
+            <span class="cmt-len" id="cmtLen">0/300</span>
+            <button class="cmt-send" id="cmtSend" type="submit">发表</button>
+          </div>
+        </form>
+        <div class="cmt-list" id="cmtList"></div>
+      </div>
+    </section>
+
     <div class="pager" id="pager"></div>
   </section>
 </main>
@@ -188,6 +208,8 @@
 </div>
 
 <script src="data.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/cloud.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

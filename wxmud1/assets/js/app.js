@@ -27,6 +27,12 @@
   let scrollMemo = 0;
   let cmdkIdx = -1;
 
+  /* 互动数据（点赞 / 浏览量 / 留言），云端不可用时自动走本地 */
+  const Cloud = window.WXCloud || null;
+  const CloudOn = !!(Cloud && Cloud.hasCloud);   // 只有配了 Supabase 才启用互动功能
+  const STATS = { map: {}, mode: 'local', degraded: false };
+  const stOf = id => STATS.map[id] || { likes: 0, views: 0 };
+
   const $ = s => document.querySelector(s);
   const el = (t, c) => { const n = document.createElement(t); if (c) n.className = c; return n; };
 
@@ -113,6 +119,10 @@
     if (state.q.trim()) return list;
     if (state.sort === 'len') list.sort((a, b) => b.chars - a.chars);
     else if (state.sort === 'img') list.sort((a, b) => b.imgs - a.imgs);
+    else if (state.sort === 'hot') {
+      const heat = g => { const s = stOf(g.id); return s.likes * 5 + s.views + (s.likes + s.views > 0 ? 0 : -1); };
+      list.sort((a, b) => heat(b) - heat(a) || b.w - a.w);
+    }
     else list.sort((a, b) => b.w - a.w);
     return list;
   }
@@ -136,6 +146,10 @@
 
       const tags = g.tags.slice(0, 2).map(t => '<span>' + esc(t) + '</span>').join('');
       const no = pad(GUIDES.indexOf(g) >= 0 ? sortedIndex(g) : i + 1);
+      const st = stOf(g.id);
+      const like = st.likes > 0
+        ? '<span class="card-like" title="' + st.likes + ' 人点赞"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" fill="currentColor"/></svg>' + fmt(st.likes) + '</span>'
+        : '';
       a.innerHTML =
         '<div class="card-top">' +
           '<span class="card-cat">' + esc(catName(g.cat)) + '</span>' +
@@ -147,6 +161,7 @@
           '<span class="k">' + (g.chars ? fmt(g.chars) + ' 字' : '图集') + '</span>' +
           (g.imgs ? '<span class="sep"></span><span>' + g.imgs + ' 图</span>' : '') +
           (g.chars ? '<span class="sep"></span><span>' + Math.max(1, Math.round(g.chars / 420)) + ' min</span>' : '') +
+          like +
           '<span class="card-tags">' + tags + '</span>' +
         '</div>';
       grid.appendChild(a);
@@ -184,6 +199,61 @@
 
     const frag = document.createDocumentFragment();
     frag.appendChild(head);
+
+    if (CloudOn) {
+      /* ---- 互动条：点赞 / 阅读 / 留言 ---- */
+      const st = stOf(g.id);
+      const isLiked = !!(Cloud && Cloud.liked(g.id));
+      const bar = el('div', 'art-actions');
+      bar.innerHTML =
+        '<button class="like-btn' + (isLiked ? ' on' : '') + '" id="likeBtn" type="button" aria-pressed="' + isLiked + '">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>' +
+          '<span class="like-txt">' + (isLiked ? '已赞' : '点赞') + '</span>' +
+          '<b class="like-num" id="likeNum">' + st.likes + '</b>' +
+        '</button>' +
+        '<span class="art-view" title="累计阅读"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.6 12S6 5.8 12 5.8 21.4 12 21.4 12 18 18.2 12 18.2 2.6 12 2.6 12Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><b id="viewNum">' + st.views + '</b> 阅读</span>' +
+        '<a class="art-cmt-jump" role="button" tabindex="0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.6c0 4.2-3.8 7.6-8.5 7.6-1 0-2-.15-2.9-.43L4.2 20.2l1.36-3.5C4.3 15.3 3.5 13.5 3.5 11.6 3.5 7.4 7.3 4 12 4s8.5 3.4 8.5 7.6Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>留言 <b id="cmtNumTop">0</b></a>';
+      frag.appendChild(bar);
+
+      // 跳到留言区：用脚本滚动，不能改 hash，否则会触发路由返回首页
+      const jump = bar.querySelector('.art-cmt-jump');
+      const goCmt = () => {
+        const t = $('#comments');
+        if (t && !t.hidden) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      jump.onclick = e => { e.preventDefault(); goCmt(); };
+      jump.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goCmt(); } };
+
+      const likeBtn = bar.querySelector('#likeBtn');
+      likeBtn.onclick = async () => {
+        if (!Cloud || likeBtn.disabled) return;
+        likeBtn.disabled = true;
+        let r;
+        try { r = await Cloud.toggleLike(g.id); } catch (_) { r = null; }
+        likeBtn.disabled = false;
+        if (!r || !r.ok) return;
+        likeBtn.classList.toggle('on', r.liked);
+        likeBtn.setAttribute('aria-pressed', String(r.liked));
+        likeBtn.querySelector('.like-txt').textContent = r.liked ? '已赞' : '点赞';
+        likeBtn.querySelector('.like-num').textContent = r.likes;
+        STATS.map[g.id] = { likes: r.likes, views: stOf(g.id).views };
+        if (r.liked) {
+          likeBtn.classList.add('pop');
+          setTimeout(() => likeBtn.classList.remove('pop'), 460);
+        }
+      };
+
+      if (Cloud) {
+        Cloud.hit(g.id).then(v => {
+          if (typeof v === 'number') {
+            STATS.map[g.id] = { likes: stOf(g.id).likes, views: v };
+            const vn = bar.querySelector('#viewNum');
+            if (vn) vn.textContent = v;
+          }
+        }).catch(() => {});
+      }
+    }
+
     const isGallery = !g.chars && g.imgs > 0;
     if (isGallery) {
       const note = el('p', 'gallery-note');
@@ -303,6 +373,104 @@
     secEls = headings.map(h => document.getElementById(h.id)).filter(Boolean);
     window.scrollTo(0, 0);
     document.title = g.title + ' · 武仙攻略';
+
+    currentGuideId = g.id;
+    renderComments(g.id);
+  }
+
+  /* ---------- 留言 ---------- */
+  let currentGuideId = null;
+
+  function fmtTime(d) {
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (!isFinite(diff)) return '';
+    if (diff < 60) return '刚刚';
+    if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+    if (diff < 86400 * 30) return Math.floor(diff / 86400) + ' 天前';
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  function paintComments(arr) {
+    const list = $('#cmtList');
+    const cnt = $('#cmtCount');
+    const top = $('#cmtNumTop');
+    if (!list) return;
+    if (cnt) cnt.textContent = arr.length;
+    if (top) top.textContent = arr.length;
+    if (!arr.length) {
+      list.innerHTML = '<p class="cmt-empty">还没有留言，来做第一个。</p>';
+      return;
+    }
+    list.innerHTML = arr.map(c => {
+      const d = new Date(c.created_at);
+      const t = isNaN(d.getTime()) ? '' : fmtTime(d);
+      return '<div class="cmt-item">' +
+        '<div class="cmt-meta"><b>' + esc(c.nick || '无名侠客') + '</b><span>' + t + '</span>' +
+          (c.mine ? '<button class="cmt-del" data-del="' + esc(String(c.id)) + '" type="button">删除</button>' : '') +
+        '</div>' +
+        '<p class="cmt-text">' + esc(c.body) + '</p>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function renderComments(id) {
+    const box = $('#comments');
+    if (!box) return;
+    if (!CloudOn) { box.hidden = true; return; }
+    box.hidden = false;
+    bindCommentForm();
+    const list = $('#cmtList');
+    if (list) list.innerHTML = '<p class="cmt-empty">加载中…</p>';
+    let r = { list: [] };
+    try { r = await Cloud.comments(id); } catch (_) {}
+    if (currentGuideId !== id) return; // 期间已切到别的篇
+    paintComments(r.list || []);
+  }
+
+  function bindCommentForm() {
+    const form = $('#cmtForm');
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = '1';
+    const body = $('#cmtBody'), nick = $('#cmtNick'), tip = $('#cmtTip'), len = $('#cmtLen'), send = $('#cmtSend');
+    try { const n = localStorage.getItem('wx_nick'); if (n) nick.value = n; } catch (_) {}
+
+    body.addEventListener('input', () => {
+      len.textContent = body.value.length + '/300';
+      if (tip.textContent) tip.textContent = '';
+    });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!currentGuideId || send.disabled) return;
+      const txt = body.value.trim();
+      if (txt.length < 2) { tip.textContent = '至少写两个字'; body.focus(); return; }
+      send.disabled = true;
+      tip.textContent = '发表中…';
+      let r;
+      try { r = await Cloud.addComment(currentGuideId, nick.value, txt); }
+      catch (_) { r = { ok: false, error: '网络异常，稍后再试' }; }
+      send.disabled = false;
+      if (!r.ok) { tip.textContent = r.error || '发表失败'; return; }
+      try { if (nick.value.trim()) localStorage.setItem('wx_nick', nick.value.trim().slice(0, 20)); } catch (_) {}
+      body.value = '';
+      len.textContent = '0/300';
+      tip.textContent = r.mode === 'local' ? '已存在本机（云端未连通）' : '已发表';
+      setTimeout(() => { if (tip.textContent.indexOf('已') === 0) tip.textContent = ''; }, 3000);
+      renderComments(currentGuideId);
+    });
+
+    $('#cmtList').addEventListener('click', async e => {
+      const btn = e.target.closest('[data-del]');
+      if (!btn || !currentGuideId) return;
+      const cid = btn.dataset.del;
+      const raw = /^\d+$/.test(cid) ? Number(cid) : cid;
+      btn.disabled = true;
+      const r = await Cloud.delComment(currentGuideId, raw).catch(() => ({ ok: false }));
+      if (r && r.ok) renderComments(currentGuideId);
+      else btn.disabled = false;
+    });
   }
 
   /* ---------- 路由 ---------- */
@@ -414,8 +582,8 @@
   search.addEventListener('input', e => { state.q = e.target.value; renderGrid(); });
 
   $('#sortBtn').onclick = () => {
-    const order = ['rec', 'len', 'img'];
-    const label = { rec: '推荐', len: '字数', img: '图片' };
+    const order = CloudOn ? ['rec', 'hot', 'len', 'img'] : ['rec', 'len', 'img'];
+    const label = { rec: '推荐', hot: '最热', len: '字数', img: '图片' };
     state.sort = order[(order.indexOf(state.sort) + 1) % order.length];
     $('#sortLabel').textContent = label[state.sort];
     renderGrid();
@@ -615,6 +783,27 @@
   buildChips();
   buildStats();
   renderGrid();
+
+  /* 互动数据：异步加载，到了再补数字，不阻塞首屏 */
+  if (CloudOn) {
+    Cloud.stats().then(s => {
+      STATS.map = s.map || {};
+      STATS.mode = s.mode;
+      STATS.degraded = !!s.degraded;
+      if (!viewHome.hidden) {
+        const y = window.scrollY;
+        renderGrid();
+        window.scrollTo(0, y);
+      }
+      if (!viewReader.hidden && currentGuideId) {
+        const st = stOf(currentGuideId);
+        const ln = $('#likeNum'), vn = $('#viewNum');
+        if (ln) ln.textContent = st.likes;
+        if (vn) vn.textContent = st.views;
+      }
+    }).catch(() => {});
+  }
+
   window.addEventListener('hashchange', () => {
     if (/^#\/g\//.test(location.hash) && !viewHome.hidden) {
       homeScroll = window.scrollY;
