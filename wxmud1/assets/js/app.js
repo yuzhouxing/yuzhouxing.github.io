@@ -20,6 +20,9 @@
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
   const state = { q: '', cat: 'all', sort: 'rec' };
+  // 已合并条目的旧链接别名，避免早先分享出去的地址 404
+  const ALIAS = { 'c3047fea': 'e4158b9f' };
+  let homeScroll = 0;
   let secEls = [];
   let scrollMemo = 0;
   let cmdkIdx = -1;
@@ -86,15 +89,21 @@
   }
 
   /* ---------- 过滤 ---------- */
+  const terms = q => {
+    const s = String(q).trim().toLowerCase();
+    return s ? s.split(/\s+/).filter(Boolean) : [];
+  };
   function results() {
     const q = state.q.trim().toLowerCase();
+    const ts = terms(q);
     let list;
-    if (!q) {
+    if (!ts.length) {
       list = GUIDES.slice();
     } else {
-      list = index.filter(x => x.txt.includes(q)).map(x => x.g);
+      list = index.filter(x => ts.every(t => x.txt.includes(t))).map(x => x.g);
       list.sort((a, b) => {
-        const am = a.title.toLowerCase().includes(q), bm = b.title.toLowerCase().includes(q);
+        const am = ts.every(t => a.title.toLowerCase().includes(t));
+        const bm = ts.every(t => b.title.toLowerCase().includes(t));
         if (am !== bm) return am ? -1 : 1;
         return b.w - a.w;
       });
@@ -136,7 +145,7 @@
         '<div class="card-foot">' +
           '<span class="k">' + (g.chars ? fmt(g.chars) + ' 字' : '图集') + '</span>' +
           (g.imgs ? '<span class="sep"></span><span>' + g.imgs + ' 图</span>' : '') +
-          '<span class="sep"></span><span>' + Math.max(1, Math.round(g.chars / 420)) + ' min</span>' +
+          (g.chars ? '<span class="sep"></span><span>' + Math.max(1, Math.round(g.chars / 420)) + ' min</span>' : '') +
           '<span class="card-tags">' + tags + '</span>' +
         '</div>';
       grid.appendChild(a);
@@ -168,12 +177,19 @@
         '<span class="art-cat">' + esc(catName(g.cat)) + '</span>' +
         (g.chars ? '<span>' + fmt(g.chars) + ' 字</span><span class="sep"></span>' : '') +
         (g.imgs ? '<span>' + g.imgs + ' 图</span><span class="sep"></span>' : '') +
-        '<span>' + Math.max(1, Math.round(g.chars / 420)) + ' MIN READ</span>' +
+        (g.chars ? '<span>' + Math.max(1, Math.round(g.chars / 420)) + ' MIN READ</span>' : '<span>图集</span>') +
       '</div>' +
       '<h1>' + esc(g.title) + '</h1>';
 
     const frag = document.createDocumentFragment();
     frag.appendChild(head);
+    const isGallery = !g.chars && g.imgs > 0;
+    if (isGallery) {
+      const note = el('p', 'gallery-note');
+      note.innerHTML = '本篇为图集攻略，共 <b>' + g.imgs + '</b> 张，点击任意图片可放大查看。';
+      frag.appendChild(note);
+    }
+    let imgCount = 0;
     let hIdx = 0;
     const headings = [];
 
@@ -203,7 +219,17 @@
         img.style.transition = 'opacity .5s';
         img.onload = () => { img.style.opacity = 1; };
         if (img.complete) img.style.opacity = 1;
-        frag.appendChild(img);
+        if (isGallery) {
+          imgCount++;
+          const fig = el('figure', 'fig');
+          const cap = el('figcaption');
+          cap.textContent = 'P.' + pad(imgCount, 2) + ' / ' + pad(g.imgs, 2);
+          fig.appendChild(img);
+          fig.appendChild(cap);
+          frag.appendChild(fig);
+        } else {
+          frag.appendChild(img);
+        }
       } else if (b.t === 'table') {
         const wrap = el('table');
         const maxc = Math.max(...b.rows.map(r => r.length));
@@ -234,15 +260,21 @@
     if (headings.length > 1) {
       const t = el('p', 'toc-t'); t.textContent = 'CONTENTS'; tocBox.appendChild(t);
       headings.forEach((h, i) => {
-        const a = el('a'); a.href = '#' + h.id; a.dataset.sec = h.id;
+        const a = el('a');
+        a.dataset.sec = h.id;
+        a.tabIndex = 0;
+        a.setAttribute('role', 'link');
         a.innerHTML = '<span class="t-n">' + pad(i + 1, 2) + '</span><span class="t-x">' + esc(h.text) + '</span>';
-        a.onclick = e => { e.preventDefault(); document.getElementById(h.id).scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+        const go = () => document.getElementById(h.id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        a.onclick = e => { e.preventDefault(); go(); };
+        a.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
         tocBox.appendChild(a);
       });
     }
 
     // 下载
     const dl = $('#dlBtn');
+    dl.hidden = !g.src;
     if (g.src) {
       dl.href = 'assets/files/' + encodeURIComponent(g.src.replace(/[\\/:*?"<>|]/g, '_'));
       dl.setAttribute('download', g.src);
@@ -279,10 +311,12 @@
     const mC = h.match(/^#\/c\/(\w+)/);
 
     if (mG) {
-      if (!BY_ID[mG[1]]) { location.hash = '#/'; return; }
+      const gid = ALIAS[mG[1]] || mG[1];
+      if (!BY_ID[gid]) { location.hash = '#/'; return; }
+      if (gid !== mG[1]) { location.replace('#/g/' + gid); return; }
       viewHome.hidden = true;
       viewReader.hidden = false;
-      renderReader(mG[1]);
+      renderReader(gid);
     } else {
       viewReader.hidden = true;
       viewHome.hidden = false;
@@ -292,7 +326,7 @@
       buildNav();
       renderGrid();
       if (window.__fromReader) {
-        window.scrollTo({ top: scrollMemo, behavior: 'instant' });
+        window.scrollTo({ top: homeScroll, behavior: 'instant' });
         window.__fromReader = false;
       }
     }
@@ -321,10 +355,12 @@
   }
   function cmdResults(q) {
     const s = q.trim().toLowerCase();
-    if (!s) return GUIDES.slice().sort((a, b) => b.w - a.w).slice(0, 8);
-    const hit = index.filter(x => x.txt.includes(s)).map(x => x.g);
+    const ts = terms(s);
+    if (!ts.length) return GUIDES.slice().sort((a, b) => b.w - a.w).slice(0, 8);
+    const hit = index.filter(x => ts.every(t => x.txt.includes(t))).map(x => x.g);
     hit.sort((a, b) => {
-      const am = a.title.toLowerCase().includes(s), bm = b.title.toLowerCase().includes(s);
+      const am = ts.every(t => a.title.toLowerCase().includes(t));
+      const bm = ts.every(t => b.title.toLowerCase().includes(t));
       if (am !== bm) return am ? -1 : 1;
       return b.w - a.w;
     });
@@ -527,7 +563,13 @@
   buildChips();
   buildStats();
   renderGrid();
-  window.addEventListener('hashchange', route);
+  window.addEventListener('hashchange', () => {
+    if (/^#\/g\//.test(location.hash) && !viewHome.hidden) {
+      homeScroll = window.scrollY;
+      window.__fromReader = true;
+    }
+    route();
+  });
   route();
   window.addEventListener('beforeunload', () => { scrollMemo = window.scrollY; });
 
