@@ -153,8 +153,17 @@ kbd{
   box-shadow:0 6px 22px -12px rgba(217,169,79,.75);
 }
 .chat-btn:active{transform:translateY(1px)}
+/* 顶栏入口按钮：两个按钮与检索框尺寸严格对齐 */
+.qq-btn,.chat-btn{
+  box-sizing:border-box;height:34px;min-width:120px;padding:0 14px;
+  justify-content:center;line-height:1;
+  font-size:12.5px;font-weight:500;letter-spacing:.02em;
+}
+.qq-btn .qq-ico{width:16px;height:16px}
+.chat-btn svg{width:16px;height:16px;flex:none}
 .cmd-btn{
-  display:flex;align-items:center;gap:8px;padding:7px 10px 7px 11px;
+  display:flex;align-items:center;gap:8px;padding:0 10px 0 11px;
+  box-sizing:border-box;height:34px;
   border:1px solid var(--line-2);border-radius:5px;
   background:rgba(255,255,255,.022);color:var(--ink-3);
   font-size:12.5px;transition:.2s;
@@ -720,10 +729,9 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
   .topnav{display:none}
   .topbar-right{margin-left:auto}
   .cmd-label,#kbdHint{display:none}
-  .cmd-btn{padding:8px;border-radius:4px}
-  .chat-btn{padding:7px 10px;font-size:11.5px;border-radius:4px}
+  .cmd-btn{padding:0;width:32px;height:30px;justify-content:center;border-radius:4px}
+  .qq-btn,.chat-btn{height:30px;min-width:84px;padding:0 10px;font-size:11.5px;border-radius:4px;gap:6px}
   .chat-btn svg{width:13px;height:13px}
-  .qq-btn{padding:7px 11px;font-size:11.5px;border-radius:4px;gap:6px}
   .qq-ico{width:14px;height:14px;font-size:7.5px}
   .qq-txt-full{display:none}
   .qq-txt-short{display:inline}
