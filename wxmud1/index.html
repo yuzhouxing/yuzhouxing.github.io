@@ -126,10 +126,6 @@
     <div class="reader-head">
       <div class="crumb" id="crumb"></div>
       <div class="reader-actions">
-        <button class="play-btn" id="playBtn" type="button" title="在新窗口打开游戏，本页进入伴读（正文收窄，和游戏并排）">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="4.2" width="18.8" height="13" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 20.4h6.8M12 17.2v3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="10.4" y="7.6" width="7" height="6.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
-          伴随
-        </button>
         <a class="dl-btn" id="dlBtn" download>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 20h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           原档
@@ -167,11 +163,6 @@
     </section>
 
     <div class="pager" id="pager"></div>
-
-    <button class="play-fab" id="playFab" type="button" title="在新窗口打开游戏，本页进入伴读（正文收窄，和游戏并排）">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="4.2" width="18.8" height="13" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.6 20.4h6.8M12 17.2v3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="10.4" y="7.6" width="7" height="6.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
-      <span>边玩边看</span>
-    </button>
   </section>
 </main>
 
@@ -209,34 +200,6 @@
     </div>
   </div>
 </div>
-
-<!-- 伴读条：游戏在独立窗口，本站只留正文 -->
-<div class="cmp-bar" id="cmpBar" hidden>
-  <button class="cmp-back" id="cmpBack" type="button" aria-label="退出伴读">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>退出伴读</span>
-  </button>
-  <span class="cmp-state" id="cmpState">游戏已在新窗口打开</span>
-  <div class="cmp-right">
-    <button class="cmp-btn" id="cmpFocus" type="button">回到游戏</button>
-    <button class="cmp-btn" id="cmpCopy" type="button">复制地址</button>
-  </div>
-</div>
-<!-- 手机端随身模式：底部章节导航 -->
-<div class="pocket-nav" id="pocketNav" hidden>
-  <button class="pn-btn" id="pnPrev" type="button" aria-label="上一节">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
-  <button class="pn-mid" id="pnMid" type="button">
-    <span class="pn-idx" id="pnIdx">0/0</span>
-    <span class="pn-name" id="pnName">本节</span>
-  </button>
-  <button class="pn-btn" id="pnNext" type="button" aria-label="下一节">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
-</div>
-
-<div class="cmp-tip" id="cmpTip" hidden></div>
 
 <div class="lightbox" id="lightbox" hidden>
   <button class="lb-close" aria-label="关闭">✕</button>

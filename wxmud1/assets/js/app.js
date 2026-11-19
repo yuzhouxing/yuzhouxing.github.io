@@ -44,10 +44,6 @@
   const progress = $('#progress'), topbar = $('#topbar');
   const cmdk = $('#cmdk'), cmdkInput = $('#cmdkInput'), cmdkList = $('#cmdkList');
   const qmodal = $('#qmodal'), qmCopy = $('#qmCopy');
-  const cmpBar = $('#cmpBar'), cmpState = $('#cmpState');
-  const cmpFocus = $('#cmpFocus'), cmpCopy = $('#cmpCopy'), cmpTipEl = $('#cmpTip');
-  const pocketNav = $('#pocketNav'), pnPrev = $('#pnPrev'), pnNext = $('#pnNext');
-  const pnIdx = $('#pnIdx'), pnName = $('#pnName'), pnMid = $('#pnMid');
 
   /* ---------- 索引 ---------- */
   const index = GUIDES.map(g => {
@@ -229,8 +225,6 @@
   function sortedIndex(g) { return ORDER_MAP[g.id] || 1; }
 
   /* ---------- 详情 ---------- */
-  let currentHeadings = [];   // 当前文章的章节锚点，随身模式的翻节导航用
-
   function renderReader(id) {
     const g = BY_ID[id];
     if (!g) { location.hash = '#/'; return; }
@@ -367,9 +361,7 @@
           html += '<tr>' + row.map(c => '<' + tag + '>' + esc(c) + '</' + tag + '>').join('') + '</tr>';
         });
         wrap.innerHTML = html;
-        const scroller = el('div', 'tbl');
-        scroller.appendChild(wrap);
-        frag.appendChild(scroller);
+        frag.appendChild(wrap);
       } else if (b.t === 'sep') {
         const s2 = el('div', 'page-sep');
         s2.innerHTML = '<span>' + esc(b.text) + '</span>';
@@ -384,7 +376,6 @@
 
     article.innerHTML = '';
     article.appendChild(frag);
-    currentHeadings = headings;
 
     // 目录
     tocBox.innerHTML = '';
@@ -533,226 +524,11 @@
     });
   }
 
-  /* ---------- 伴读模式 ----------
-     游戏站无法在 iframe 里运行：跨源嵌入时它的初始化会中断（登录对象都不创建，
-     点按钮只到 DOM 不触发逻辑），而跨源我们无法注入修复。
-     所以游戏固定开在独立窗口，本页只把正文收成窄栏，和游戏窗口并排。 */
-  const GAME_URL = 'https://www.wxmud1.com/';
-  const GAME_WIN = 'wxmud1_game';
-  // 设备判断用触屏能力，不用宽度：桌面窄窗（760px）也要按桌面逻辑走
-  const mqTouch = window.matchMedia('(hover:none) and (pointer:coarse)');
-
-  let playId = null;
-  let gameWin = null;
-  let readerYBeforePlay = 0;
-  let tipTimerA = null, tipTimerB = null;
-
-  function flashCmp(msg, hold) {
-    clearTimeout(tipTimerA); clearTimeout(tipTimerB);
-    cmpTipEl.textContent = msg;
-    cmpTipEl.hidden = false;
-    cmpTipEl.classList.remove('fade');
-    tipTimerA = setTimeout(() => cmpTipEl.classList.add('fade'), hold || 1600);
-    tipTimerB = setTimeout(() => { cmpTipEl.hidden = true; cmpTipEl.classList.remove('fade'); }, (hold || 1600) + 500);
-  }
-
-  /* 打开游戏：复用同一个具名窗口/标签（重复 open 会让页面重新导航，等于把人踢下线） */
-  function openGame() {
-    if (gameAlive()) {
-      try { gameWin.focus(); } catch (_) {}
-      return true;
-    }
-    try {
-      const w = window.open(GAME_URL, GAME_WIN);
-      if (w) gameWin = w;
-      return !!w;
-    } catch (_) { return false; }
-  }
-
-  function gameAlive() {
-    return !!(gameWin && !gameWin.closed);
-  }
-
-  function syncCmpState() {
-    if (mqTouch.matches) {
-      cmpState.innerHTML = '游戏在<b>新标签</b> · 用标签栏切回';
-      cmpFocus.textContent = '切到游戏';
-      cmpFocus.disabled = false;
-      return;
-    }
-    const ok = gameAlive();
-    cmpState.innerHTML = ok
-      ? '游戏在<b>独立窗口</b>运行 · 本页和它并排即可'
-      : '游戏窗口已关闭';
-    cmpFocus.textContent = ok ? '回到游戏' : '重新打开';
-    cmpFocus.disabled = false;
-  }
-
-  /* ---------- 随身模式（触屏） ----------
-     手机浏览器不允许跨站页面浮在游戏上，物理上没法真的并排。
-     所以这里把攻略做成"扫一眼"形态：大字号、章节吸顶、底部一键翻节。 */
-  let pocketIdx = 0;
-
-  function pocketSections() {
-    return currentHeadings
-      .map(h => ({ text: h.text, el: document.getElementById(h.id) }))
-      .filter(s => s.el);
-  }
-
-  function updatePocket() {
-    const secs = pocketSections();
-    if (!secs.length) {
-      pnIdx.textContent = '全文';
-      pnName.textContent = '一节到底';
-      pnPrev.disabled = true;
-      pnNext.disabled = true;
-      return;
-    }
-    pnPrev.disabled = pocketIdx <= 0;
-    pnNext.disabled = pocketIdx >= secs.length - 1;
-    pnIdx.textContent = (pocketIdx + 1) + '/' + secs.length;
-    pnName.textContent = secs[pocketIdx].text;
-  }
-
-  function pocketGo(i) {
-    const secs = pocketSections();
-    if (!secs.length) return;
-    pocketIdx = Math.max(0, Math.min(secs.length - 1, i));
-    const y = secs[pocketIdx].el.getBoundingClientRect().top + window.scrollY - 44;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-    updatePocket();
-  }
-
-  function buildPocket() {
-    document.body.classList.add('pocket');
-    pocketNav.hidden = false;
-    pocketIdx = 0;
-    updatePocket();
-  }
-
-  function clearPocket() {
-    document.body.classList.remove('pocket');
-    pocketNav.hidden = true;
-  }
-
-  pnPrev.onclick = () => pocketGo(pocketIdx - 1);
-  pnNext.onclick = () => pocketGo(pocketIdx + 1);
-  pnMid.onclick = () => pocketGo(pocketIdx);
-
-  window.addEventListener('scroll', () => {
-    if (!document.body.classList.contains('pocket')) return;
-    const secs = pocketSections();
-    if (!secs.length) return;
-    let i = 0;
-    for (let k = 0; k < secs.length; k++) {
-      if (secs[k].el.getBoundingClientRect().top <= 96) i = k;
-    }
-    if (i !== pocketIdx) { pocketIdx = i; updatePocket(); }
-  }, { passive: true });
-
-  function enterPlay(id) {
-    const g = BY_ID[id];
-    if (!g) { location.hash = '#/'; return; }
-    playId = id;
-    document.body.classList.add('playing');
-    cmpBar.hidden = false;
-    document.title = g.title + ' · 伴读';
-    syncCmpState();
-    if (mqTouch.matches) buildPocket();
-    else if (!gameAlive()) flashCmp('点右上角「重新打开」进入游戏', 3000);
-    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-  }
-
-  function exitPlay() {
-    const id = playId || currentGuideId;
-    if (!id) { location.hash = '#/'; return; }
-    playId = null;
-    clearPocket();
-    document.body.classList.remove('playing');
-    cmpBar.hidden = true;
-    document.title = '武仙传说 · 攻略总集';
-    window.__restoreY = readerYBeforePlay;
-    location.hash = '#/g/' + id;
-  }
-
-  cmpBack.onclick = () => exitPlay();
-
-  cmpFocus.onclick = () => {
-    if (mqTouch.matches) {
-      if (!gameAlive()) { openGame(); syncCmpState(); flashCmp('游戏已在新标签打开', 2400); return; }
-      try { gameWin.focus(); } catch (_) {}
-      flashCmp('没切过去就用浏览器标签栏', 2600);
-      return;
-    }
-    if (gameAlive()) { try { gameWin.focus(); } catch (_) {} flashCmp('已切到游戏窗口'); return; }
-    if (openGame()) { syncCmpState(); flashCmp('游戏窗口已打开'); }
-    else flashCmp('浏览器拦住了弹窗，请允许后重试', 3000);
-  };
-
-  cmpCopy.onclick = () => {
-    const done = () => flashCmp('游戏地址已复制');
-    const fallback = () => {
-      const t = document.createElement('textarea');
-      t.value = GAME_URL;
-      t.style.cssText = 'position:fixed;top:-999px;opacity:0';
-      document.body.appendChild(t);
-      t.select();
-      let ok = false;
-      try { ok = document.execCommand('copy'); } catch (_) {}
-      t.remove();
-      ok ? done() : flashCmp('复制失败：' + GAME_URL, 3600);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(GAME_URL).then(done).catch(fallback);
-    } else fallback();
-  };
-
-  /* 游戏窗口被关掉时同步状态 */
-  setInterval(() => { if (playId && !mqTouch.matches) syncCmpState(); }, 2500);
-
-  /* 入口：必须在点击手势里同步 open，否则会被弹窗拦截 */
-  const goPlay = () => {
-    if (!currentGuideId) return;
-    readerYBeforePlay = window.scrollY;
-    const opened = openGame();
-    if (location.hash === '#/play/' + currentGuideId) {
-      if (playId !== currentGuideId) enterPlay(currentGuideId);
-    } else {
-      location.hash = '#/play/' + currentGuideId;
-    }
-    if (!opened) flashCmp('浏览器拦住了游戏窗口，点「重新打开」可重试', 3400);
-  };
-  $('#playBtn').onclick = goPlay;
-  $('#playFab').onclick = goPlay;
-
   /* ---------- 路由 ---------- */
   function route() {
     const h = location.hash || '#/';
-    const mP = h.match(/^#\/play\/([a-f0-9]+)/);
     const mG = h.match(/^#\/g\/([a-f0-9]+)/);
     const mC = h.match(/^#\/c\/(\w+)/);
-
-    if (mP) {
-      const gid = ALIAS[mP[1]] || mP[1];
-      if (!BY_ID[gid]) { location.hash = '#/'; return; }
-      viewHome.hidden = true;
-      viewReader.hidden = false;
-      if (playId !== gid) {
-        if (currentGuideId !== gid || viewReader.hidden) renderReader(gid);
-        enterPlay(gid);
-      }
-      updateNav();
-      return;
-    }
-
-    // 离开伴读模式
-    if (document.body.classList.contains('playing')) {
-      playId = null;
-      cmpBar.hidden = true;
-      if (typeof clearPocket === 'function') clearPocket();
-      document.body.classList.remove('playing');
-      document.title = '武仙传说 · 攻略总集';
-    }
 
     if (mG) {
       const gid = ALIAS[mG[1]] || mG[1];
@@ -761,11 +537,6 @@
       viewHome.hidden = true;
       viewReader.hidden = false;
       renderReader(gid);
-      if (window.__restoreY != null) {
-        const y = window.__restoreY;
-        window.__restoreY = null;
-        requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
-      }
     } else {
       viewReader.hidden = true;
       viewHome.hidden = false;
@@ -930,9 +701,9 @@
   cmdkInput.addEventListener('input', () => { cmdkIdx = 0; renderCmdk(); });
   cmdk.querySelector('[data-close]').onclick = closeCmdk;
 
-  // 图片灯箱（正文与伴随浮窗共用）
+  // 图片灯箱
   document.addEventListener('click', e => {
-    const img = e.target.closest('.article img, .fl-body img');
+    const img = e.target.closest('.article img');
     if (img && img.src) {
       lbImg.src = img.src;
       lightbox.hidden = false;
@@ -952,16 +723,6 @@
   // 键盘
   document.addEventListener('keydown', e => {
     const inInput = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
-
-    // 伴读模式：Esc 先关灯箱，再退出；其余快捷键照常可用
-    if (document.body.classList.contains('playing')) {
-      if (e.key === 'Escape') {
-        if (!lightbox.hidden) { lightbox.hidden = true; return; }
-        e.preventDefault();
-        exitPlay();
-        return;
-      }
-    }
 
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
@@ -990,18 +751,10 @@
       return;
     }
     if (!viewReader.hidden && !inInput && qmodal.hidden) {
-      const jump = (a, fromReader) => {
-        if (!a) return;
-        const gid = (a.getAttribute('href') || '').replace('#/g/', '');
-        // 伴读模式下翻篇要留在伴读，别被踢回普通阅读页
-        if (document.body.classList.contains('playing') && gid) { location.hash = '#/play/' + gid; return; }
-        window.__fromReader = !!fromReader;
-        location.href = a.href;
-      };
-      if (e.key.toLowerCase() === 'j') jump(pager.querySelector('.next'), true);
-      if (e.key.toLowerCase() === 'k') jump(pager.querySelector('.prev'), true);
-      if (e.key === 'ArrowLeft') jump(pager.querySelector('.prev'), true);
-      if (e.key === 'ArrowRight') jump(pager.querySelector('.next'), true);
+      if (e.key.toLowerCase() === 'j') { const n = pager.querySelector('.next'); if (n) { window.__fromReader = true; location.href = n.href; } }
+      if (e.key.toLowerCase() === 'k') { const p = pager.querySelector('.prev'); if (p) { window.__fromReader = true; location.href = p.href; } }
+      if (e.key === 'ArrowLeft') { const p = pager.querySelector('.prev'); if (p) { window.__fromReader = true; location.href = p.href; } }
+      if (e.key === 'ArrowRight') { const n = pager.querySelector('.next'); if (n) { window.__fromReader = true; location.href = n.href; } }
     }
   });
 

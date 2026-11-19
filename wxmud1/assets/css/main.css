@@ -607,15 +607,10 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
 }
 .article .gallery-note b{color:var(--gold);font-weight:500}
 
-/* 表格：外层负责横滑，table 本身保持正常表格布局（否则列宽会撑爆） */
-.article .tbl{
-  margin:20px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;
-  border:1px solid var(--line);border-radius:4px;
-  background:rgba(255,255,255,.012);
-}
 .article table{
-  width:100%;min-width:100%;border-collapse:collapse;margin:0;font-size:12.5px;
-  white-space:nowrap;border:none;
+  width:100%;border-collapse:collapse;margin:20px 0;font-size:12.5px;
+  display:block;overflow-x:auto;white-space:nowrap;
+  border:1px solid var(--line);border-radius:4px;
 }
 .article th,.article td{
   padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.045);
@@ -847,166 +842,6 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
 .totop:hover{background:rgba(217,169,79,.14);border-color:rgba(217,169,79,.4)}
 .totop svg{width:15px;height:15px}
 
-/* ============================================================
-   伴随模式：游戏铺满 + 攻略浮窗
-   ============================================================ */
-
-.play-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:7px 13px;border-radius:3px;
-  font-family:var(--mono);font-size:12px;font-weight:600;
-  color:#1b1508;
-  background:linear-gradient(180deg,#e8c069,#c99b3f);
-  border:1px solid rgba(217,169,79,.6);
-  box-shadow:0 2px 14px -6px rgba(217,169,79,.7);
-  transition:transform .16s ease,box-shadow .2s ease,background .2s ease;
-}
-.play-btn:hover{background:linear-gradient(180deg,#f2ce7b,#d6a648);box-shadow:0 4px 18px -6px rgba(217,169,79,.85)}
-.play-btn:active{transform:translateY(1px)}
-.play-btn svg{width:13px;height:13px;flex:none}
-
-/* 阅读页常驻的伴随入口 */
-.play-fab{
-  position:fixed;right:22px;bottom:72px;z-index:95;
-  display:inline-flex;align-items:center;gap:7px;
-  padding:10px 15px;border-radius:22px;
-  font-family:var(--mono);font-size:11.5px;font-weight:600;color:#1b1508;
-  background:linear-gradient(180deg,#e8c069,#c99b3f);
-  box-shadow:0 12px 32px -12px rgba(0,0,0,.95),0 0 0 1px rgba(217,169,79,.3);
-  transition:transform .18s ease,box-shadow .22s ease,opacity .2s ease;
-}
-.play-fab:hover{transform:translateY(-2px);box-shadow:0 16px 38px -12px rgba(0,0,0,1),0 0 0 1px rgba(217,169,79,.5)}
-.play-fab:active{transform:translateY(0)}
-.play-fab svg{width:14px;height:14px;flex:none}
-.play-fab[hidden]{display:none}
-
-/* ---------- 伴读模式 ---------- */
-/* 游戏必须开在独立窗口（跨源 iframe 里游戏初始化会被跳过，登录不可用），
-   所以这里只做"正文收窄"，让本页和游戏窗口并排 */
-body.playing{overflow:auto}
-body.playing .topbar,
-body.playing .progress,
-body.playing .scanline,
-body.playing .toc,
-body.playing .pager,
-body.playing .cmt,
-body.playing .reader-head,
-body.playing .play-fab,
-body.playing .totop{display:none !important}
-body.playing .view-reader{padding:62px 22px 40px;max-width:800px}
-body.playing .reader-layout{display:block;max-width:none}
-body.playing .article{padding:34px 40px 44px}
-
-/* 顶部伴读条 */
-.cmp-bar{
-  position:fixed;top:0;left:0;right:0;z-index:200;height:44px;
-  display:flex;align-items:center;gap:10px;padding:0 12px;
-  background:rgba(6,7,11,.95);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid rgba(217,169,79,.16);
-  font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
-}
-.cmp-bar[hidden]{display:none}
-.cmp-back{
-  display:inline-flex;align-items:center;gap:5px;flex:none;
-  height:28px;padding:0 11px;border-radius:4px;color:var(--ink-2);
-  border:1px solid rgba(255,255,255,.1);transition:.18s ease;
-}
-.cmp-back:hover{color:var(--gold);border-color:rgba(217,169,79,.45);background:rgba(217,169,79,.07)}
-.cmp-back svg{width:12px;height:12px}
-.cmp-state{
-  flex:1;min-width:0;text-align:center;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--ink-2);letter-spacing:.04em;
-}
-.cmp-state b{color:var(--gold);font-weight:500}
-.cmp-right{display:flex;gap:6px;flex:none}
-.cmp-btn{
-  height:28px;padding:0 11px;border-radius:4px;
-  font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
-  border:1px solid rgba(255,255,255,.1);transition:.18s ease;
-}
-.cmp-btn:hover{color:var(--ink);border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.05)}
-.cmp-btn:disabled{opacity:.38;cursor:default}
-
-/* 提示 */
-.cmp-tip{
-  position:fixed;z-index:210;left:50%;transform:translateX(-50%);
-  bottom:26px;padding:9px 16px;border-radius:4px;
-  background:rgba(8,10,15,.95);border:1px solid rgba(217,169,79,.28);
-  font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.04em;
-  box-shadow:0 16px 40px -18px #000;
-  pointer-events:none;transition:opacity .4s ease;
-}
-.cmp-tip.fade{opacity:0}
-.cmp-tip[hidden]{display:none}
-
-/* ---------- 随身模式（触屏） ----------
-   手机上没法把游戏和攻略塞进同一块屏（浏览器限制跨站悬浮），
-   所以把攻略压成"扫一眼就能记住"的形态：大字、章节吸顶、底部翻节。 */
-.pocket-nav{
-  position:fixed;left:0;right:0;bottom:0;z-index:200;
-  display:none;align-items:center;gap:8px;
-  padding:7px 10px calc(7px + env(safe-area-inset-bottom,0px));
-  background:rgba(6,7,11,.96);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border-top:1px solid rgba(217,169,79,.2);
-}
-.pocket-nav[hidden]{display:none}
-body.playing.pocket .pocket-nav{display:flex}
-.pn-btn{
-  flex:none;width:46px;height:42px;border-radius:5px;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--ink-2);border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.03);transition:.16s ease;
-}
-.pn-btn:active{background:rgba(217,169,79,.16);color:var(--gold)}
-.pn-btn svg{width:16px;height:16px}
-.pn-btn:disabled{opacity:.28}
-.pn-mid{
-  flex:1;min-width:0;height:42px;border-radius:5px;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  background:rgba(217,169,79,.08);
-  border:1px solid rgba(217,169,79,.22);
-  font-family:var(--mono);font-size:11px;color:var(--ink-2);
-  overflow:hidden;
-}
-.pn-mid:active{background:rgba(217,169,79,.16)}
-.pn-idx{flex:none;color:var(--gold);font-weight:600;letter-spacing:.06em}
-.pn-name{
-  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--ink-3);
-}
-body.playing.pocket .view-reader{padding:50px 0 92px;max-width:none}
-body.playing.pocket .article{
-  padding:4px 18px 26px;max-width:none;
-  font-size:16.5px;line-height:1.95;
-}
-body.playing.pocket .article .art-head{padding:14px 0 4px}
-body.playing.pocket .article h1{font-size:21px;line-height:1.4}
-body.playing.pocket .art-actions,
-body.playing.pocket .art-meta{display:none}
-body.playing.pocket .article h2{
-  position:sticky;top:40px;z-index:6;
-  margin:26px -18px 10px;padding:9px 18px;
-  font-size:14.5px;letter-spacing:.05em;
-  color:var(--gold);
-  background:rgba(9,11,16,.94);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  border-top:1px solid rgba(217,169,79,.2);
-  border-bottom:1px solid rgba(217,169,79,.12);
-}
-body.playing.pocket .article h3{margin-top:20px;font-size:15.5px}
-body.playing.pocket .article p{margin:0 0 14px;font-size:16px;line-height:1.95;color:var(--ink)}
-body.playing.pocket .article img{margin:12px 0}
-body.playing.pocket .article table{font-size:13px}
-body.playing.pocket .art-actions{margin:14px 0 4px}
-body.playing.pocket .cmt,
-body.playing.pocket .pager,
-body.playing.pocket .toc,
-body.playing.pocket .reader-head{display:none !important}
-
-
 /* ---------- 响应式 ---------- */
 @media (max-width:1080px){
   .reader-layout{grid-template-columns:minmax(0,1fr);gap:0}
@@ -1075,22 +910,6 @@ body.playing.pocket .reader-head{display:none !important}
   /* 窄屏优先保证点赞/浏览数可见，标签让位 */
   .card-foot{gap:7px}
   .card-tags{display:none}
-  .play-fab{padding:0;width:44px;height:44px;justify-content:center}
-  .play-fab span{display:none}
-}
-/* 小屏：伴读条收窄 */
-@media (max-width:760px){
-  .cmp-bar{height:40px;padding:0 8px;gap:6px;font-size:10.5px}
-  .cmp-back{padding:0 9px}
-  .cmp-back span{display:none}
-  .cmp-right{gap:4px}
-  .cmp-btn{padding:0 9px;font-size:10.5px}
-  #cmpCopy{display:none}
-  .cmp-tip{left:16px;right:16px;transform:none;text-align:center;font-size:10.5px;line-height:1.6}
-  body.playing .view-reader{padding:52px 14px 30px}
-  body.playing .article{padding:26px 20px 34px}
-  .play-fab{right:14px;bottom:70px;padding:10px 14px;font-size:11px}
-  .play-fab svg{width:13px;height:13px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
