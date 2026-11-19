@@ -36,6 +36,7 @@
   const lightbox = $('#lightbox'), lbImg = $('#lbImg');
   const progress = $('#progress'), topbar = $('#topbar');
   const cmdk = $('#cmdk'), cmdkInput = $('#cmdkInput'), cmdkList = $('#cmdkList');
+  const qmodal = $('#qmodal'), qmCopy = $('#qmCopy');
 
   /* ---------- 索引 ---------- */
   const index = GUIDES.map(g => {
@@ -428,6 +429,56 @@
   $('#backBtn').onclick = () => { window.__fromReader = true; history.length > 1 ? history.back() : (location.hash = '#/'); };
   $('#cmdBtn').onclick = () => openCmdk();
 
+  /* ---------- QQ 群 ---------- */
+  function openQQ() {
+    qmodal.hidden = false;
+    document.body.classList.add('locked');
+    setTimeout(() => qmCopy.focus(), 40);
+  }
+  function closeQQ() {
+    qmodal.hidden = true;
+    if (cmdk.hidden) document.body.classList.remove('locked');
+  }
+  $('#qqBtn').onclick = openQQ;
+  qmodal.querySelectorAll('[data-qclose]').forEach(n => { n.onclick = closeQQ; });
+
+  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(navigator.userAgent);
+  async function copyGroupNum() {
+    const num = $('#qmNum').textContent.trim();
+    try {
+      await navigator.clipboard.writeText(num);
+      return true;
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = num;
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+      ta.remove();
+      return ok;
+    }
+  }
+  function flash(btn, text) {
+    if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+    btn.textContent = text;
+    btn.classList.add('ok');
+    clearTimeout(btn._t);
+    btn._t = setTimeout(() => {
+      btn.textContent = btn.dataset.label;
+      btn.classList.remove('ok');
+    }, 1800);
+  }
+  qmCopy.onclick = async () => flash(qmCopy, (await copyGroupNum()) ? '已复制' : '请手动选择群号');
+  // 桌面端没有 mqqapi 协议处理器，改为复制群号，避免点了没反应
+  $('#qmOpen').onclick = async e => {
+    if (isMobileUA) return;
+    e.preventDefault();
+    flash($('#qmOpen'), (await copyGroupNum()) ? '已复制，去 QQ 搜索' : '请手动复制');
+  };
+
   cmdkInput.addEventListener('input', () => { cmdkIdx = 0; renderCmdk(); });
   cmdk.querySelector('[data-close]').onclick = closeCmdk;
 
@@ -472,14 +523,15 @@
       } else if (e.key === 'Enter') { e.preventDefault(); cmdkGo(); }
       return;
     }
-    if (e.key === '/' && !inInput) { e.preventDefault(); if (viewHome.hidden) location.hash = '#/'; setTimeout(() => search.focus(), 30); return; }
+    if (e.key === '/' && !inInput && qmodal.hidden) { e.preventDefault(); if (viewHome.hidden) location.hash = '#/'; setTimeout(() => search.focus(), 30); return; }
     if (e.key === 'Escape') {
-      if (!lightbox.hidden) lightbox.hidden = true;
+      if (!qmodal.hidden) closeQQ();
+      else if (!lightbox.hidden) lightbox.hidden = true;
       else if (!viewReader.hidden) { window.__fromReader = true; location.hash = '#/'; }
       else if (inInput) document.activeElement.blur();
       return;
     }
-    if (!viewReader.hidden && !inInput) {
+    if (!viewReader.hidden && !inInput && qmodal.hidden) {
       if (e.key.toLowerCase() === 'j') { const n = pager.querySelector('.next'); if (n) { window.__fromReader = true; location.href = n.href; } }
       if (e.key.toLowerCase() === 'k') { const p = pager.querySelector('.prev'); if (p) { window.__fromReader = true; location.href = p.href; } }
       if (e.key === 'ArrowLeft') { const p = pager.querySelector('.prev'); if (p) { window.__fromReader = true; location.href = p.href; } }

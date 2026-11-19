@@ -35,9 +35,15 @@
   </a>
   <nav class="topnav" id="topnav"></nav>
   <div class="topbar-right">
+    <button class="qq-btn" id="qqBtn" type="button" aria-haspopup="dialog">
+      <span class="qq-ico" aria-hidden="true">QQ</span>
+      <span class="qq-txt-full">加入QQ群</span>
+      <span class="qq-txt-short">QQ群</span>
+    </button>
     <a class="chat-btn" href="https://fluxer.gg/OMHG588I" target="_blank" rel="noopener noreferrer">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.6c0 4.2-3.8 7.6-8.5 7.6-1 0-2-.15-2.9-.43L4.2 20.2l1.36-3.5C4.3 15.3 3.5 13.5 3.5 11.6 3.5 7.4 7.3 4 12 4s8.5 3.4 8.5 7.6Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8.6" cy="11.6" r="1" fill="currentColor"/><circle cx="12" cy="11.6" r="1" fill="currentColor"/><circle cx="15.4" cy="11.6" r="1" fill="currentColor"/></svg>
-      <span class="chat-txt">加入聊天室</span>
+      <span class="chat-txt-full">加入聊天室</span>
+      <span class="chat-txt-short">聊天室</span>
     </a>
     <button class="cmd-btn" id="cmdBtn" aria-label="打开搜索面板">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.4 4.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -139,6 +145,22 @@
     <div class="pager" id="pager"></div>
   </section>
 </main>
+
+<!-- 加群面板 -->
+<div class="qmodal" id="qmodal" hidden>
+  <div class="qm-back" data-qclose></div>
+  <div class="qm-panel" role="dialog" aria-modal="true" aria-label="加入QQ群">
+    <button class="qm-x" data-qclose aria-label="关闭">✕</button>
+    <p class="qm-k">JOIN GROUP</p>
+    <p class="qm-title">武仙攻略 · QQ 群</p>
+    <p class="qm-num" id="qmNum">629421026</p>
+    <p class="qm-hint">手机端点「在 QQ 中打开」可直接进群；电脑端复制群号，在 QQ 里搜索即可。</p>
+    <div class="qm-acts">
+      <button class="qm-copy" id="qmCopy" type="button">复制群号</button>
+      <a class="qm-open" id="qmOpen" href="mqqapi://card/show_pslcard?src_type=internal&version=1&uin=629421026&card_type=group&source=qrcode">在 QQ 中打开</a>
+    </div>
+  </div>
+</div>
 
 <!-- 命令面板 -->
 <div class="cmdk" id="cmdk" hidden>

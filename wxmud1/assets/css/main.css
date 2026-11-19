@@ -120,6 +120,25 @@ kbd{
   background:linear-gradient(90deg,transparent,var(--gold),transparent);
 }
 .topbar-right{flex-shrink:0;display:flex;align-items:center;gap:8px}
+.qq-btn{
+  display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:5px;
+  background:linear-gradient(180deg,#f4d79c 0%,#d9a94f 52%,#bf8d2f 100%);
+  border:1px solid rgba(246,220,166,.9);color:#1b1206;
+  font-size:12.5px;font-weight:600;letter-spacing:.02em;white-space:nowrap;
+  box-shadow:0 0 0 1px rgba(217,169,79,.16),0 8px 26px -12px rgba(217,169,79,.85);
+  transition:filter .2s,box-shadow .2s,transform .15s;
+}
+.qq-btn:hover{
+  filter:brightness(1.07);
+  box-shadow:0 0 0 1px rgba(246,220,166,.4),0 12px 30px -12px rgba(217,169,79,1);
+}
+.qq-btn:active{transform:translateY(1px)}
+.qq-ico{
+  display:grid;place-items:center;width:16px;height:16px;border-radius:50%;
+  background:#12b7f5;color:#fff;font-family:var(--sans);font-size:8.5px;
+  font-weight:700;letter-spacing:-.02em;line-height:1;
+}
+.qq-txt-short,.chat-txt-short{display:none}
 .chat-btn{
   display:flex;align-items:center;gap:7px;padding:7px 13px;
   border:1px solid rgba(217,169,79,.38);border-radius:5px;
@@ -570,6 +589,41 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
 .pager .ttl{font-family:var(--serif);font-size:13.5px;color:var(--ink);line-height:1.55}
 .pager .next{text-align:right}
 
+/* ---------- 加群面板 ---------- */
+.qmodal{position:fixed;inset:0;z-index:410;display:flex;align-items:center;justify-content:center;padding:24px}
+.qmodal[hidden]{display:none}
+.qm-back{position:absolute;inset:0;background:rgba(4,5,8,.74);backdrop-filter:blur(8px);animation:fade .18s ease}
+.qm-panel{
+  position:relative;width:min(370px,100%);padding:30px 26px 24px;text-align:center;
+  background:linear-gradient(180deg,#111419,#0a0c11);
+  border:1px solid rgba(217,169,79,.3);border-radius:8px;
+  box-shadow:0 40px 90px -40px #000,inset 0 1px 0 rgba(255,255,255,.04);
+  animation:pop .22s cubic-bezier(.2,.9,.3,1);
+}
+.qm-x{position:absolute;top:8px;right:10px;padding:5px 7px;color:var(--ink-4);font-size:12px;transition:color .2s}
+.qm-x:hover{color:var(--gold)}
+.qm-k{font-family:var(--mono);font-size:9px;letter-spacing:.24em;color:var(--gold-dim);margin-bottom:11px}
+.qm-title{font-family:var(--serif);font-size:17.5px;color:var(--ink);margin-bottom:6px;letter-spacing:.03em}
+.qm-num{
+  font-family:var(--mono);font-size:25px;letter-spacing:.1em;color:var(--gold-hi);
+  margin:12px 0 14px;user-select:all;text-shadow:0 0 26px rgba(217,169,79,.3);
+}
+.qm-hint{font-size:12px;line-height:1.85;color:var(--ink-2);margin-bottom:20px;padding:0 4px}
+.qm-acts{display:flex;gap:9px}
+.qm-copy,.qm-open{
+  flex:1;padding:10px 0;border-radius:5px;font-size:12.5px;text-align:center;
+  transition:.2s;
+}
+.qm-copy{border:1px solid var(--line-2);color:var(--ink-2);background:rgba(255,255,255,.03)}
+.qm-copy:hover{color:var(--gold);border-color:rgba(217,169,79,.42);background:rgba(217,169,79,.06)}
+.qm-copy.ok{color:var(--gold-hi);border-color:rgba(217,169,79,.55);background:rgba(217,169,79,.1)}
+.qm-open{
+  background:linear-gradient(180deg,#f4d79c,#d9a94f 55%,#bf8d2f);
+  color:#1b1206;font-weight:600;border:1px solid rgba(246,220,166,.9);
+}
+.qm-open:hover{filter:brightness(1.07)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+
 /* ---------- 命令面板 ---------- */
 .cmdk{position:fixed;inset:0;z-index:400;display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
 .cmdk-backdrop{position:absolute;inset:0;background:rgba(4,5,8,.72);backdrop-filter:blur(8px);animation:fade .18s ease}
@@ -669,6 +723,12 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
   .cmd-btn{padding:8px;border-radius:4px}
   .chat-btn{padding:7px 10px;font-size:11.5px;border-radius:4px}
   .chat-btn svg{width:13px;height:13px}
+  .qq-btn{padding:7px 11px;font-size:11.5px;border-radius:4px;gap:6px}
+  .qq-ico{width:14px;height:14px;font-size:7.5px}
+  .qq-txt-full{display:none}
+  .qq-txt-short{display:inline}
+  .chat-txt-full{display:none}
+  .chat-txt-short{display:inline}
   .hero{padding:112px 16px 44px}
   .hero-meta{font-size:9px;letter-spacing:.1em;gap:7px;margin-bottom:24px}
   .h1-main{letter-spacing:.04em}
