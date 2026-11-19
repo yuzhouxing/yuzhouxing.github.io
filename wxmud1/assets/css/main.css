@@ -382,7 +382,10 @@ h1{margin:0;font-family:var(--serif);font-weight:600;line-height:1.08}
   display:flex;align-items:center;gap:9px;margin-top:15px;padding-top:11px;
   border-top:1px solid rgba(255,255,255,.045);
   font-family:var(--mono);font-size:10px;color:var(--ink-4);
+  min-width:0;
 }
+/* 元信息与统计一律不收缩、不折行；空间不足时让标签让位 */
+.card-foot > span:not(.card-tags){flex:none;white-space:nowrap}
 .card-foot .k{color:var(--ink-3)}
 .card-foot .sep{width:1px;height:9px;background:var(--line-2)}
 .card-tags{display:flex;gap:5px;overflow:hidden;min-width:0;margin-left:auto}
@@ -390,11 +393,24 @@ h1{margin:0;font-family:var(--serif);font-weight:600;line-height:1.08}
   padding:1px 5px;border-radius:2px;background:rgba(255,255,255,.045);
   color:var(--ink-3);font-family:var(--sans);font-size:9.5px;white-space:nowrap;
 }
-.card-like{
-  display:inline-flex;align-items:center;gap:3px;flex:none;
-  color:#c9736a;font-family:var(--mono);font-size:10px;
+.card-stat{
+  display:inline-flex;align-items:center;gap:10px;flex:none;
+  font-family:var(--mono);font-size:10px;line-height:1;
+  transition:opacity .4s ease;
 }
-.card-like svg{width:10px;height:10px;opacity:.9}
+.card-stat.is-pending{opacity:0}
+.card-stat .cs{
+  display:inline-flex;align-items:center;gap:3.5px;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;
+  transition:color .22s ease,opacity .22s ease;
+}
+.card-stat .cs svg{width:10.5px;height:10.5px;flex:none;opacity:.85}
+.card-stat .cs b{font-weight:500}
+.card-stat .cs-like.has{color:#c9736a}
+.card-stat .cs-view.has{color:var(--ink-2)}
+.card-stat .cs:not(.has){opacity:.62}
+.card:hover .card-stat .cs{color:var(--ink-2);opacity:1}
+.card:hover .card-stat .cs-like.has{color:#e08d82}
 
 mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padding:0 1px}
 
@@ -891,6 +907,9 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
 @media (max-width:420px){
   .brand-code{display:none}
   .hud-num{font-size:17px}
+  /* 窄屏优先保证点赞/浏览数可见，标签让位 */
+  .card-foot{gap:7px}
+  .card-tags{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}

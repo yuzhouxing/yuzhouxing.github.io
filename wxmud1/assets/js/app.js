@@ -31,6 +31,7 @@
   const Cloud = window.WXCloud || null;
   const CloudOn = !!(Cloud && Cloud.hasCloud);   // 只有配了 Supabase 才启用互动功能
   const STATS = { map: {}, mode: 'local', degraded: false };
+  let statsReady = false;   // 互动数据是否已就绪，未就绪时卡片留位不显示数字
   const stOf = id => STATS.map[id] || { likes: 0, views: 0 };
 
   const $ = s => document.querySelector(s);
@@ -147,8 +148,17 @@
       const tags = g.tags.slice(0, 2).map(t => '<span>' + esc(t) + '</span>').join('');
       const no = pad(GUIDES.indexOf(g) >= 0 ? sortedIndex(g) : i + 1);
       const st = stOf(g.id);
-      const like = st.likes > 0
-        ? '<span class="card-like" title="' + st.likes + ' 人点赞"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" fill="currentColor"/></svg>' + fmt(st.likes) + '</span>'
+      const stat = CloudOn
+        ? '<span class="card-stat' + (statsReady ? '' : ' is-pending') + '">' +
+            '<span class="cs cs-like' + (st.likes > 0 ? ' has' : '') + '" title="' + st.likes + ' 人点赞">' +
+              '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z" fill="currentColor"/></svg>' +
+              '<b>' + fmt(st.likes) + '</b>' +
+            '</span>' +
+            '<span class="cs cs-view' + (st.views > 0 ? ' has' : '') + '" title="' + st.views + ' 次浏览">' +
+              '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.2 12S5.8 6.2 12 6.2 21.8 12 21.8 12 18.2 17.8 12 17.8 2.2 12 2.2 12Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>' +
+              '<b>' + fmt(st.views) + '</b>' +
+            '</span>' +
+          '</span>'
         : '';
       a.innerHTML =
         '<div class="card-top">' +
@@ -161,11 +171,52 @@
           '<span class="k">' + (g.chars ? fmt(g.chars) + ' 字' : '图集') + '</span>' +
           (g.imgs ? '<span class="sep"></span><span>' + g.imgs + ' 图</span>' : '') +
           (g.chars ? '<span class="sep"></span><span>' + Math.max(1, Math.round(g.chars / 420)) + ' min</span>' : '') +
-          like +
+          (stat ? '<span class="sep"></span>' : '') +
+          stat +
           '<span class="card-tags">' + tags + '</span>' +
         '</div>';
       grid.appendChild(a);
     });
+
+    // 标签放不下时整块收起，避免出现半截文字
+    grid.querySelectorAll('.card').forEach(card => {
+      const tags = card.querySelector('.card-tags');
+      if (!tags) return;
+      if (tags.scrollWidth > tags.clientWidth + 1) tags.style.display = 'none';
+    });
+  }
+
+  /* 只刷新卡片上的数字，不重建列表（避免滚动跳动和动画重播） */
+  function paintCardStats() {
+    grid.querySelectorAll('.card').forEach(card => {
+      const id = card.dataset.id;
+      if (!id) return;
+      const st = stOf(id);
+      const like = card.querySelector('.cs-like');
+      const view = card.querySelector('.cs-view');
+      if (like) {
+        like.querySelector('b').textContent = fmt(st.likes);
+        like.classList.toggle('has', st.likes > 0);
+        like.title = st.likes + ' 人点赞';
+      }
+      if (view) {
+        view.querySelector('b').textContent = fmt(st.views);
+        view.classList.toggle('has', st.views > 0);
+        view.title = st.views + ' 次浏览';
+      }
+      const wrap = card.querySelector('.card-stat');
+      if (wrap && statsReady) wrap.classList.remove('is-pending');
+    });
+  }
+
+  /* 回到首页时补拉一次，把文章页里点出来的赞和浏览量同步过来 */
+  function refreshHomeStats() {
+    if (!CloudOn) return;
+    Cloud.stats().then(s => {
+      STATS.map = s.map || {};
+      statsReady = true;
+      if (!viewHome.hidden) paintCardStats();
+    }).catch(() => {});
   }
 
   // 全站固定编号（按推荐权重）
@@ -790,6 +841,7 @@
       STATS.map = s.map || {};
       STATS.mode = s.mode;
       STATS.degraded = !!s.degraded;
+      statsReady = true;
       if (!viewHome.hidden) {
         const y = window.scrollY;
         renderGrid();
@@ -802,6 +854,16 @@
         if (vn) vn.textContent = st.views;
       }
     }).catch(() => {});
+
+    // 文章页点赞后即时回写首页数字
+    if (Cloud.onChange) {
+      Cloud.onChange(snap => {
+        if (!snap || !snap.map) return;
+        STATS.map = snap.map;
+        statsReady = true;
+        if (!viewHome.hidden) paintCardStats();
+      });
+    }
   }
 
   window.addEventListener('hashchange', () => {
@@ -810,6 +872,7 @@
       window.__fromReader = true;
     }
     route();
+    refreshHomeStats();
   });
   route();
   window.addEventListener('beforeunload', () => { scrollMemo = window.scrollY; });
