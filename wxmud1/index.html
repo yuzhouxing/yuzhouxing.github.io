@@ -212,7 +212,7 @@
 
 <!-- 伴读条：游戏在独立窗口，本站只留正文 -->
 <div class="cmp-bar" id="cmpBar" hidden>
-  <button class="cmp-back" id="cmpBack" type="button">
+  <button class="cmp-back" id="cmpBack" type="button" aria-label="退出伴读">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>退出伴读</span>
   </button>
@@ -222,6 +222,20 @@
     <button class="cmp-btn" id="cmpCopy" type="button">复制地址</button>
   </div>
 </div>
+<!-- 手机端随身模式：底部章节导航 -->
+<div class="pocket-nav" id="pocketNav" hidden>
+  <button class="pn-btn" id="pnPrev" type="button" aria-label="上一节">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="pn-mid" id="pnMid" type="button">
+    <span class="pn-idx" id="pnIdx">0/0</span>
+    <span class="pn-name" id="pnName">本节</span>
+  </button>
+  <button class="pn-btn" id="pnNext" type="button" aria-label="下一节">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</div>
+
 <div class="cmp-tip" id="cmpTip" hidden></div>
 
 <div class="lightbox" id="lightbox" hidden>

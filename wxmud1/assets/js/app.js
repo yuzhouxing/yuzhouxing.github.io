@@ -46,6 +46,8 @@
   const qmodal = $('#qmodal'), qmCopy = $('#qmCopy');
   const cmpBar = $('#cmpBar'), cmpState = $('#cmpState');
   const cmpFocus = $('#cmpFocus'), cmpCopy = $('#cmpCopy'), cmpTipEl = $('#cmpTip');
+  const pocketNav = $('#pocketNav'), pnPrev = $('#pnPrev'), pnNext = $('#pnNext');
+  const pnIdx = $('#pnIdx'), pnName = $('#pnName'), pnMid = $('#pnMid');
 
   /* ---------- 索引 ---------- */
   const index = GUIDES.map(g => {
@@ -227,6 +229,8 @@
   function sortedIndex(g) { return ORDER_MAP[g.id] || 1; }
 
   /* ---------- 详情 ---------- */
+  let currentHeadings = [];   // 当前文章的章节锚点，随身模式的翻节导航用
+
   function renderReader(id) {
     const g = BY_ID[id];
     if (!g) { location.hash = '#/'; return; }
@@ -363,7 +367,9 @@
           html += '<tr>' + row.map(c => '<' + tag + '>' + esc(c) + '</' + tag + '>').join('') + '</tr>';
         });
         wrap.innerHTML = html;
-        frag.appendChild(wrap);
+        const scroller = el('div', 'tbl');
+        scroller.appendChild(wrap);
+        frag.appendChild(scroller);
       } else if (b.t === 'sep') {
         const s2 = el('div', 'page-sep');
         s2.innerHTML = '<span>' + esc(b.text) + '</span>';
@@ -378,6 +384,7 @@
 
     article.innerHTML = '';
     article.appendChild(frag);
+    currentHeadings = headings;
 
     // 目录
     tocBox.innerHTML = '';
@@ -549,16 +556,8 @@
     tipTimerB = setTimeout(() => { cmpTipEl.hidden = true; cmpTipEl.classList.remove('fade'); }, (hold || 1600) + 500);
   }
 
-  /* 打开游戏：桌面端复用同名窗口（不重复开、登录态不丢），移动端走新标签 */
+  /* 打开游戏：复用同一个具名窗口/标签（重复 open 会让页面重新导航，等于把人踢下线） */
   function openGame() {
-    if (mqTouch.matches) {
-      try {
-        const w = window.open(GAME_URL, '_blank');
-        if (w) gameWin = w;
-        return !!w;
-      } catch (_) { return false; }
-    }
-    // 窗口已存在时只聚焦：再传 URL 会让它重新导航，等于把人踢下线
     if (gameAlive()) {
       try { gameWin.focus(); } catch (_) {}
       return true;
@@ -576,8 +575,8 @@
 
   function syncCmpState() {
     if (mqTouch.matches) {
-      cmpState.innerHTML = '游戏在<b>新标签</b>打开';
-      cmpFocus.textContent = '打开游戏';
+      cmpState.innerHTML = '游戏在<b>新标签</b> · 用标签栏切回';
+      cmpFocus.textContent = '切到游戏';
       cmpFocus.disabled = false;
       return;
     }
@@ -589,6 +588,68 @@
     cmpFocus.disabled = false;
   }
 
+  /* ---------- 随身模式（触屏） ----------
+     手机浏览器不允许跨站页面浮在游戏上，物理上没法真的并排。
+     所以这里把攻略做成"扫一眼"形态：大字号、章节吸顶、底部一键翻节。 */
+  let pocketIdx = 0;
+
+  function pocketSections() {
+    return currentHeadings
+      .map(h => ({ text: h.text, el: document.getElementById(h.id) }))
+      .filter(s => s.el);
+  }
+
+  function updatePocket() {
+    const secs = pocketSections();
+    if (!secs.length) {
+      pnIdx.textContent = '全文';
+      pnName.textContent = '一节到底';
+      pnPrev.disabled = true;
+      pnNext.disabled = true;
+      return;
+    }
+    pnPrev.disabled = pocketIdx <= 0;
+    pnNext.disabled = pocketIdx >= secs.length - 1;
+    pnIdx.textContent = (pocketIdx + 1) + '/' + secs.length;
+    pnName.textContent = secs[pocketIdx].text;
+  }
+
+  function pocketGo(i) {
+    const secs = pocketSections();
+    if (!secs.length) return;
+    pocketIdx = Math.max(0, Math.min(secs.length - 1, i));
+    const y = secs[pocketIdx].el.getBoundingClientRect().top + window.scrollY - 44;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    updatePocket();
+  }
+
+  function buildPocket() {
+    document.body.classList.add('pocket');
+    pocketNav.hidden = false;
+    pocketIdx = 0;
+    updatePocket();
+  }
+
+  function clearPocket() {
+    document.body.classList.remove('pocket');
+    pocketNav.hidden = true;
+  }
+
+  pnPrev.onclick = () => pocketGo(pocketIdx - 1);
+  pnNext.onclick = () => pocketGo(pocketIdx + 1);
+  pnMid.onclick = () => pocketGo(pocketIdx);
+
+  window.addEventListener('scroll', () => {
+    if (!document.body.classList.contains('pocket')) return;
+    const secs = pocketSections();
+    if (!secs.length) return;
+    let i = 0;
+    for (let k = 0; k < secs.length; k++) {
+      if (secs[k].el.getBoundingClientRect().top <= 96) i = k;
+    }
+    if (i !== pocketIdx) { pocketIdx = i; updatePocket(); }
+  }, { passive: true });
+
   function enterPlay(id) {
     const g = BY_ID[id];
     if (!g) { location.hash = '#/'; return; }
@@ -597,7 +658,8 @@
     cmpBar.hidden = false;
     document.title = g.title + ' · 伴读';
     syncCmpState();
-    if (!mqTouch.matches && !gameAlive()) flashCmp('点右上角「重新打开」进入游戏', 3000);
+    if (mqTouch.matches) buildPocket();
+    else if (!gameAlive()) flashCmp('点右上角「重新打开」进入游戏', 3000);
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   }
 
@@ -605,6 +667,7 @@
     const id = playId || currentGuideId;
     if (!id) { location.hash = '#/'; return; }
     playId = null;
+    clearPocket();
     document.body.classList.remove('playing');
     cmpBar.hidden = true;
     document.title = '武仙传说 · 攻略总集';
@@ -615,7 +678,12 @@
   cmpBack.onclick = () => exitPlay();
 
   cmpFocus.onclick = () => {
-    if (mqTouch.matches) { openGame(); return; }
+    if (mqTouch.matches) {
+      if (!gameAlive()) { openGame(); syncCmpState(); flashCmp('游戏已在新标签打开', 2400); return; }
+      try { gameWin.focus(); } catch (_) {}
+      flashCmp('没切过去就用浏览器标签栏', 2600);
+      return;
+    }
     if (gameAlive()) { try { gameWin.focus(); } catch (_) {} flashCmp('已切到游戏窗口'); return; }
     if (openGame()) { syncCmpState(); flashCmp('游戏窗口已打开'); }
     else flashCmp('浏览器拦住了弹窗，请允许后重试', 3000);
@@ -681,6 +749,7 @@
     if (document.body.classList.contains('playing')) {
       playId = null;
       cmpBar.hidden = true;
+      if (typeof clearPocket === 'function') clearPocket();
       document.body.classList.remove('playing');
       document.title = '武仙传说 · 攻略总集';
     }

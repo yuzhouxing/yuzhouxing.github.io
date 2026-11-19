@@ -607,10 +607,15 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
 }
 .article .gallery-note b{color:var(--gold);font-weight:500}
 
-.article table{
-  width:100%;border-collapse:collapse;margin:20px 0;font-size:12.5px;
-  display:block;overflow-x:auto;white-space:nowrap;
+/* 表格：外层负责横滑，table 本身保持正常表格布局（否则列宽会撑爆） */
+.article .tbl{
+  margin:20px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;
   border:1px solid var(--line);border-radius:4px;
+  background:rgba(255,255,255,.012);
+}
+.article table{
+  width:100%;min-width:100%;border-collapse:collapse;margin:0;font-size:12.5px;
+  white-space:nowrap;border:none;
 }
 .article th,.article td{
   padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.045);
@@ -936,6 +941,72 @@ body.playing .article{padding:34px 40px 44px}
 .cmp-tip.fade{opacity:0}
 .cmp-tip[hidden]{display:none}
 
+/* ---------- 随身模式（触屏） ----------
+   手机上没法把游戏和攻略塞进同一块屏（浏览器限制跨站悬浮），
+   所以把攻略压成"扫一眼就能记住"的形态：大字、章节吸顶、底部翻节。 */
+.pocket-nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:200;
+  display:none;align-items:center;gap:8px;
+  padding:7px 10px calc(7px + env(safe-area-inset-bottom,0px));
+  background:rgba(6,7,11,.96);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid rgba(217,169,79,.2);
+}
+.pocket-nav[hidden]{display:none}
+body.playing.pocket .pocket-nav{display:flex}
+.pn-btn{
+  flex:none;width:46px;height:42px;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink-2);border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.03);transition:.16s ease;
+}
+.pn-btn:active{background:rgba(217,169,79,.16);color:var(--gold)}
+.pn-btn svg{width:16px;height:16px}
+.pn-btn:disabled{opacity:.28}
+.pn-mid{
+  flex:1;min-width:0;height:42px;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:rgba(217,169,79,.08);
+  border:1px solid rgba(217,169,79,.22);
+  font-family:var(--mono);font-size:11px;color:var(--ink-2);
+  overflow:hidden;
+}
+.pn-mid:active{background:rgba(217,169,79,.16)}
+.pn-idx{flex:none;color:var(--gold);font-weight:600;letter-spacing:.06em}
+.pn-name{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--ink-3);
+}
+body.playing.pocket .view-reader{padding:50px 0 92px;max-width:none}
+body.playing.pocket .article{
+  padding:4px 18px 26px;max-width:none;
+  font-size:16.5px;line-height:1.95;
+}
+body.playing.pocket .article .art-head{padding:14px 0 4px}
+body.playing.pocket .article h1{font-size:21px;line-height:1.4}
+body.playing.pocket .art-actions,
+body.playing.pocket .art-meta{display:none}
+body.playing.pocket .article h2{
+  position:sticky;top:40px;z-index:6;
+  margin:26px -18px 10px;padding:9px 18px;
+  font-size:14.5px;letter-spacing:.05em;
+  color:var(--gold);
+  background:rgba(9,11,16,.94);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid rgba(217,169,79,.2);
+  border-bottom:1px solid rgba(217,169,79,.12);
+}
+body.playing.pocket .article h3{margin-top:20px;font-size:15.5px}
+body.playing.pocket .article p{margin:0 0 14px;font-size:16px;line-height:1.95;color:var(--ink)}
+body.playing.pocket .article img{margin:12px 0}
+body.playing.pocket .article table{font-size:13px}
+body.playing.pocket .art-actions{margin:14px 0 4px}
+body.playing.pocket .cmt,
+body.playing.pocket .pager,
+body.playing.pocket .toc,
+body.playing.pocket .reader-head{display:none !important}
+
+
 /* ---------- 响应式 ---------- */
 @media (max-width:1080px){
   .reader-layout{grid-template-columns:minmax(0,1fr);gap:0}
@@ -1013,7 +1084,8 @@ body.playing .article{padding:34px 40px 44px}
   .cmp-back{padding:0 9px}
   .cmp-back span{display:none}
   .cmp-right{gap:4px}
-  .cmp-btn{padding:0 8px;font-size:10.5px}
+  .cmp-btn{padding:0 9px;font-size:10.5px}
+  #cmpCopy{display:none}
   .cmp-tip{left:16px;right:16px;transform:none;text-align:center;font-size:10.5px;line-height:1.6}
   body.playing .view-reader{padding:52px 14px 30px}
   body.playing .article{padding:26px 20px 34px}
