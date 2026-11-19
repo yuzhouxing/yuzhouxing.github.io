@@ -1,0 +1,143 @@
+//全身自制包含洗练精炼，请保证玄晶元晶充足
+//新建流程全部复制进去就行，点击开始后就不要动了
+//中途卡了自行处理，已测试过正常情况下不会卡流程
+#select ($zz_wq) = 自制武器,剑|刀|棍|杖|鞭|拳套|否,剑
+#select ($zz_yf) = 自制衣服,是|否,是
+#select ($zz_xz) = 自制鞋子,是|否,是
+#select ($zz_tb) = 自制头部,是|否,是
+#select ($zz_pf) = 自制披风,是|否,是
+#select ($zz_jz) = 自制戒指,是|否,是
+#select ($zz_xl) = 自制项链,是|否,是
+#select ($zz_sp) = 自制饰品,是|否,是
+#select ($zz_hw) = 自制护腕,是|否,是
+#select ($zz_yd) = 自制腰带,是|否,是
+#select ($zz_aq) = 自制暗器,是|否,是
+#config
+state stop
+@cmdDelay 300
+[if] (zz_wq) == 剑
+    duanzao weapon_sword
+    chat 樱岛麻衣
+[if] (zz_wq) == 刀
+    duanzao weapon_blade
+    chat 樱岛麻衣
+[if] (zz_wq) == 棍
+    duanzao weapon_club
+    chat 樱岛麻衣
+[if] (zz_wq) == 杖
+    duanzao weapon_staff
+    chat 樱岛麻衣
+[if] (zz_wq) == 鞭
+    duanzao weapon_whip
+    chat 樱岛麻衣
+[if] (zz_wq) == 拳套
+    duanzao weapon_unarmed
+    chat 樱岛麻衣
+[if] (zz_yf) == 是
+    duanzao cloth
+    chat 衣服
+[if] (zz_xz) == 是
+    duanzao shoes
+    chat 鞋子
+[if] (zz_tb) == 是
+    duanzao head
+    chat 头部
+[if] (zz_pf) == 是
+    duanzao cape
+    chat 披风
+[if] (zz_jz) == 是
+    duanzao ring
+    chat 戒指
+[if] (zz_xl) == 是
+    duanzao necklace
+    chat 项链
+[if] (zz_sp) == 是
+    duanzao jewels
+    chat 饰品
+[if] (zz_hw) == 是
+    duanzao wrist
+    chat 护腕
+[if] (zz_yd) == 是
+    duanzao waist
+    chat 腰带
+[if] (zz_aq) == 是
+    duanzao throwing
+    chat 暗器
+[while] {b樱岛麻衣o%}? != null
+    jinglian {b樱岛麻衣o%} full
+    packitem recast {b樱岛麻衣o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b樱岛麻衣o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b衣服o%}? != null
+    jinglian {b衣服o%} full
+    packitem recast {b衣服o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b衣服o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b鞋子o%}? != null
+    jinglian {b鞋子o%} full
+    packitem recast {b鞋子o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b鞋子o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b头部o%}? != null
+    jinglian {b头部o%} full
+    packitem recast {b头部o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b头部o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b披风o%}? != null
+    jinglian {b披风o%} full
+    packitem recast {b披风o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b披风o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b戒指o%}? != null
+    jinglian {b戒指o%} full
+    packitem recast {b戒指o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b戒指o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b项链o%}? != null
+    jinglian {b项链o%} full
+    packitem recast {b项链o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b项链o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b饰品o%}? != null
+    jinglian {b饰品o%} full
+    packitem recast {b饰品o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b饰品o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b护腕o%}? != null
+    jinglian {b护腕o%} full
+    packitem recast {b护腕o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b护腕o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b腰带o%}? != null
+    jinglian {b腰带o%} full
+    packitem recast {b腰带o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b腰带o} roll
+        @tip 已洗练($xl_cs)次
+[while] {b暗器o%}? != null
+    jinglian {b暗器o%} full
+    packitem recast {b暗器o}
+    @tip 已洗练($xl_cs)次
+    [while] (xl_cs) < 50
+        packitem recast {b暗器o} roll
+        @tip 已洗练($xl_cs)次
+tm 结束
