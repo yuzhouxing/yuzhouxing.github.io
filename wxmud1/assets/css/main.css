@@ -1446,8 +1446,10 @@ body.has-netbar .to-top{bottom:74px}
 }
 .pl-stats .ps{display:inline-flex;align-items:center;gap:4px;transition:color .18s}
 .pl-stats .ps svg{width:11.5px;height:11.5px;opacity:.62;flex:none}
-.pl-stats .ps b{font-weight:500;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.pl-stats .ps b{font-weight:500;letter-spacing:.02em;font-variant-numeric:tabular-nums;color:var(--ink-2)}
 .pl-stats .ps-like.has{color:#c9736a}
+.pl-stats .ps-like.has b{color:#dd8b80}
+.pl-stats .ps-cmt.has b{color:var(--gold-dim)}
 .pl-stats .ps-view.has{color:var(--ink-3)}
 .pl-stats .ps-cmt.has{color:var(--gold-dim)}
 .pl-card:hover .pl-stats{color:var(--ink-3)}
