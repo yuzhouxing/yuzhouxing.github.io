@@ -264,7 +264,7 @@
     try { modalEl.querySelector('.tm-nick').value = localStorage.getItem('wx_nick') || ''; } catch (_) {}
     modalEl.hidden = false;
     document.body.classList.add('locked');
-    setTimeout(() => ta.focus(), 30);
+    setTimeout(() => { ta.focus(); ta.setSelectionRange(0, 0); ta.scrollTop = 0; }, 30);
     modalEl.querySelector('.tm-save').onclick = () => saveTerm(t);
   }
 

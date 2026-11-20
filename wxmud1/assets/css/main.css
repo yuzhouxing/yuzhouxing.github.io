@@ -1945,5 +1945,6 @@ body.has-netbar .to-top{bottom:74px}
   .md-view h2{font-size:17.5px;margin:22px 0 10px}
   .md-view img{margin:12px 0}
   .md-btn{min-width:28px;height:28px}
-  .md-ed .md-prev{max-height:300px}
+  .md-ed .md-prev{max-height:340px;min-height:200px}
+  .md-ed textarea{min-height:200px!important}
 }
