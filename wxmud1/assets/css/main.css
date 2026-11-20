@@ -1531,7 +1531,7 @@ body.has-netbar .to-top{bottom:74px}
   font-size:13.5px;line-height:1.95;color:var(--ink-2);
   white-space:pre-wrap;word-break:break-word;
 }
-.pd-note-body.empty{color:var(--ink-4);font-style:normal;font-size:12.5px}
+.pd-note-body.empty{color:var(--ink-4);font-style:normal;font-size:12.5px;padding:0;text-align:left}
 .pd-note-foot{
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   margin-top:12px;padding-top:11px;border-top:1px solid rgba(217,169,79,.14);

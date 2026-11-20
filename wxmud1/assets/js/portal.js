@@ -60,9 +60,19 @@
     return data;
   }
 
-  const LS_OFF = 'wx_pnote_off';       // 服务端备注函数不存在时置 1，避免反复 404
+  const LS_OFF = 'wx_pnote_off';       // 服务端备注函数连不上时记个时间戳，30 分钟内不再重试
   const LS_KEY = 'wx_pnote_';
-  const offMode = () => { try { return localStorage.getItem(LS_OFF) === '1'; } catch (_) { return false; } };
+  const OFF_MS = 30 * 60 * 1000;
+  const offMode = () => {
+    try {
+      const v = localStorage.getItem(LS_OFF);
+      if (!v) return false;
+      const t = Number(v);
+      if (!t || Number.isNaN(t)) return false;   // 旧版永久标记（'1'）作废，重新试一次
+      return Date.now() - t < OFF_MS;
+    } catch (_) { return false; }
+  };
+  const markOff = () => { try { localStorage.setItem(LS_OFF, String(Date.now())); } catch (_) {} };
   const readLocalNote = id => {
     try { return JSON.parse(localStorage.getItem(LS_KEY + id) || 'null'); } catch (_) { return null; }
   };
@@ -84,7 +94,7 @@
         const row = Array.isArray(rows) ? rows[0] : rows;
         return { mode: 'cloud', note: row ? { body: row.body || '', nick: row.nick || '', at: row.updated_at || '' } : null };
       } catch (e) {
-        if (e.status === 404 || e.status === 400) { try { localStorage.setItem(LS_OFF, '1'); } catch (_) {} }
+        if (e.status === 404 || e.status === 400) markOff();
         return { mode: 'offline', note: readLocalNote(id) };
       }
     }
@@ -101,7 +111,7 @@
         const row = Array.isArray(rows) ? rows[0] : rows;
         return { ok: true, mode: 'cloud', note: { body: (row && row.body) || body, nick: (row && row.nick) || name, at: (row && row.updated_at) || new Date().toISOString() } };
       } catch (e) {
-        if (e.status === 404 || e.status === 400) { try { localStorage.setItem(LS_OFF, '1'); } catch (_) {} }
+        if (e.status === 404 || e.status === 400) markOff();
         else return { ok: false, error: e.message || '保存失败' };
       }
     }
@@ -180,7 +190,7 @@
     if (plLoading) return plLoading;
     plLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'assets/data/plugins.js?v=20261120-9';
+      s.src = 'assets/data/plugins.js?v=20261120-10';
       s.onload = () => {
         if (window.WX_PLUGINS && Array.isArray(WX_PLUGINS.items)) {
           PLUG = WX_PLUGINS.items.slice().sort((a, b) => b.z - a.z);
