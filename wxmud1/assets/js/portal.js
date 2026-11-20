@@ -220,7 +220,7 @@
     if (plLoading) return plLoading;
     plLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'assets/data/plugins.js?v=20261120-11';
+      s.src = 'assets/data/plugins.js?v=20261120-12';
       s.onload = () => {
         if (window.WX_PLUGINS && Array.isArray(WX_PLUGINS.items)) {
           PLUG = WX_PLUGINS.items.slice();   // 数组本身已按原榜序排好
@@ -747,11 +747,15 @@
       try {
         await loadPlugins();
         renderPlList();
-        await loadPlugStats();
-        renderPlList();
       } catch (e) {
         $('#plMeta').textContent = '插件数据加载失败：' + (e.message || '网络问题');
+        return;
       }
+      // 统计慢一点无所谓，先出列表；拿到数字再补一次
+      try {
+        await loadPlugStats();
+        renderPlList();
+      } catch (_) {}
       return;
     }
     list.hidden = true;
