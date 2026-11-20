@@ -1,7 +1,7 @@
 -- ============================================================
 -- 「流程与插件」备注：每一条插件都能写一段用途 / 背景说明
 -- 在 Supabase → SQL Editor 里整段粘贴执行，可重复运行。
--- 不执行也能用：前端会退到浏览器本地保存（只有自己看得到）。
+-- 已于 2026-11-20 应用到项目 jhjkorupvqnogajzurva。
 -- ============================================================
 
 -- ---------- 表 ----------
@@ -18,14 +18,18 @@ create table if not exists public.plugin_note_hist (
   plugin_id  bigint not null,
   body       text not null,
   nick       text not null default '无名侠客',
+  visitor    uuid,
   created_at timestamptz not null default now()
 );
 
 create index if not exists plugin_note_hist_idx
   on public.plugin_note_hist (plugin_id, created_at desc);
 
+create index if not exists plugin_note_hist_visitor_idx
+  on public.plugin_note_hist (plugin_id, visitor, created_at desc);
+
 -- ---------- 行级安全 ----------
--- 两张表都不建 select 策略：匿名拿不到原始行（历史里有署名，但不暴露 visitor）。
+-- 两张表都不建 select 策略：匿名拿不到原始行（历史里有 visitor，不对外暴露）。
 
 alter table public.plugin_notes     enable row level security;
 alter table public.plugin_note_hist enable row level security;
@@ -75,11 +79,12 @@ begin
     v_nick := left(v_nick, 20);
   end if;
 
-  -- 同一个访客 60 秒内最多改 5 次，防止乱刷
+  -- 同一个访客对同一条插件 60 秒内最多改 5 次（按访客算，不是全站，避免互相误伤）
   if p_visitor is not null then
     select count(*) into v_cnt
       from public.plugin_note_hist h
      where h.plugin_id = p_plugin
+       and h.visitor = p_visitor
        and h.created_at > now() - interval '60 seconds';
     if v_cnt >= 5 then
       raise exception '改得太快了，歇一会儿';
@@ -91,8 +96,8 @@ begin
   on conflict (plugin_id) do update
     set body = excluded.body, nick = excluded.nick, updated_at = now();
 
-  insert into public.plugin_note_hist (plugin_id, body, nick)
-  values (p_plugin, v_body, v_nick);
+  insert into public.plugin_note_hist (plugin_id, body, nick, visitor)
+  values (p_plugin, v_body, v_nick, p_visitor);
 
   return query
     select n.body, n.nick, n.updated_at from public.plugin_notes n where n.plugin_id = p_plugin;
