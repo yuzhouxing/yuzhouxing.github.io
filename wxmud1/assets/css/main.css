@@ -1440,10 +1440,17 @@ body.has-netbar .to-top{bottom:74px}
   flex:1;min-width:0;font-size:15px;color:var(--ink);letter-spacing:.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.pl-hot{
-  flex:none;font-family:var(--mono);font-size:10px;color:#c9736a;
-  display:inline-flex;align-items:center;gap:3px;
+.pl-stats{
+  display:flex;align-items:center;gap:15px;margin-top:3px;
+  font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
 }
+.pl-stats .ps{display:inline-flex;align-items:center;gap:4px;transition:color .18s}
+.pl-stats .ps svg{width:11.5px;height:11.5px;opacity:.62;flex:none}
+.pl-stats .ps b{font-weight:500;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.pl-stats .ps-like.has{color:#c9736a}
+.pl-stats .ps-view.has{color:var(--ink-3)}
+.pl-stats .ps-cmt.has{color:var(--gold-dim)}
+.pl-card:hover .pl-stats{color:var(--ink-3)}
 .pl-sub{
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   font-family:var(--mono);font-size:10px;color:var(--ink-4);
@@ -1612,3 +1619,46 @@ body.has-netbar .to-top{bottom:74px}
 .pd-kv-k{flex:none;min-width:64px;color:var(--ink-4);letter-spacing:.04em}
 .pd-kv-v{color:var(--ink-2);word-break:break-word}
 .pd-kv-v i{font-style:normal;color:var(--ink-4)}
+
+/* ---------- 插件详情：本站统计条 ---------- */
+.pd-statbar{display:flex;align-items:center;gap:9px;margin:20px 0 6px;flex-wrap:wrap}
+.pd-like{
+  display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 17px;
+  border-radius:6px;border:1px solid rgba(201,115,106,.32);
+  background:rgba(201,115,106,.07);color:#c9736a;
+  font-family:var(--mono);font-size:13px;letter-spacing:.02em;
+  transition:background .18s,border-color .18s,color .18s,transform .12s;
+}
+.pd-like svg{width:15px;height:15px;flex:none}
+.pd-like b{font-weight:500}
+.pd-like:hover{background:rgba(201,115,106,.15);border-color:rgba(201,115,106,.55)}
+.pd-like:active{transform:scale(.97)}
+.pd-like.on{
+  background:linear-gradient(180deg,#d98a7f,#b85f54);
+  border-color:transparent;color:#1b0f0d;
+}
+.pd-like:disabled{opacity:.55}
+.pd-sstat{
+  display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;
+  border-radius:6px;border:1px solid var(--line);
+  background:rgba(255,255,255,.02);
+  font-family:var(--mono);font-size:12.5px;color:var(--ink-2);
+}
+.pd-sstat svg{width:14px;height:14px;flex:none;color:var(--ink-4)}
+.pd-sstat b{font-weight:500}
+.pd-sstat i{font-style:normal;font-size:10px;color:var(--ink-4);letter-spacing:.04em}
+.pd-sstat.as-btn{transition:border-color .18s,color .18s,background .18s}
+.pd-sstat.as-btn:hover{border-color:rgba(217,169,79,.45);color:var(--gold);background:rgba(217,169,79,.05)}
+
+/* 详情页内嵌评论区：去掉卡片外壳，融进 pd-sec */
+#pdCmtSec .cmt-card{padding:0;border:none;background:none;box-shadow:none;border-radius:0}
+#pdCmtSec .cmt-head{margin-bottom:12px}
+#pdCmtSec .cmt-list{margin-top:8px}
+#pdCmtSec .cmt-item:first-child{border-top:1px solid rgba(255,255,255,.045)}
+
+@media (max-width:860px){
+  .pd-statbar{gap:7px}
+  .pd-like{height:36px;padding:0 14px;font-size:12.5px}
+  .pd-sstat{height:36px;padding:0 12px;font-size:12px}
+  .pl-stats{gap:7px}
+}

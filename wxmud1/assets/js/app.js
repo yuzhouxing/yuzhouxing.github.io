@@ -571,17 +571,6 @@
   }
 
   /* ---------- 路由 ---------- */
-  // 词条总览入口右侧的条数
-  function paintTermEntry() {
-    const el = $('#termEntrySub');
-    if (!el || !window.WX_TERMS) return;
-    const n = WX_TERMS.count();
-    const txt = n ? n + ' 条' : '';
-    if (el.textContent !== txt) el.textContent = txt;
-  }
-  if (window.WX_TERMS) {
-    Promise.resolve(WX_TERMS.ready()).then(paintTermEntry).catch(() => {});
-  }
 
   const viewPortal = $('#viewPortal'), viewTools = $('#viewTools'), viewPlugins = $('#viewPlugins');
   function onlyView(keep) {
@@ -591,7 +580,6 @@
   }
 
   function route() {
-    paintTermEntry();
     const h = location.hash || '#/';
     const mG = h.match(/^#\/g\/([a-f0-9]+)/);
     const mC = h.match(/^#\/c\/(\w+)/);
