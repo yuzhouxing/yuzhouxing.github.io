@@ -45,7 +45,11 @@
     'Content-Type': 'application/json'
   } : null;
 
-  async function rpc(fn, body) {
+  // 复用 cloud.js 的超时 + 退避重试；拿不到就退回本文件的裸 fetch
+  const Net = (window.WXCloud && window.WXCloud.net) || null;
+
+  async function rpc(fn, body, retry) {
+    if (Net) return Net.rpc(fn, body || {}, 15000, retry);
     const res = await fetch(SB.url + '/rest/v1/rpc/' + fn, {
       method: 'POST', headers: SB_H, body: JSON.stringify(body || {})
     });
@@ -61,6 +65,7 @@
   }
 
   async function rest(path) {
+    if (Net) return Net.rest(path, null, 12000);
     const res = await fetch(SB.url + '/rest/v1/' + path, { headers: SB_H });
     const text = await res.text();
     let data = null;
@@ -121,6 +126,22 @@
       PSTAT.known = true;
     } catch (_) {
       PSTAT.known = false;
+      if (!PSTAT.retryTimer) {
+        PSTAT.retryTimer = setTimeout(async () => {
+          PSTAT.retryTimer = null;
+          await loadPlugStats(true);
+          if (!PSTAT.known) return;
+          const lp = $('#plListPage');
+          if (lp && !lp.hidden) renderPlList();
+          if (currentPlugin) {
+            const st = pstOf(currentPlugin.i);
+            const a = $('#pdLikeNum'), b = $('#pdViewNum'), c = $('#plCmtNum');
+            if (a) a.textContent = numTxt(st.likes);
+            if (b) b.textContent = numTxt(st.views);
+            if (c) c.textContent = numTxt(st.comments);
+          }
+        }, 8000);
+      }
     }
     return PSTAT;
   }
@@ -443,7 +464,7 @@
       if (!HAS_SB || likeBtn.disabled) return;
       likeBtn.disabled = true;
       try {
-        const rows = await rpc('plugin_toggle_like', { p_plugin: p.i, p_visitor: visitor() });
+        const rows = await rpc('plugin_toggle_like', { p_plugin: p.i, p_visitor: visitor() }, false);
         const r = Array.isArray(rows) ? rows[0] : rows;
         if (r && typeof r.likes === 'number') {
           setPStat(p.i, { likes: r.likes });

@@ -1074,6 +1074,12 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
   box-shadow:0 0 0 3px rgba(217,169,79,.14);
 }
 .netbar.is-bad .nb-dot{background:#d1593f;box-shadow:0 0 0 3px rgba(209,89,63,.16)}
+.netbar.is-warn .nb-dot{
+  background:var(--gold);box-shadow:0 0 0 3px rgba(217,169,79,.16);
+  animation:nb-pulse 1.8s ease-in-out infinite;
+}
+@keyframes nb-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.netbar .nb-btn:disabled{opacity:.5}
 .netbar .nb-txt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .netbar .nb-txt b{color:var(--gold);font-weight:600}
 .netbar .nb-btn{

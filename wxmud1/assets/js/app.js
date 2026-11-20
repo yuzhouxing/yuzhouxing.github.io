@@ -30,7 +30,7 @@
   /* 互动数据（点赞 / 浏览量 / 留言），云端不可用时自动走本地 */
   const Cloud = window.WXCloud || null;
   const CloudOn = !!(Cloud && Cloud.hasCloud);   // 只有配了 Supabase 才启用互动功能
-  const STATS = { map: {}, mode: 'local', degraded: false };
+  const STATS = { map: {}, mode: 'local', degraded: false, stale: false, cachedAt: 0 };
   let statsReady = false;   // 互动数据是否已就绪，未就绪时卡片留位不显示数字
   let statsKnown = false;   // 数字是否可信；云端连不上时为 false，界面显示「—」而不是假 0
   const stOf = id => STATS.map[id] || { likes: 0, views: 0, comments: 0 };
@@ -242,6 +242,8 @@
     Cloud.stats().then(s => {
       STATS.map = s.map || {};
       STATS.mode = s.mode;
+      STATS.stale = !!s.stale;
+      STATS.cachedAt = s.cachedAt || 0;
       statsReady = true;
       statsKnown = s.mode === 'cloud';
       paintNetBar();
@@ -936,54 +938,62 @@
   document.body.appendChild(toTop);
 
   /* ---------- 云端状态条 ---------- */
-  // 连不上就说清楚：数据可能被这个浏览器拦了，换个浏览器能看到真实数字。
-  // 不再假装成 0，也不弹自检面板。
+  // 三种状态：正常 / 用缓存（连不上但手里有上次真实数字）/ 没数字。
+  // 文案不再让人「换浏览器」，因为多数时候只是链路抖了一下，重试即可。
   const netBar = document.createElement('div');
   netBar.className = 'netbar';
   netBar.hidden = true;
   netBar.innerHTML = '<span class="nb-dot" aria-hidden="true"></span><span class="nb-txt"></span>' +
-    '<button class="nb-btn" type="button">复制链接</button>';
+    '<button class="nb-btn" type="button">立即重试</button>';
   document.body.appendChild(netBar);
   const netTxt = netBar.querySelector('.nb-txt');
   const netBtn = netBar.querySelector('.nb-btn');
 
-  function copyPageUrl(btn) {
-    const url = location.origin + location.pathname + (location.hash && location.hash !== '#/' ? location.hash : '');
-    const done = ok => {
-      btn.textContent = ok ? '已复制' : '请手动复制';
-      setTimeout(() => { btn.textContent = '复制链接'; }, 1800);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(() => done(true)).catch(() => done(false));
-    } else {
-      try {
-        const ta = document.createElement('textarea');
-        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
-        document.body.appendChild(ta); ta.select();
-        const ok = document.execCommand('copy');
-        document.body.removeChild(ta);
-        done(ok);
-      } catch (_) { done(false); }
-    }
+  function agoText(ms) {
+    if (!ms || ms < 45000) return '刚刚';
+    const m = Math.round(ms / 60000);
+    if (m < 60) return m + ' 分钟前';
+    const h = Math.round(m / 60);
+    if (h < 24) return h + ' 小时前';
+    return Math.round(h / 24) + ' 天前';
   }
-  netBtn.onclick = () => copyPageUrl(netBtn);
+
+  netBtn.onclick = async () => {
+    if (!Cloud || !Cloud.reconnect) return;
+    netBtn.disabled = true;
+    netBtn.textContent = '重试中';
+    try { await Cloud.reconnect(); } catch (_) {}
+    netBtn.disabled = false;
+    netBtn.textContent = '立即重试';
+    paintNetBar();
+  };
 
   function paintNetBar() {
     if (!CloudOn) { netBar.hidden = true; document.body.classList.remove('has-netbar'); return; }
     const pending = Cloud.queueLen ? Cloud.queueLen() : 0;
-    if (STATS.mode === 'offline') {
+    netBar.classList.remove('is-bad', 'is-warn');
+
+    if (STATS.stale) {
+      // 有上次的真实数字，只是不是最新的
+      netBar.hidden = false;
+      netBar.classList.add('is-warn');
+      const age = (Cloud.statsAge && Cloud.statsAge()) || (STATS.cachedAt ? Date.now() - STATS.cachedAt : 0);
+      const when = age < 60000 ? '当前显示<b>本机缓存</b>' : '当前显示<b>' + agoText(age) + '</b>的数据';
+      netTxt.innerHTML = '数据库响应慢，' + when + '，正在自动重连' +
+        (pending ? ' · 本机 <b>' + pending + '</b> 条待同步' : '');
+    } else if (STATS.mode === 'offline') {
       netBar.hidden = false;
       netBar.classList.add('is-bad');
-      netTxt.innerHTML = '数据库可能被这个浏览器拦住了，<b>换个浏览器打开</b>可看到真实数字' +
-        (pending ? ' · 本机 <b>' + pending + '</b> 条待同步' : '');
+      netTxt.innerHTML = '数据库暂时没连上，正在自动重试' +
+        (pending ? ' · 本机 <b>' + pending + '</b> 条待同步' : '') +
+        '（不影响阅读，连上后数字会自动补上）';
     } else if (pending) {
       netBar.hidden = false;
-      netBar.classList.remove('is-bad');
       netTxt.innerHTML = '本机有 <b>' + pending + '</b> 条记录待同步，连上后会自动补传';
     } else {
       netBar.hidden = true;
     }
-    netBtn.hidden = STATS.mode !== 'offline';
+    netBtn.hidden = !(STATS.stale || STATS.mode === 'offline');
     document.body.classList.toggle('has-netbar', !netBar.hidden);
   }
 
@@ -1000,11 +1010,13 @@
       STATS.map = s.map || {};
       STATS.mode = s.mode;
       STATS.degraded = !!s.degraded;
+      STATS.stale = !!s.stale;
+      STATS.cachedAt = s.cachedAt || 0;
       statsReady = true;
       statsKnown = s.mode === 'cloud';
       paintNetBar();
-      // 云端通了之后，把「早于接入云端」时点过的赞补上去（幂等，重复跑不会多算）
-      if (s.mode === 'cloud' && !localStorage.getItem('wx_pushed')) {
+      // 云端真通了之后，把「早于接入云端」时点过的赞补上去（幂等，重复跑不会多算）
+      if (s.mode === 'cloud' && !s.stale && !localStorage.getItem('wx_pushed')) {
         try { localStorage.setItem('wx_pushed', '1'); } catch (_) {}
         if (Cloud.pushLocalLikes) Cloud.pushLocalLikes().catch(() => {});
       }
@@ -1027,10 +1039,19 @@
         if (!snap) return;
         if (snap.map) STATS.map = snap.map;
         if (snap.mode) STATS.mode = snap.mode;
+        STATS.stale = !!snap.stale;
+        STATS.cachedAt = snap.cachedAt || 0;
         statsReady = true;
         statsKnown = snap.mode === 'cloud';
         paintNetBar();
         if (!viewHome.hidden) paintCardStats();
+        // 断线自愈后，正在读的文章页也要把「—」换成真实数字
+        if (!viewReader.hidden && currentGuideId) {
+          const st = stOf(currentGuideId);
+          const ln = $('#likeNum'), vn = $('#viewNum');
+          if (ln) ln.textContent = statsKnown ? st.likes : '—';
+          if (vn) vn.textContent = statsKnown ? st.views : '—';
+        }
       });
     }
   }

@@ -90,7 +90,14 @@
   }
   function queueLen() { return readQueue().length; }
 
-  /* ---------- HTTP ---------- */
+  /* ---------- HTTP ----------
+     国内访问 *.supabase.co 常见「握手卡住几秒」「偶发超时」，
+     一次失败就判定断线会让整页数字变「—」，所以这里做三层：
+       1) 单次请求 12 秒超时（原来 6 秒，冷启动握手经常不够）
+       2) 网络类失败按 0.5s / 1.5s 退避重试，最多 3 次
+       3) 仍然失败才置为离线，并交给后台重连循环继续试
+     只有幂等请求才重试：读取、点赞（set 语义）、浏览（按天去重）。
+     发评论这类非幂等写入只打一次，避免重复楼层。 */
   function headers(extra) {
     return Object.assign({
       apikey: KEY,
@@ -99,10 +106,21 @@
     }, extra || {});
   }
   const now = () => ((window.performance && performance.now) ? performance.now() : Date.now());
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  async function request(url, opts, timeout) {
+  const READ_TIMEOUT = 12000;
+  const RETRY_GAP = [500, 1500];
+
+  function isRetryable(e) {
+    if (!e) return false;
+    if (e.name === 'AbortError') return true;                 // 超时
+    if (e.network) return true;                               // 断网 / TLS / CORS
+    return e.status === 408 || e.status === 425 || e.status === 429 || e.status >= 500;
+  }
+
+  async function once(url, opts, timeout) {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), timeout || 6000);
+    const timer = setTimeout(() => ctl.abort(), timeout || READ_TIMEOUT);
     const t0 = now();
     try {
       const res = await fetch(url, Object.assign({}, opts, { signal: ctl.signal }));
@@ -125,12 +143,32 @@
     }
   }
 
-  const rest = (path, opts) => request(BASE + '/rest/v1/' + path, Object.assign({ headers: headers() }, opts || {}));
-  const rpc = (fn, payload, timeout) => request(BASE + '/rest/v1/rpc/' + fn, {
+  async function request(url, opts, timeout, retry) {
+    const tries = retry === false ? 1 : 3;
+    const budget = 20000;                       // 总预算：三次重试最多占 20 秒
+    const deadline = Date.now() + budget;
+    let err;
+    for (let i = 0; i < tries; i++) {
+      const left = deadline - Date.now();
+      if (left < 1200) break;                   // 剩得太少就别再试了
+      try {
+        return await once(url, opts, Math.min(timeout || READ_TIMEOUT, left));
+      } catch (e) {
+        err = e;
+        if (i >= tries - 1 || !isRetryable(e)) break;
+        await sleep(RETRY_GAP[Math.min(i, RETRY_GAP.length - 1)] + Math.round(Math.random() * 300));
+      }
+    }
+    throw err || new Error('request aborted');
+  }
+
+  const rest = (path, opts, timeout, retry) => request(BASE + '/rest/v1/' + path,
+    Object.assign({ headers: headers() }, opts || {}), timeout, retry);
+  const rpc = (fn, payload, timeout, retry) => request(BASE + '/rest/v1/rpc/' + fn, {
     method: 'POST',
     headers: headers({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload)
-  }, timeout);
+  }, timeout, retry);
 
   /* ---------- 状态 ---------- */
   let degraded = false;         // 配了云端，但最近一次请求失败
@@ -138,10 +176,13 @@
   const listeners = new Set();
 
   function emit() { listeners.forEach(fn => { try { fn(snapshot); } catch (_) {} }); }
-  let snapshot = { mode: HAS_CLOUD ? 'cloud' : 'local', degraded: false, map: {}, pending: 0 };
+  let snapshot = { mode: HAS_CLOUD ? 'cloud' : 'local', degraded: false, stale: false, map: {}, pending: 0 };
 
-  function setSnap(mode, map) {
-    snapshot = { mode, degraded: mode === 'offline', map: map || {}, pending: queueLen() };
+  function setSnap(mode, map, extra) {
+    snapshot = Object.assign({
+      mode, degraded: mode === 'offline', stale: false, cachedAt: 0,
+      map: map || {}, pending: queueLen()
+    }, extra || {});
     emit();
   }
 
@@ -156,12 +197,34 @@
 
   /* ---------- 聚合计数 ---------- */
   // 评论条数：guide_comments 对匿名只开放非敏感列，拉 guide_id 在本地数一遍。
-  // 只取未删除的行，一列文本，几千条也就几十 KB。
+  // 属于「锦上添花」，超时就放弃，不拖累点赞/浏览的展示。
   async function commentCounts() {
-    const rows = await rest('guide_comments?select=guide_id&deleted=eq.false&limit=5000');
+    const rows = await rest('guide_comments?select=guide_id&deleted=eq.false&limit=5000', null, 8000, false);
     const out = {};
     (Array.isArray(rows) ? rows : []).forEach(r => { out[r.guide_id] = (out[r.guide_id] | 0) + 1; });
     return out;
+  }
+
+  /* ---------- 上次成功的数字 ----------
+     网络抖动时先把上一轮真实数字摆出来（标明是缓存），
+     比整页「—」更接近事实，也不会把 0 当默认值。 */
+  const CACHE_KEY = 'wx_stats_cache_v1';
+  function readCache() {
+    try {
+      const o = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (o && o.t && o.map && typeof o.map === 'object') return o;
+    } catch (_) {}
+    return null;
+  }
+  function writeCache(map) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), map })); } catch (_) {}
+  }
+  // 单条更新缓存，避免刚点的赞/刚看的文章在下次断线时被旧值盖回去
+  function patchCache(id, patch) {
+    const c = readCache();
+    if (!c) return;
+    setStat(c.map, id, patch);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); } catch (_) {}
   }
 
   function setStat(m, id, patch) {
@@ -174,35 +237,63 @@
     if (!snapshot.map || !snapshot.map[id]) return;
     const m = Object.assign({}, snapshot.map);
     setStat(m, id, { comments: Math.max(0, ((m[id] && m[id].comments) | 0) + (delta || 0)) });
+    patchCache(id, { comments: m[id].comments });
     snapshot = Object.assign({}, snapshot, { map: m });
     emit();
   }
 
-  async function stats() {
+  let statsPromise = null;
+  // 同一时刻只允许一次全量拉取：切页、重连、自愈可能同时触发，别互相叠加
+  function stats(opts) {
+    if (statsPromise) return statsPromise;
+    statsPromise = pullStats(opts).catch(e => {
+      degraded = true;
+      lastError = describe(e);
+      return snapshot;
+    }).then(s => {
+      statsPromise = null;
+      return s;
+    });
+    return statsPromise;
+  }
+
+  async function pullStats(opts) {
+    const o = opts || {};
+    const timeout = o.timeout || READ_TIMEOUT;
     if (HAS_CLOUD) {
-      try {
-        const rows = await rest('guide_stats?select=guide_id,likes,views');
+      // 两个读并行：总耗时取决于慢的那个，而不是两者相加
+      const settled = await Promise.allSettled([
+        rest('guide_stats?select=guide_id,likes,views', null, timeout, o.retry),
+        commentCounts()
+      ]);
+      const main = settled[0];
+      const extra = settled[1];
+      if (main.status === 'fulfilled') {
         const map = {};
-        (Array.isArray(rows) ? rows : []).forEach(r => {
+        (Array.isArray(main.value) ? main.value : []).forEach(r => {
           map[r.guide_id] = { likes: r.likes | 0, views: r.views | 0, comments: 0 };
         });
-        // 评论数单独取，失败也不影响点赞/浏览的展示
-        try {
-          const cc = await commentCounts();
-          Object.keys(cc).forEach(id => { setStat(map, id, { comments: cc[id] }); });
-        } catch (_) {}
+        if (extra.status === 'fulfilled') {
+          Object.keys(extra.value).forEach(id => { setStat(map, id, { comments: extra.value[id] }); });
+        }
         degraded = false;
         lastError = '';
+        writeCache(map);
         setSnap('cloud', map);
         if (queueLen()) flushQueue();   // 顺手把积压补传掉
         return snapshot;
-      } catch (e) {
-        degraded = true;
-        lastError = describe(e);
-        // 关键：连不上时不要拿本机数字冒充云端数字，交给界面显示「—」
-        setSnap('offline', {});
-        return snapshot;
       }
+      degraded = true;
+      lastError = describe(main.reason);
+      const c = readCache();
+      if (c) {
+        // 有上次的真实数字：先展示，标记为缓存，后台继续重连
+        setSnap('cloud', c.map, { stale: true, cachedAt: c.t });
+      } else {
+        setSnap('offline', {});
+      }
+      if (!o.quiet) scheduleRecovery();
+      return snapshot;
     }
     const lo = readLocal();
     const map = {};
@@ -228,11 +319,11 @@
         const item = q[0];
         try {
           if (item.k === 'like') {
-            await rpc('guide_like_set', { p_guide: item.id, p_visitor: vid(), p_on: !!item.on });
+            await rpc('guide_like_set', { p_guide: item.id, p_visitor: vid(), p_on: !!item.on }, 15000, false);
           } else if (item.k === 'view') {
-            await rpc('guide_hit', { p_guide: item.id, p_visitor: vid() });
+            await rpc('guide_hit', { p_guide: item.id, p_visitor: vid() }, 15000, false);
           } else if (item.k === 'comment') {
-            await rpc('guide_add_comment', { p_guide: item.id, p_visitor: vid(), p_nick: item.nick || '', p_body: item.body });
+            await rpc('guide_add_comment', { p_guide: item.id, p_visitor: vid(), p_nick: item.nick || '', p_body: item.body }, 15000, false);
           }
           sent++;
         } catch (e) {
@@ -262,7 +353,8 @@
     const want = !readLocal().liked[id];
     if (HAS_CLOUD) {
       try {
-        const rows = await rpc('guide_toggle_like', { p_guide: id, p_visitor: vid() });
+        // 用 set 语义而不是 toggle：请求超时后重试是幂等的，不会点一次变两次
+        const rows = await rpc('guide_like_set', { p_guide: id, p_visitor: vid(), p_on: want }, 15000);
         const row = Array.isArray(rows) ? rows[0] : rows;
         if (row && typeof row.likes === 'number') {
           const m = Object.assign({}, currentMap());
@@ -271,7 +363,8 @@
           lo.liked[id] = !!row.liked;
           writeLocal(lo);
           degraded = false;
-          snapshot = Object.assign({}, snapshot, { mode: 'cloud', degraded: false, map: m, pending: queueLen() });
+          patchCache(id, { likes: row.likes });
+          snapshot = Object.assign({}, snapshot, { mode: 'cloud', degraded: false, stale: false, map: m, pending: queueLen() });
           emit();
           return { ok: true, likes: row.likes, liked: !!row.liked, mode: 'cloud' };
         }
@@ -305,7 +398,8 @@
         if (typeof v === 'number') {
           const m = Object.assign({}, currentMap());
           setStat(m, id, { views: v });
-          snapshot = Object.assign({}, snapshot, { map: m, pending: queueLen() });
+          patchCache(id, { views: v });
+          snapshot = Object.assign({}, snapshot, { mode: 'cloud', stale: false, map: m, pending: queueLen() });
           emit();
           return v;
         }
@@ -335,7 +429,7 @@
       try {
         const rows = await rpc('guide_list_comments', {
           p_guide: id, p_visitor: vid(), p_limit: 100
-        });
+        }, 12000);
         if (Array.isArray(rows)) {
           return {
             mode: 'cloud',
@@ -356,7 +450,7 @@
       try {
         const row = await rpc('guide_add_comment', {
           p_guide: id, p_visitor: vid(), p_nick: nick || '', p_body: body
-        });
+        }, 18000, false);   // 非幂等：只打一次，宁可提示失败也不要重复楼层
         const r = Array.isArray(row) ? row[0] : row;
         if (r && r.id) {
           bumpComments(id, 1);
@@ -385,7 +479,7 @@
   async function delComment(id, cid) {
     if (HAS_CLOUD && typeof cid === 'number') {
       try {
-        const ok = await rpc('guide_del_comment', { p_id: cid, p_visitor: vid() });
+        const ok = await rpc('guide_del_comment', { p_id: cid, p_visitor: vid() }, 15000, false);
         if (ok) bumpComments(id, -1);
         return { ok: !!ok, mode: 'cloud' };
       } catch (e) { lastError = describe(e); }
@@ -448,7 +542,7 @@
     let done = 0;
     for (const id of ids) {
       try {
-        await rpc('guide_like_set', { p_guide: id, p_visitor: vid(), p_on: true });
+        await rpc('guide_like_set', { p_guide: id, p_visitor: vid(), p_on: true }, 15000, false);
         done++;
       } catch (e) {
         lastError = describe(e);
@@ -459,10 +553,49 @@
     return { ok: true, done, total: ids.length };
   }
 
+  /* ---------- 断线自愈 ----------
+     连不上就自己隔一会儿再试，指数退避到 60 秒封顶；
+     留在页面上不动也能恢复，不需要刷新，更不需要换浏览器。 */
+  let recoverTimer = null;
+  let recoverDelay = 4000;
+
+  function scheduleRecovery() {
+    if (!HAS_CLOUD || recoverTimer) return;
+    recoverTimer = setTimeout(runRecovery, recoverDelay + Math.round(Math.random() * 800));
+  }
+
+  async function runRecovery() {
+    recoverTimer = null;
+    if (document.hidden) { scheduleRecovery(); return; }   // 后台标签页不空转
+    const s = await stats({ timeout: 9000, quiet: true });
+    if (s.mode === 'cloud' && !s.degraded) { recoverDelay = 4000; return; }
+    recoverDelay = Math.min(Math.round(recoverDelay * 1.8), 60000);
+    scheduleRecovery();
+  }
+
+  // 用户点「重试」：立刻重连，不等退避
+  async function reconnect() {
+    recoverDelay = 4000;
+    if (recoverTimer) { clearTimeout(recoverTimer); recoverTimer = null; }
+    const s = await stats({ timeout: 9000 });
+    if (s.mode === 'cloud' && !s.degraded) {
+      recoverDelay = 4000;
+      if (queueLen()) flushQueue();
+    } else {
+      scheduleRecovery();
+    }
+    return s;
+  }
+
   /* ---------- 生命周期 ---------- */
-  function kick() { if (HAS_CLOUD && queueLen()) flushQueue(); }
+  function kick() {
+    if (!HAS_CLOUD) return;
+    if (queueLen()) flushQueue();
+    // 之前失败过，回到前台顺手重连一次
+    if (degraded || snapshot.stale) reconnect();
+  }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) kick(); });
-  window.addEventListener('online', () => { lastError = ''; kick(); stats(); });
+  window.addEventListener('online', () => { lastError = ''; reconnect(); });
   window.addEventListener('offline', () => { degraded = true; emit(); });
   setInterval(() => { if (!document.hidden && queueLen()) flushQueue(); }, 60000);
 
@@ -484,6 +617,13 @@
     flush: flushQueue,
     queueLen,
     pushLocalLikes,
+    reconnect,
+    statsAge: () => {
+      const c = readCache();
+      return c ? Date.now() - c.t : 0;
+    },
+    // 供其他模块复用同一套超时 + 重试，别再各写一份裸 fetch
+    net: { rest, rpc },
     onChange: fn => { listeners.add(fn); return () => listeners.delete(fn); },
     snapshot: () => snapshot
   };
