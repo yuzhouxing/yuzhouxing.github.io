@@ -119,7 +119,6 @@
     '<section class="tcl" id="tlContrib" hidden>' +
       '<div class="tcl-head">' +
         '<h2 class="tcl-title">贡献榜</h2>' +
-        '<span class="tcl-sub">按写过的词条数排名；同一署名在同一条目下改多少次，都只算一条</span>' +
         '<button class="tcl-more" id="tlContribMore" type="button" hidden>展开全部</button>' +
       '</div>' +
       '<ol class="tcl-list" id="tlContribList"></ol>' +
@@ -179,8 +178,8 @@
       '<select class="tn-cat">' +
         CAT_ORDER.map(c => '<option value="' + c + '">' + CAT_NAME[c] + '</option>').join('') +
       '</select>' +
-      '<label class="tn-label">释义<span>可留空，先占个位置</span></label>' +
-      '<textarea class="tn-body" maxlength="2000" rows="4" placeholder="用一两句话说清它是什么、有什么用、在哪获得"></textarea>' +
+      '<label class="tn-label">释义<span>可留空</span></label>' +
+      '<textarea class="tn-body" maxlength="8000" rows="5" placeholder="正文，支持 Markdown"></textarea>' +
       '<div class="tn-foot">' +
         '<input class="tn-nick" maxlength="20" placeholder="署名（可留空）">' +
         '<button class="tn-save" type="button">创建词条</button>' +
@@ -188,6 +187,7 @@
       '<p class="tn-msg"></p>' +
     '</div>';
   document.body.appendChild(modal);
+  if (window.WXMD) window.WXMD.attach(modal.querySelector('.tn-body'));
   const tnMsg = modal.querySelector('.tn-msg');
 
   function openNew(prefill) {
@@ -196,6 +196,7 @@
     tnMsg.textContent = '';
     modal.querySelector('.tn-name').value = prefill || '';
     modal.querySelector('.tn-body').value = '';
+    if (modal.querySelector('.tn-body')._wxmd) modal.querySelector('.tn-body')._wxmd.refresh();
     try { modal.querySelector('.tn-nick').value = localStorage.getItem('wx_nick') || ''; } catch (_) {}
     setTimeout(() => modal.querySelector('.tn-name').focus(), 30);
   }
@@ -371,6 +372,8 @@
     if (!rows || !rows.length) { box.hidden = true; return; }
     box.hidden = false;
     const show = contribAll ? rows : rows.slice(0, 5);
+    // 只有一两个人时比例条撑不出信息量，直接收起
+    listEl.classList.toggle('tcl-slim', rows.length < 3);
     const max = Math.max(1, rows[0].terms | 0);
     listEl.innerHTML = show.map((r, i) => {
       const pct = Math.max(6, Math.round((r.terms | 0) / max * 100));
@@ -450,7 +453,7 @@
     editBtn.hidden = false;
     editBtn.textContent = t.filled ? '编辑释义' : '我来写第一条';
     bodyEl.innerHTML = t.filled
-      ? t.body.split(/\n{1,}/).filter(Boolean).map(p => '<p>' + esc(p) + '</p>').join('')
+      ? '<div class="md-view">' + (window.WXMD ? window.WXMD.render(t.body) : t.body.split(/\n+/).map(p => '<p>' + esc(p) + '</p>').join('')) + '</div>'
       : '<p class="td-hint">这条还没有人写。<br>你比下一位玩家更早来到这里 —— 补一句，后面的人就不用猜了。</p>' +
         '<div class="td-cta"><button class="td-edit2" type="button">我来写第一条</button></div>';
     const d2 = bodyEl.querySelector('.td-edit2');
@@ -494,7 +497,7 @@
       histEl.innerHTML = rows.map(r =>
         '<div class="td-hist-row">' +
           '<div class="th-top"><b>' + esc(r.nick || '无名侠客') + '</b><time>' + dateTxt(r.created_at) + '</time></div>' +
-          '<p>' + esc((r.body || '').slice(0, 160)) + '</p>' +
+          '<p>' + esc(window.WXMD ? window.WXMD.plain(r.body, 160) : (r.body || '').slice(0, 160)) + '</p>' +
         '</div>'
       ).join('');
     } catch (_) {

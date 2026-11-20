@@ -189,7 +189,7 @@
         '<button class="tp-x" type="button" aria-label="关闭">✕</button>' +
       '</div>' +
       (t.filled
-        ? '<div class="tp-body">' + esc(t.body.length > 120 ? t.body.slice(0, 120) + '…' : t.body).replace(/\n/g, '<br>') + '</div>' +
+        ? '<div class="tp-body">' + esc(window.WXMD ? window.WXMD.plain(t.body, 120) : t.body.slice(0, 120)) + '</div>' +
           '<div class="tp-foot"><span class="tp-by">' + (t.editor ? '由 ' + esc(t.editor) + ' 释义' : '社区释义') + '</span>' +
           '<button class="tp-edit" type="button" data-act="open">查看完整词条 ›</button></div>'
         : '<div class="tp-body tp-hint">这个词条还没有释义。<br>你比下一位玩家更早来到这里 —— 补一句，后面的人就不用猜了。</div>' +
@@ -245,8 +245,7 @@
       modalEl.innerHTML =
         '<div class="tm-card" role="dialog" aria-modal="true">' +
           '<div class="tm-head"><b class="tm-title"></b><button class="tm-x" type="button" aria-label="关闭">✕</button></div>' +
-          '<p class="tm-sub"></p>' +
-          '<textarea class="tm-body" maxlength="800" rows="5" placeholder="用一两句话说清它是什么、有什么用、在哪获得"></textarea>' +
+          '<textarea class="tm-body" maxlength="8000" rows="7" placeholder="正文，支持 Markdown"></textarea>' +
           '<div class="tm-row"><input class="tm-nick" maxlength="20" placeholder="署名（可留空）"><button class="tm-save" type="button">保存</button></div>' +
           '<p class="tm-msg"></p>' +
         '</div>';
@@ -255,11 +254,12 @@
         if (e.target === modalEl || e.target.closest('.tm-x')) closeEditor();
       });
     }
+    if (!modalEl._md && window.WXMD) modalEl._md = window.WXMD.attach(modalEl.querySelector('.tm-body'));
     modalEl.dataset.term = t.name;
     modalEl.querySelector('.tm-title').textContent = t.name;
-    modalEl.querySelector('.tm-sub').textContent = t.filled ? '修改这条释义，所有人都会看到新版本。' : '第一个写下它的人。';
     const ta = modalEl.querySelector('.tm-body');
     ta.value = t.body || '';
+    if (modalEl._md) { modalEl._md.refresh(); modalEl._md.preview(false); }
     modalEl.querySelector('.tm-msg').textContent = '';
     try { modalEl.querySelector('.tm-nick').value = localStorage.getItem('wx_nick') || ''; } catch (_) {}
     modalEl.hidden = false;
@@ -280,7 +280,7 @@
     const msg = modalEl.querySelector('.tm-msg');
     const btn = modalEl.querySelector('.tm-save');
     const body = ta.value.trim();
-    if (body.length < 2) { msg.textContent = '再多写一点'; return; }
+    if (body.length < 2) { msg.textContent = '内容太短'; return; }
     if (!ON) { msg.textContent = '未连接词条服务'; return; }
     btn.disabled = true; btn.textContent = '保存中…';
     try {
