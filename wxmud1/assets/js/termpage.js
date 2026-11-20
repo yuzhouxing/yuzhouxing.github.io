@@ -116,6 +116,14 @@
       '<h1>词条总览 <span class="ph-count" id="tlCount"></span></h1>' +
       '<p class="page-sub">正文里带虚线的词都能点开查看。标灰的是还没有人写过的条目，随时可以补上。</p>' +
     '</div>' +
+    '<section class="tcl" id="tlContrib" hidden>' +
+      '<div class="tcl-head">' +
+        '<h2 class="tcl-title">贡献榜</h2>' +
+        '<span class="tcl-sub">按写过的词条数排名；同一署名在同一条目下改多少次，都只算一条</span>' +
+        '<button class="tcl-more" id="tlContribMore" type="button" hidden>展开全部</button>' +
+      '</div>' +
+      '<ol class="tcl-list" id="tlContribList"></ol>' +
+    '</section>' +
     '<div class="tlist-tools">' +
       '<input class="tlist-search" id="tlSearch" type="search" placeholder="搜索词条…" autocomplete="off">' +
       '<button class="tlist-new" id="tlNew" type="button">＋ 新增词条</button>' +
@@ -239,6 +247,7 @@
           : '已创建 · 正文里暂时没出现，下回补进去就会自动加下划线');
       }
       closeNew();
+      dropContrib();
       location.hash = '#/t/' + encodeURIComponent(r.name);
     } catch (_) {
       tnMsg.textContent = '网络异常，稍后再试';
@@ -316,12 +325,80 @@
   });
   viewList.querySelector('#tlNew').onclick = () => openNew('');
 
+  /* ---------- 贡献榜 ---------- */
+  // 口径：同一署名在同一条词目下改多少次都只算 1 条，所以主数字是「条」；
+  // 「次」只作副信息，用来看谁改得细。数据来自 term_contributors。
+  let contribRows = null, contribAt = 0, contribAll = false;
+  // 自己刚写完就作废缓存，回到总览能立刻看到名次变化
+  function dropContrib() { contribRows = null; contribAt = 0; }
+
+  async function fetchContrib() {
+    if (!ON) return null;
+    if (contribRows && Date.now() - contribAt < 20000) return contribRows;
+    const payload = { p_limit: 30 };
+    try {
+      let rows;
+      const net = window.WXCloud && window.WXCloud.net;
+      if (net) {
+        rows = await net.rpc('term_contributors', payload, 12000);
+      } else {
+        const res = await fetch(BASE + '/rest/v1/rpc/term_contributors', {
+          method: 'POST',
+          headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        rows = await res.json();
+      }
+      contribRows = Array.isArray(rows) ? rows : [];
+      contribAt = Date.now();
+    } catch (_) {
+      // 拉不到就整块藏起来，别在总览页挂一条报错
+    }
+    return contribRows;
+  }
+
+  function contribDay(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  function paintContrib(rows) {
+    const box = viewList.querySelector('#tlContrib');
+    const listEl = viewList.querySelector('#tlContribList');
+    const more = viewList.querySelector('#tlContribMore');
+    if (!box || !listEl) return;
+    if (!rows || !rows.length) { box.hidden = true; return; }
+    box.hidden = false;
+    const show = contribAll ? rows : rows.slice(0, 5);
+    const max = Math.max(1, rows[0].terms | 0);
+    listEl.innerHTML = show.map((r, i) => {
+      const pct = Math.max(6, Math.round((r.terms | 0) / max * 100));
+      return '<li class="tcl-row' + (i < 3 ? ' top' : '') + '">' +
+        '<span class="tcl-rank">' + pad(i + 1) + '</span>' +
+        '<span class="tcl-name">' + esc(r.nick) + '</span>' +
+        '<span class="tcl-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span>' +
+        '<span class="tcl-num"><b>' + (r.terms | 0) + '</b> 条</span>' +
+        '<span class="tcl-edits" title="累计编辑次数">' + (r.edits | 0) + ' 次</span>' +
+        '<span class="tcl-time" title="最近一次编辑">' + contribDay(r.last_at) + '</span>' +
+      '</li>';
+    }).join('');
+    more.hidden = rows.length <= 5;
+    more.textContent = contribAll ? '收起' : '展开全部 ' + rows.length;
+  }
+
+  viewList.querySelector('#tlContribMore').onclick = () => {
+    contribAll = !contribAll;
+    paintContrib(contribRows);
+  };
+
   function showList() {
     viewTerm.hidden = true;
     viewList.hidden = false;
     const mod = T();
     const p = mod ? mod.ready() : Promise.resolve();
     p.then(() => { paintChips(); paintGrid(); });
+    fetchContrib().then(paintContrib);
     document.title = '词条总览 · 武仙传说';
   }
 
@@ -384,7 +461,7 @@
         (t.updated_at ? ' · ' + dateTxt(t.updated_at) + ' 更新' : '')
       : '';
 
-    editBtn.onclick = () => mod.edit(name, () => showTerm(name));
+    editBtn.onclick = () => mod.edit(name, () => { dropContrib(); showTerm(name); });
 
     // 引用
     const refs = scan(name);
