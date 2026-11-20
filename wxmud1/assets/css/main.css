@@ -1654,7 +1654,8 @@ body.has-netbar .to-top{bottom:74px}
 
 /* 详情页内嵌评论区：去掉卡片外壳，融进 pd-sec */
 #pdCmtSec .cmt-card{padding:0;border:none;background:none;box-shadow:none;border-radius:0}
-#pdCmtSec .cmt-head{margin-bottom:12px}
+#pdCmtSec .cmt-head{margin-bottom:11px}
+#pdCmtSec .cmt-title{font-family:var(--mono);font-size:10.5px;font-weight:500;color:var(--ink-4);letter-spacing:.14em;text-transform:uppercase}
 #pdCmtSec .cmt-list{margin-top:8px}
 #pdCmtSec .cmt-item:first-child{border-top:1px solid rgba(255,255,255,.045)}
 

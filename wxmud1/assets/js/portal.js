@@ -220,7 +220,7 @@
     if (plLoading) return plLoading;
     plLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'assets/data/plugins.js?v=20261120-13';
+      s.src = 'assets/data/plugins.js?v=20261120-14';
       s.onload = () => {
         if (window.WX_PLUGINS && Array.isArray(WX_PLUGINS.items)) {
           PLUG = WX_PLUGINS.items.slice();   // 数组本身已按原榜序排好
