@@ -264,6 +264,33 @@ h1{margin:0;font-family:var(--serif);font-weight:600;line-height:1.08}
   border:1px solid var(--line-2);border-radius:3px;padding:2px 6px;
 }
 
+/* 词条总览入口：与搜索条同宽的金色长条 */
+.term-entry{
+  display:flex;align-items:center;gap:9px;box-sizing:border-box;
+  max-width:600px;margin:12px auto 0;padding:0 16px;height:46px;
+  border-radius:6px;
+  background:linear-gradient(180deg,#f4d79c 0%,#d9a94f 52%,#bf8d2f 100%);
+  border:1px solid rgba(246,220,166,.9);color:#1b1206;
+  font-size:13.5px;font-weight:600;letter-spacing:.04em;white-space:nowrap;
+  box-shadow:0 0 0 1px rgba(217,169,79,.16),0 10px 30px -16px rgba(217,169,79,.85);
+  transition:filter .2s,box-shadow .2s,transform .15s;
+}
+.term-entry:hover{
+  filter:brightness(1.07);
+  box-shadow:0 0 0 1px rgba(246,220,166,.4),0 12px 32px -14px rgba(217,169,79,1);
+}
+.term-entry:active{transform:translateY(1px)}
+.te-ico{width:16px;height:16px;flex:none;opacity:.78}
+.te-txt{flex:none}
+.te-sub{
+  margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:500;
+  letter-spacing:0;color:rgba(27,18,6,.6);
+}
+.te-sub:empty{display:none}
+.te-arrow{display:grid;place-items:center;width:18px;height:18px;flex:none;opacity:.55;transition:transform .2s,opacity .2s}
+.te-arrow svg{width:14px;height:14px}
+.term-entry:hover .te-arrow{transform:translateX(2px);opacity:.9}
+
 /* HUD 数据 */
 .hud{
   display:grid;grid-template-columns:repeat(4,1fr);
@@ -873,6 +900,8 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
   .lede{font-size:12.5px;line-height:1.95}
   .mb-only{display:block}
   .searchbar{height:50px;margin-top:30px}
+  .term-entry{height:44px;margin-top:10px;padding:0 14px;font-size:13px}
+  .te-sub{font-size:10px}
   #search{font-size:13.5px}
   .hud{margin-top:32px;grid-template-columns:repeat(2,1fr)}
   .hud-cell{border-top:1px solid var(--line)}
@@ -1068,8 +1097,7 @@ mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padd
 
 /* 状态条常驻时给页面留出底部空间，别让它压住最后一排卡片 */
 body.has-netbar{padding-bottom:54px}
-.foot-link{color:var(--ink-4);border-bottom:1px dotted rgba(201,195,182,.28);transition:.16s}
-.foot-link:hover{color:var(--gold);border-bottom-color:var(--gold)}
+
 body.has-netbar .to-top{bottom:74px}
 
 /* ============================================================
