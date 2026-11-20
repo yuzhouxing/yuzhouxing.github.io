@@ -49,6 +49,10 @@
   const qmodal = $('#qmodal'), qmCopy = $('#qmCopy');
 
   /* ---------- 索引 ---------- */
+  // 插件脚本类的文章不占「攻略大全」，它们归到「流程与插件」
+  const MAIN_GUIDES = GUIDES.filter(g => g.cat !== 'plugin');
+  const listMain = () => MAIN_GUIDES;
+
   const index = GUIDES.map(g => {
     let txt = g.title + ' ' + g.tags.join(' ') + ' ' + g.summary + ' ';
     for (const b of g.blocks) {
@@ -71,32 +75,37 @@
   }
 
   /* ---------- 导航 ---------- */
+  const NAV_ITEMS = [
+    ['guides', '攻略大全', '#/list'],
+    ['terms', '词条百科', '#/t'],
+    ['tools', '工具包', '#/tools'],
+    ['plugins', '流程与插件', '#/p']
+  ];
   function buildNav() {
     const nav = $('#topnav');
     nav.innerHTML = '';
-    const mk = (id, name, idx) => {
-      const a = el('a'); a.href = id === 'all' ? '#/' : '#/c/' + id;
-      a.dataset.cat = id;
-      a.innerHTML = '<span class="idx">' + idx + '</span>' + esc(name);
+    NAV_ITEMS.forEach(([key, name], i) => {
+      const a = el('a');
+      a.href = NAV_ITEMS[i][2];
+      a.dataset.key = key;
+      a.innerHTML = '<span class="idx">' + pad(i + 1, 2) + '</span>' + esc(name);
       nav.appendChild(a);
-    };
-    mk('all', '全部', '00');
-    CATS.forEach((c, i) => mk(c.id, c.name, pad(i + 1, 2)));
+    });
   }
 
   function buildChips() {
     const counts = {};
-    GUIDES.forEach(g => counts[g.cat] = (counts[g.cat] || 0) + 1);
+    listMain().forEach(g => counts[g.cat] = (counts[g.cat] || 0) + 1);
     chips.innerHTML = '';
     const mk = (id, name, n, idx) => {
       const b = el('button', 'chip' + (state.cat === id ? ' on' : ''));
       b.dataset.cat = id;
       b.innerHTML = '<span class="c-idx">' + idx + '</span>' + esc(name) + '<span class="c-num">' + n + '</span>';
-      b.onclick = () => { location.hash = id === 'all' ? '#/' : '#/c/' + id; };
+      b.onclick = () => { location.hash = id === 'all' ? '#/list' : '#/c/' + id; };
       chips.appendChild(b);
     };
-    mk('all', '全部', GUIDES.length, '00');
-    CATS.forEach((c, i) => { if (counts[c.id]) mk(c.id, c.name, counts[c.id], pad(i + 1, 2)); });
+    mk('all', '全部', listMain().length, '00');
+    CATS.forEach((c, i) => { if (c.id !== 'plugin' && counts[c.id]) mk(c.id, c.name, counts[c.id], pad(i + 1, 2)); });
   }
 
   /* ---------- 过滤 ---------- */
@@ -120,6 +129,7 @@
       });
     }
     if (state.cat !== 'all') list = list.filter(g => g.cat === state.cat);
+    else list = list.filter(g => g.cat !== 'plugin');
     if (state.q.trim()) return list;
     if (state.sort === 'len') list.sort((a, b) => b.chars - a.chars);
     else if (state.sort === 'img') list.sort((a, b) => b.imgs - a.imgs);
@@ -247,7 +257,7 @@
   /* ---------- 详情 ---------- */
   function renderReader(id) {
     const g = BY_ID[id];
-    if (!g) { location.hash = '#/'; return; }
+    if (!g) { location.hash = '#/list'; return; }
     const accent = ACCENT[g.cat] || '#d9a94f';
     document.documentElement.style.setProperty('--accent', accent);
     const no = pad(sortedIndex(g));
@@ -573,51 +583,91 @@
     Promise.resolve(WX_TERMS.ready()).then(paintTermEntry).catch(() => {});
   }
 
+  const viewPortal = $('#viewPortal'), viewTools = $('#viewTools'), viewPlugins = $('#viewPlugins');
+  function onlyView(keep) {
+    [viewPortal, viewHome, viewReader, viewTools, viewPlugins].forEach(v => {
+      if (v) v.hidden = v !== keep;
+    });
+  }
+
   function route() {
     paintTermEntry();
     const h = location.hash || '#/';
     const mG = h.match(/^#\/g\/([a-f0-9]+)/);
     const mC = h.match(/^#\/c\/(\w+)/);
+    const mP = h.match(/^#\/p(?:\/(\d+))?$/);
 
 
     const mT = h.match(/^#\/t(?:\/([^/?#]+))?$/);
     if (mT && window.WXTermPage) {
-      viewHome.hidden = true;
-      viewReader.hidden = true;
+      onlyView(null);
       window.WXTermPage.show(mT[1] ? decodeURIComponent(mT[1]) : '');
-      updateNav();
+      updateNav('terms');
       updateProgress();
       return;
     }
     if (window.WXTermPage) window.WXTermPage.hide();
 
+    // 流程与插件
+    if (mP && window.WXPortal) {
+      onlyView(viewPlugins);
+      document.title = '流程与插件 · 武仙传说';
+      window.WXPortal.showPlugins(mP[1]);
+      updateNav('plugins');
+      updateProgress();
+      return;
+    }
+
+    // 工具包
+    if (h === '#/tools' && window.WXPortal) {
+      onlyView(viewTools);
+      document.title = '工具包 · 武仙传说';
+      window.WXPortal.showTools();
+      updateNav('tools');
+      updateProgress();
+      return;
+    }
+
     if (mG) {
       const gid = ALIAS[mG[1]] || mG[1];
-      if (!BY_ID[gid]) { location.hash = '#/'; return; }
+      if (!BY_ID[gid]) { location.hash = '#/list'; return; }
       if (gid !== mG[1]) { location.replace('#/g/' + gid); return; }
-      viewHome.hidden = true;
-      viewReader.hidden = false;
+      onlyView(viewReader);
       renderReader(gid);
-    } else {
-      viewReader.hidden = true;
-      viewHome.hidden = false;
-      document.title = '武仙传说 · 攻略总集';
-      state.cat = (mC && CAT_MAP[mC[1]]) ? mC[1] : 'all';
-      buildChips();
-      buildNav();
-      renderGrid();
-      if (window.__fromReader) {
-        window.scrollTo({ top: homeScroll, behavior: 'instant' });
-        window.__fromReader = false;
-      }
+      updateNav('guides');
+      updateProgress();
+      return;
     }
-    updateNav();
+
+    // 门户首页
+    if (h === '#/' || h === '#' || h === '' || h === '#/home') {
+      onlyView(viewPortal);
+      if (window.WXPortal) window.WXPortal.paintCounts();
+      updateNav('portal');
+      document.title = '武仙传说 · 攻略总集';
+      updateProgress();
+      return;
+    }
+
+    // 攻略大全（#/list 与 #/c/:cat）
+    onlyView(viewHome);
+    document.title = '攻略大全 · 武仙传说';
+    if (mC && mC[1] === 'plugin') { location.replace('#/p'); return; }
+    state.cat = (mC && CAT_MAP[mC[1]]) ? mC[1] : 'all';
+    buildChips();
+    buildNav();
+    renderGrid();
+    if (window.__fromReader) {
+      window.scrollTo({ top: homeScroll, behavior: 'instant' });
+      window.__fromReader = false;
+    }
+    updateNav('guides');
     updateProgress();
   }
 
-  function updateNav() {
+  function updateNav(key) {
     document.querySelectorAll('#topnav a').forEach(a => {
-      a.classList.toggle('on', a.dataset.cat === state.cat);
+      a.classList.toggle('on', a.dataset.key === key);
     });
   }
 
@@ -702,11 +752,11 @@
   };
 
   $('#emptyReset').onclick = () => {
-    state.q = ''; search.value = ''; location.hash = '#/';
+    state.q = ''; search.value = ''; location.hash = '#/list';
     setTimeout(() => { buildChips(); renderGrid(); }, 0);
   };
 
-  $('#backBtn').onclick = () => { window.__fromReader = true; history.length > 1 ? history.back() : (location.hash = '#/'); };
+  $('#backBtn').onclick = () => { window.__fromReader = true; history.length > 1 ? history.back() : (location.hash = '#/list'); };
   $('#cmdBtn').onclick = () => openCmdk();
 
   /* ---------- QQ 群 ---------- */
@@ -810,11 +860,11 @@
       if (ts && !document.getElementById('viewTerms').hidden) ts.focus();
       return;
     }
-    if (e.key === '/' && !inInput && qmodal.hidden) { e.preventDefault(); if (viewHome.hidden) location.hash = '#/'; setTimeout(() => search.focus(), 30); return; }
+    if (e.key === '/' && !inInput && qmodal.hidden) { e.preventDefault(); if (viewHome.hidden) location.hash = '#/list'; setTimeout(() => search.focus(), 30); return; }
     if (e.key === 'Escape') {
       if (!qmodal.hidden) closeQQ();
       else if (!lightbox.hidden) lightbox.hidden = true;
-      else if (!viewReader.hidden) { window.__fromReader = true; location.hash = '#/'; }
+      else if (!viewReader.hidden) { window.__fromReader = true; location.hash = '#/list'; }
       else if (inInput) document.activeElement.blur();
       return;
     }
@@ -855,20 +905,21 @@
 
   /* ---------- HUD ---------- */
   function buildStats() {
-    const chars = GUIDES.reduce((s, g) => s + g.chars, 0);
-    const imgs = GUIDES.reduce((s, g) => s + g.imgs, 0);
+    const main = listMain();
+    const chars = main.reduce((s, g) => s + g.chars, 0);
+    const imgs = main.reduce((s, g) => s + g.imgs, 0);
     const items = [
-      [GUIDES.length, 'ENTRIES', '篇'],
+      [main.length, 'ENTRIES', '篇'],
       [Math.round(chars / 10000), 'K CHARS', '万字'],
       [imgs, 'IMAGES', '张图'],
-      [CATS.length, 'SECTORS', '分类']
+      [CATS.filter(c => c.id !== 'plugin').length, 'SECTORS', '分类']
     ];
     $('#stats').innerHTML = items.map(([n, u, cn], i) =>
       '<div class="hud-cell"><span class="hud-num" data-n="' + n + '" data-i="' + i + '">0</span>' +
       '<span class="hud-unit">' + u + '</span></div>').join('');
 
-    $('#hmCount').textContent = GUIDES.length + ' ENTRIES';
-    $('#footCount').textContent = GUIDES.length;
+    $('#hmCount').textContent = listMain().length + ' ENTRIES';
+    $('#footCount').textContent = listMain().length;
     $('#footDate').textContent = (DATA.meta && DATA.meta.updated) || '—';
 
     // 数字滚动（定时器驱动，确保一定能落地）

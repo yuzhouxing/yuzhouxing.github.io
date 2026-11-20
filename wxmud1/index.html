@@ -10,7 +10,7 @@
 <meta property="og:title" content="武仙传说 · 攻略总集">
 <meta property="og:description" content="副本禁地、门派武学、装备炼制、丹方符箓、插件脚本，全量收录，一搜即达。">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="assets/css/main.css?v=20261120-7">
+<link rel="stylesheet" href="assets/css/main.css?v=20261120-8">
 </head>
 <body>
 
@@ -54,8 +54,69 @@
 </header>
 
 <main>
-  <!-- ============ 首页 ============ -->
-  <section class="view view-home" id="viewHome">
+  <!-- ============ 门户首页 ============ -->
+  <section class="view view-portal" id="viewPortal" hidden>
+    <div class="portal">
+      <div class="portal-meta">
+        <span class="hm-item"><i class="dot"></i>INDEX ONLINE</span>
+        <span class="hm-sep">/</span>
+        <span class="hm-item">REV 2026.11</span>
+      </div>
+      <h1 class="portal-h1">
+        <span class="h1-main">武仙传说</span>
+        <span class="h1-line" aria-hidden="true"><i></i></span>
+        <span class="h1-sub">攻略总集</span>
+      </h1>
+      <p class="portal-lede">攻略 · 词条 · 工具 · 脚本，四个入口各管一摊。</p>
+
+      <div class="portal-grid">
+        <a class="portal-card" href="#/list" style="--accent:var(--gold)">
+          <span class="pc-top"><span class="pc-idx">01</span><span class="pc-num" id="pcGuides">—</span></span>
+          <span class="pc-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 4.5h6.5a2 2 0 0 1 2 2V20a2.5 2.5 0 0 0-2.5-2.5H4Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M20 4.5h-6.5a2 2 0 0 0-2 2V20a2.5 2.5 0 0 1 2.5-2.5H20Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="pc-title">攻略大全</span>
+          <span class="pc-desc">副本禁地、门派武学、装备炼制、丹方符箓，按分类检索全文。</span>
+          <span class="pc-go">进入 <i aria-hidden="true">→</i></span>
+        </a>
+
+        <a class="portal-card" href="#/t" style="--accent:#8fb8c9">
+          <span class="pc-top"><span class="pc-idx">02</span><span class="pc-num" id="pcTerms">—</span></span>
+          <span class="pc-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m16.2 16.2 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8.4 11h5.2M11 8.4v5.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </span>
+          <span class="pc-title">词条百科</span>
+          <span class="pc-desc">名词释义、出处与反向索引，攻略里带下划线的字都能点进来。</span>
+          <span class="pc-go">查询 <i aria-hidden="true">→</i></span>
+        </a>
+
+        <a class="portal-card" href="#/tools" style="--accent:#c9a3d6">
+          <span class="pc-top"><span class="pc-idx">03</span><span class="pc-num" id="pcTools">—</span></span>
+          <span class="pc-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14.2 5.2a3.6 3.6 0 0 0 4.6 4.6l-7.2 7.2a2.6 2.6 0 1 1-3.7-3.7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m9.6 6.4 8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <span class="pc-title">工具包</span>
+          <span class="pc-desc">开花计算器、面板换算一类的小工具，打开即用，不装软件。</span>
+          <span class="pc-go">打开 <i aria-hidden="true">→</i></span>
+        </a>
+
+        <a class="portal-card" href="#/p" style="--accent:#7fc4a8">
+          <span class="pc-top"><span class="pc-idx">04</span><span class="pc-num" id="pcPlugins">—</span></span>
+          <span class="pc-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 4.5v3M15 4.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="5.5" y="7.5" width="13" height="11.5" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="m10 12.4-1.6 1.8 1.6 1.8M14 12.4l1.6 1.8-1.6 1.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="pc-title">流程与插件</span>
+          <span class="pc-desc">热门触发、流程源码与导入说明，附带用途备注和使用背景。</span>
+          <span class="pc-go">浏览 <i aria-hidden="true">→</i></span>
+        </a>
+      </div>
+
+      <p class="portal-hint"><kbd>/</kbd> 直接搜攻略 <kbd>⌘K</kbd> 命令面板</p>
+    </div>
+  </section>
+
+  <!-- ============ 攻略大全 ============ -->
+  <section class="view view-home" id="viewHome" hidden>
     <div class="hero">
       <div class="hero-frame" aria-hidden="true">
         <span class="corner tl"></span><span class="corner tr"></span>
@@ -171,6 +232,53 @@
 
     <div class="pager" id="pager"></div>
   </section>
+
+  <!-- ============ 工具包 ============ -->
+  <section class="view view-tools" id="viewTools" hidden>
+    <div class="tl-page">
+      <div class="page-crumb"><a href="#/">首页</a><span>/</span>工具包</div>
+      <div class="page-head">
+        <h1 class="page-title">工具包</h1>
+        <p class="page-sub">常用计算与换算，纯网页实现，不联网也能跑。</p>
+      </div>
+      <div class="tool-grid" id="toolGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 流程与插件 ============ -->
+  <section class="view view-plugins" id="viewPlugins" hidden>
+    <div class="pl-page" id="plListPage">
+      <div class="page-crumb"><a href="#/">首页</a><span>/</span>流程与插件</div>
+      <div class="page-head">
+        <h1 class="page-title">流程与插件</h1>
+        <p class="page-sub">收录武神传说热度最高的触发与流程，点开即看源码、复制分享码，并附一条用途备注。</p>
+      </div>
+
+      <div class="pl-bar">
+        <label class="pl-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.4 4.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="plSearch" type="search" placeholder="搜名称、作者、触发事件或源码…" autocomplete="off" spellcheck="false">
+        </label>
+        <button class="pl-sort" id="plSort" type="button">按热度</button>
+      </div>
+
+      <div class="pl-meta" id="plMeta"></div>
+      <div class="pl-grid" id="plGrid"></div>
+      <div class="pl-empty" id="plEmpty" hidden>没有匹配的条目</div>
+
+      <section class="pl-guides">
+        <h2 class="pl-h2">本站插件教程 <span id="plGuideNum"></span></h2>
+        <div class="pl-guide-list" id="plGuideList"></div>
+      </section>
+
+      <p class="pl-note">
+        条目来自 wsmud.ii74.com 的玩家公开分享（按赞数取前 100），版权归原作者；
+        源码仅作学习与交流，导入前请自行检查，如涉及侵权请联系删除。
+      </p>
+    </div>
+
+    <div class="pl-detail-page" id="plDetailPage" hidden></div>
+  </section>
 </main>
 
 <!-- 加群面板 -->
@@ -214,11 +322,12 @@
   <div class="lb-hint">点击任意处关闭</div>
 </div>
 
-<script src="data.js?v=20261120-7"></script>
-<script src="assets/js/config.js?v=20261120-7"></script>
-<script src="assets/js/cloud.js?v=20261120-7"></script>
-<script src="assets/js/terms.js?v=20261120-7"></script>
-<script src="assets/js/termpage.js?v=20261120-7"></script>
-<script src="assets/js/app.js?v=20261120-7"></script>
+<script src="data.js?v=20261120-8"></script>
+<script src="assets/js/config.js?v=20261120-8"></script>
+<script src="assets/js/cloud.js?v=20261120-8"></script>
+<script src="assets/js/terms.js?v=20261120-8"></script>
+<script src="assets/js/termpage.js?v=20261120-8"></script>
+<script src="assets/js/portal.js?v=20261120-8"></script>
+<script src="assets/js/app.js?v=20261120-8"></script>
 </body>
 </html>
