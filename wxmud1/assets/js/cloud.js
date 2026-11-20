@@ -577,6 +577,8 @@
   async function reconnect() {
     recoverDelay = 4000;
     if (recoverTimer) { clearTimeout(recoverTimer); recoverTimer = null; }
+    // 可能正有一次失败的拉取在路上：等它收尾，再发一次全新的，别把旧结果当重试结果
+    if (statsPromise) { try { await statsPromise; } catch (_) {} }
     const s = await stats({ timeout: 9000 });
     if (s.mode === 'cloud' && !s.degraded) {
       recoverDelay = 4000;
