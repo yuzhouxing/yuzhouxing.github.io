@@ -60,7 +60,8 @@
     map = new Map();
     for (const t of list) map.set(t.name, {
       name: t.name, cat: t.cat || 'other', body: t.body || '',
-      filled: !!t.filled, editor: t.editor || ''
+      filled: !!t.filled, editor: t.editor || '',
+      freq: t.freq | 0, updated_at: t.updated_at || ''
     });
     buildTrie();
   }
@@ -188,12 +189,12 @@
         '<button class="tp-x" type="button" aria-label="关闭">✕</button>' +
       '</div>' +
       (t.filled
-        ? '<div class="tp-body">' + esc(t.body).replace(/\n/g, '<br>') + '</div>' +
+        ? '<div class="tp-body">' + esc(t.body.length > 120 ? t.body.slice(0, 120) + '…' : t.body).replace(/\n/g, '<br>') + '</div>' +
           '<div class="tp-foot"><span class="tp-by">' + (t.editor ? '由 ' + esc(t.editor) + ' 释义' : '社区释义') + '</span>' +
-          '<button class="tp-edit" type="button" data-act="edit">编辑</button></div>'
+          '<button class="tp-edit" type="button" data-act="open">查看完整词条 ›</button></div>'
         : '<div class="tp-body tp-hint">这个词条还没有释义。<br>你比下一位玩家更早来到这里 —— 补一句，后面的人就不用猜了。</div>' +
           '<div class="tp-foot"><span class="tp-by">待认领</span>' +
-          '<button class="tp-edit" type="button" data-act="edit">我来写</button></div>');
+          '<button class="tp-edit" type="button" data-act="open">去写第一条 ›</button></div>');
 
     pop.hidden = false;
     if (mobile) {
@@ -221,15 +222,22 @@
     active = null;
   }
 
+  function gotoTerm(name) {
+    closePop();
+    location.hash = '#/t/' + encodeURIComponent(name);
+  }
+
   function onPopClick(e) {
-    const btn = e.target.closest('[data-act="edit"]');
-    if (btn) { const t = popTerm; closePop(); openEditor(t); return; }
-    if (e.target.closest('.tp-x')) closePop();
+    if (e.target.closest('.tp-x')) { closePop(); return; }
+    if (popTerm) gotoTerm(popTerm.name);
   }
 
   /* ---------- 编辑 ---------- */
-  function openEditor(t) {
+  let editCb = null;
+
+  function openEditor(t, cb) {
     if (!t) return;
+    editCb = typeof cb === 'function' ? cb : null;
     if (!modalEl) {
       modalEl = document.createElement('div');
       modalEl.className = 'term-modal';
@@ -283,7 +291,7 @@
       });
       const r = await res.json();
       if (!r || !r.ok) { msg.textContent = (r && r.error) || '保存失败'; btn.disabled = false; btn.textContent = '保存'; return; }
-      t.body = r.body; t.filled = true; t.editor = r.editor || '';
+      t.body = r.body; t.filled = true; t.editor = r.editor || ''; t.updated_at = new Date().toISOString();
       try { if (nick.value.trim()) localStorage.setItem('wx_nick', nick.value.trim().slice(0, 20)); } catch (_) {}
       // 更新页面上所有该词条的内联样式
       document.querySelectorAll('.term[data-term="' + CSS.escape(t.name) + '"]').forEach(el => el.classList.remove('term-empty'));
@@ -298,6 +306,7 @@
       } catch (_) {}
       closeEditor();
       toast('已保存，谢谢你的补充');
+      if (editCb) { const f = editCb; editCb = null; f(t); }
     } catch (_) {
       msg.textContent = '网络异常，稍后再试';
     } finally {
@@ -336,8 +345,8 @@
     const sp = e.target.closest && e.target.closest('.term');
     if (sp) {
       e.preventDefault();
-      if (active === sp && popEl && !popEl.hidden) closePop();
-      else openPop(sp);
+      e.stopPropagation();
+      gotoTerm(sp.dataset.term);
       return;
     }
     if (popEl && !popEl.hidden && !e.target.closest('.term-pop')) closePop();
@@ -358,10 +367,43 @@
   window.addEventListener('resize', () => { if (popEl && !popEl.hidden) closePop(); });
 
   /* ---------- 对外 ---------- */
+  function addLocal(t) {
+    if (!map) map = new Map();
+    const item = {
+      name: t.name, cat: t.cat || 'other', body: t.body || '',
+      filled: !!t.filled, editor: t.editor || '', freq: t.freq | 0,
+      updated_at: t.updated_at || new Date().toISOString()
+    };
+    map.set(item.name, item);
+    buildTrie();
+    // 写回缓存，刷新页面后仍然在
+    try {
+      const o = JSON.parse(localStorage.getItem(CACHE) || 'null');
+      const list = (o && Array.isArray(o.list)) ? o.list.filter(x => x.name !== item.name) : [];
+      list.unshift(item);
+      localStorage.setItem(CACHE, JSON.stringify({ at: Date.now(), list }));
+    } catch (_) {}
+    return item;
+  }
+
+  async function refresh() {
+    map = null; trie = null; loading = null;
+    try { localStorage.removeItem(CACHE); } catch (_) {}
+    await load();
+  }
+
   window.WX_TERMS = {
     link,
     ready: load,
-    count: () => (map ? map.size : 0)
+    count: () => (map ? map.size : 0),
+    get: name => (map ? map.get(name) : null),
+    list: () => (map ? [...map.values()] : []),
+    refresh,
+    addLocal,
+    edit: (name, cb) => { const t = map && map.get(name); if (t) openEditor(t, cb); return !!t; },
+    toast,
+    CAT_NAME,
+    on: ON
   };
 
   load().then(() => {

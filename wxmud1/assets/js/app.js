@@ -556,6 +556,17 @@
     const mC = h.match(/^#\/c\/(\w+)/);
 
 
+    const mT = h.match(/^#\/t(?:\/([^/?#]+))?$/);
+    if (mT && window.WXTermPage) {
+      viewHome.hidden = true;
+      viewReader.hidden = true;
+      window.WXTermPage.show(mT[1] ? decodeURIComponent(mT[1]) : '');
+      updateNav();
+      updateProgress();
+      return;
+    }
+    if (window.WXTermPage) window.WXTermPage.hide();
+
     if (mG) {
       const gid = ALIAS[mG[1]] || mG[1];
       if (!BY_ID[gid]) { location.hash = '#/'; return; }
@@ -766,6 +777,13 @@
         const n = cmdResults(cmdkInput.value).length;
         cmdkIdx = (cmdkIdx - 1 + n) % Math.max(1, n); paintCmdk();
       } else if (e.key === 'Enter') { e.preventDefault(); cmdkGo(); }
+      return;
+    }
+    // 词条页里 "/" 聚焦词条搜索，不要把人弹回首页
+    if (e.key === '/' && !inInput && qmodal.hidden && window.WXTermPage && window.WXTermPage.isOpen()) {
+      e.preventDefault();
+      const ts = document.getElementById('tlSearch');
+      if (ts && !document.getElementById('viewTerms').hidden) ts.focus();
       return;
     }
     if (e.key === '/' && !inInput && qmodal.hidden) { e.preventDefault(); if (viewHome.hidden) location.hash = '#/'; setTimeout(() => search.focus(), 30); return; }
