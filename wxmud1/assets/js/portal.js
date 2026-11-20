@@ -180,7 +180,7 @@
     if (plLoading) return plLoading;
     plLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'assets/data/plugins.js?v=20261120-8';
+      s.src = 'assets/data/plugins.js?v=20261120-9';
       s.onload = () => {
         if (window.WX_PLUGINS && Array.isArray(WX_PLUGINS.items)) {
           PLUG = WX_PLUGINS.items.slice().sort((a, b) => b.z - a.z);
@@ -465,6 +465,7 @@
       detail.hidden = true;
       bindList();
       renderGuideLinks();
+      if (!PLUG) { $('#plMeta').textContent = '加载中…'; $('#plGrid').innerHTML = ''; }
       try {
         await loadPlugins();
         renderPlList();
@@ -475,6 +476,7 @@
     }
     list.hidden = true;
     detail.hidden = false;
+    detail.innerHTML = '<div class="page-crumb"><a href="#/p">← 流程与插件</a></div><p class="pl-empty">加载中…</p>';
     try {
       const all = await loadPlugins();
       const p = all.find(x => String(x.i) === String(id));
