@@ -33,7 +33,7 @@
   const STATS = { map: {}, mode: 'local', degraded: false };
   let statsReady = false;   // 互动数据是否已就绪，未就绪时卡片留位不显示数字
   let statsKnown = false;   // 数字是否可信；云端连不上时为 false，界面显示「—」而不是假 0
-  const stOf = id => STATS.map[id] || { likes: 0, views: 0 };
+  const stOf = id => STATS.map[id] || { likes: 0, views: 0, comments: 0 };
   // 数字文案：拿不到真实值就明确留白，绝不把「0」当作「连不上」的替身
   const numTxt = v => (statsKnown ? fmt(v) : '—');
 
@@ -161,6 +161,10 @@
               '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.2 12S5.8 6.2 12 6.2 21.8 12 21.8 12 18.2 17.8 12 17.8 2.2 12 2.2 12Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>' +
               '<b>' + numTxt(st.views) + '</b>' +
             '</span>' +
+            '<span class="cs cs-cmt' + ((st.comments | 0) > 0 && statsKnown ? ' has' : '') + '" title="' + (statsKnown ? (st.comments | 0) + ' 条评论' : '未连上云端，数字未知') + '">' +
+              '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.6c0 4.2-3.8 7.6-8.5 7.6-1 0-2-.15-2.9-.43L4.2 20.2l1.36-3.5C4.3 15.3 3.5 13.5 3.5 11.6 3.5 7.4 7.3 4 12 4s8.5 3.4 8.5 7.6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>' +
+              '<b>' + numTxt(st.comments | 0) + '</b>' +
+            '</span>' +
           '</span>'
         : '';
       a.innerHTML =
@@ -197,6 +201,7 @@
       const st = stOf(id);
       const like = card.querySelector('.cs-like');
       const view = card.querySelector('.cs-view');
+      const cmt = card.querySelector('.cs-cmt');
       if (like) {
         like.querySelector('b').textContent = numTxt(st.likes);
         like.classList.toggle('has', st.likes > 0 && statsKnown);
@@ -206,6 +211,12 @@
         view.querySelector('b').textContent = numTxt(st.views);
         view.classList.toggle('has', st.views > 0 && statsKnown);
         view.title = statsKnown ? st.views + ' 次浏览' : '未连上云端，数字未知';
+      }
+      if (cmt) {
+        const n = st.comments | 0;
+        cmt.querySelector('b').textContent = numTxt(n);
+        cmt.classList.toggle('has', n > 0 && statsKnown);
+        cmt.title = statsKnown ? n + ' 条评论' : '未连上云端，数字未知';
       }
       const wrap = card.querySelector('.card-stat');
       if (wrap && statsReady) {

@@ -155,14 +155,42 @@
   }
 
   /* ---------- 聚合计数 ---------- */
+  // 评论条数：guide_comments 对匿名只开放非敏感列，拉 guide_id 在本地数一遍。
+  // 只取未删除的行，一列文本，几千条也就几十 KB。
+  async function commentCounts() {
+    const rows = await rest('guide_comments?select=guide_id&deleted=eq.false&limit=5000');
+    const out = {};
+    (Array.isArray(rows) ? rows : []).forEach(r => { out[r.guide_id] = (out[r.guide_id] | 0) + 1; });
+    return out;
+  }
+
+  function setStat(m, id, patch) {
+    m[id] = Object.assign({ likes: 0, views: 0, comments: 0 }, m[id] || {}, patch);
+    return m[id];
+  }
+
+  // 发/删评论后马上改首页卡片上的数字，不用等下一次全量拉取
+  function bumpComments(id, delta) {
+    if (!snapshot.map || !snapshot.map[id]) return;
+    const m = Object.assign({}, snapshot.map);
+    setStat(m, id, { comments: Math.max(0, ((m[id] && m[id].comments) | 0) + (delta || 0)) });
+    snapshot = Object.assign({}, snapshot, { map: m });
+    emit();
+  }
+
   async function stats() {
     if (HAS_CLOUD) {
       try {
         const rows = await rest('guide_stats?select=guide_id,likes,views');
         const map = {};
         (Array.isArray(rows) ? rows : []).forEach(r => {
-          map[r.guide_id] = { likes: r.likes | 0, views: r.views | 0 };
+          map[r.guide_id] = { likes: r.likes | 0, views: r.views | 0, comments: 0 };
         });
+        // 评论数单独取，失败也不影响点赞/浏览的展示
+        try {
+          const cc = await commentCounts();
+          Object.keys(cc).forEach(id => { setStat(map, id, { comments: cc[id] }); });
+        } catch (_) {}
         degraded = false;
         lastError = '';
         setSnap('cloud', map);
@@ -178,14 +206,14 @@
     }
     const lo = readLocal();
     const map = {};
-    Object.keys(lo.likes).forEach(id => { map[id] = { likes: lo.likes[id] | 0, views: lo.views[id] | 0 }; });
-    Object.keys(lo.views).forEach(id => { if (!map[id]) map[id] = { likes: 0, views: lo.views[id] | 0 }; });
+    Object.keys(lo.likes).forEach(id => { map[id] = { likes: lo.likes[id] | 0, views: lo.views[id] | 0, comments: (lo.comments[id] || []).length }; });
+    Object.keys(lo.views).forEach(id => { if (!map[id]) map[id] = { likes: 0, views: lo.views[id] | 0, comments: (lo.comments[id] || []).length }; });
     setSnap('local', map);
     return snapshot;
   }
 
   function currentMap() { return snapshot.map || {}; }
-  function get(id) { return currentMap()[id] || { likes: 0, views: 0 }; }
+  function get(id) { return currentMap()[id] || { likes: 0, views: 0, comments: 0 }; }
   function liked(id) { return !!readLocal().liked[id]; }
 
   /* ---------- 队列补传 ---------- */
@@ -238,7 +266,7 @@
         const row = Array.isArray(rows) ? rows[0] : rows;
         if (row && typeof row.likes === 'number') {
           const m = Object.assign({}, currentMap());
-          m[id] = { likes: row.likes, views: (m[id] && m[id].views) || 0 };
+          setStat(m, id, { likes: row.likes });
           const lo = readLocal();
           lo.liked[id] = !!row.liked;
           writeLocal(lo);
@@ -263,7 +291,7 @@
     writeLocal(lo);
     if (HAS_CLOUD) enqueue({ k: 'like', id, on: want, ts: Date.now() });
     const m = Object.assign({}, currentMap());
-    m[id] = { likes: lo.likes[id], views: (m[id] && m[id].views) || lo.views[id] | 0 };
+    setStat(m, id, { likes: lo.likes[id], views: (m[id] && m[id].views) || lo.views[id] | 0 });
     snapshot = Object.assign({}, snapshot, { map: m, pending: queueLen() });
     emit();
     return { ok: true, likes: lo.likes[id], liked: want, mode: HAS_CLOUD ? 'pending' : 'local', pending: HAS_CLOUD };
@@ -276,7 +304,7 @@
         const v = await rpc('guide_hit', { p_guide: id, p_visitor: vid() });
         if (typeof v === 'number') {
           const m = Object.assign({}, currentMap());
-          m[id] = { likes: (m[id] && m[id].likes) || 0, views: v };
+          setStat(m, id, { views: v });
           snapshot = Object.assign({}, snapshot, { map: m, pending: queueLen() });
           emit();
           return v;
@@ -295,7 +323,7 @@
       writeLocal(lo);
     }
     const m = Object.assign({}, currentMap());
-    m[id] = { likes: (m[id] && m[id].likes) || 0, views: lo.views[id] | 0 };
+    setStat(m, id, { views: lo.views[id] | 0 });
     snapshot = Object.assign({}, snapshot, { map: m, pending: queueLen() });
     emit();
     return lo.views[id] | 0;
@@ -331,6 +359,7 @@
         });
         const r = Array.isArray(row) ? row[0] : row;
         if (r && r.id) {
+          bumpComments(id, 1);
           return { ok: true, mode: 'cloud', comment: { id: r.id, nick: r.nick, body: r.body, created_at: r.created_at, mine: true } };
         }
       } catch (e) {
@@ -357,6 +386,7 @@
     if (HAS_CLOUD && typeof cid === 'number') {
       try {
         const ok = await rpc('guide_del_comment', { p_id: cid, p_visitor: vid() });
+        if (ok) bumpComments(id, -1);
         return { ok: !!ok, mode: 'cloud' };
       } catch (e) { lastError = describe(e); }
     }

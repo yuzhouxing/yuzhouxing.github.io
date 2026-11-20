@@ -435,9 +435,11 @@ h1{margin:0;font-family:var(--serif);font-weight:600;line-height:1.08}
 .card-stat .cs b{font-weight:500}
 .card-stat .cs-like.has{color:#c9736a}
 .card-stat .cs-view.has{color:var(--ink-2)}
+.card-stat .cs-cmt.has{color:var(--gold-dim)}
 .card-stat .cs:not(.has){opacity:.62}
 .card:hover .card-stat .cs{color:var(--ink-2);opacity:1}
 .card:hover .card-stat .cs-like.has{color:#e08d82}
+.card:hover .card-stat .cs-cmt.has{color:var(--gold)}
 
 mark{background:rgba(217,169,79,.26);color:var(--gold-hi);border-radius:2px;padding:0 1px}
 
