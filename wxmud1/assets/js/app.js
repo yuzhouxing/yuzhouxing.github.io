@@ -20,6 +20,9 @@
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
   const state = { q: '', cat: 'all', sort: 'rec' };
+  // 玩家投稿：从 guide_posts 拉回来，合并进同一套列表 / 卡片 / 详情
+  const POSTS = [];
+  let pendingGid = '';   // 深链打开投稿时数据还没到，先记下来，到货再跳
   // 已合并条目的旧链接别名，避免早先分享出去的地址 404
   const ALIAS = { 'c3047fea': 'e4158b9f' };
   let homeScroll = 0;
@@ -50,8 +53,8 @@
 
   /* ---------- 索引 ---------- */
   // 插件脚本类的文章不占「攻略大全」，它们归到「流程与插件」
-  const MAIN_GUIDES = GUIDES.filter(g => g.cat !== 'plugin');
-  const listMain = () => MAIN_GUIDES;
+  // 注意：投稿是运行时合并进 GUIDES 的，这里每次现算，不能用快照
+  const listMain = () => GUIDES.filter(g => g.cat !== 'plugin');
 
   const index = GUIDES.map(g => {
     let txt = g.title + ' ' + g.tags.join(' ') + ' ' + g.summary + ' ';
@@ -66,6 +69,17 @@
   const fmt = n => n >= 10000 ? (n / 10000).toFixed(1).replace(/\.0$/, '') + 'w' : String(n);
   const catName = id => (CAT_MAP[id] || {}).name || id;
   const pad = (n, w = 3) => String(n).padStart(w, '0');
+  const shortDate = s => {
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    return (d.getMonth() + 1) + '-' + String(d.getDate()).padStart(2, '0');
+  };
+  const fullDate = s => {
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  };
 
   function hl(text, q) {
     if (!q) return esc(text);
@@ -106,6 +120,7 @@
     };
     mk('all', '全部', listMain().length, '00');
     CATS.forEach((c, i) => { if (c.id !== 'plugin' && counts[c.id]) mk(c.id, c.name, counts[c.id], pad(i + 1, 2)); });
+    if (POSTS.length) mk('post', '玩家投稿', POSTS.length, '✎');
   }
 
   /* ---------- 过滤 ---------- */
@@ -128,9 +143,14 @@
         return b.w - a.w;
       });
     }
-    if (state.cat !== 'all') list = list.filter(g => g.cat === state.cat);
+    if (state.cat === 'post') list = list.filter(g => g.post);
+    else if (state.cat !== 'all') list = list.filter(g => g.cat === state.cat);
     else list = list.filter(g => g.cat !== 'plugin');
     if (state.q.trim()) return list;
+    if (state.cat === 'post') {
+      list.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+      return list;
+    }
     if (state.sort === 'len') list.sort((a, b) => b.chars - a.chars);
     else if (state.sort === 'img') list.sort((a, b) => b.imgs - a.imgs);
     else if (state.sort === 'hot') {
@@ -158,7 +178,7 @@
       a.style.setProperty('--accent', ACCENT[g.cat] || 'var(--gold)');
       a.style.setProperty('--d', Math.min(i, 16) * 24 + 'ms');
 
-      const tags = g.tags.slice(0, 2).map(t => '<span>' + esc(t) + '</span>').join('');
+      const tags = g.post ? '' : g.tags.slice(0, 2).map(t => '<span>' + esc(t) + '</span>').join('');
       const no = pad(GUIDES.indexOf(g) >= 0 ? sortedIndex(g) : i + 1);
       const st = stOf(g.id);
       const stat = CloudOn
@@ -180,7 +200,7 @@
       a.innerHTML =
         '<div class="card-top">' +
           '<span class="card-cat">' + esc(catName(g.cat)) + '</span>' +
-          '<span class="card-no">NO.' + no + '</span>' +
+          (g.post ? '<span class="card-no is-post">投稿</span>' : '<span class="card-no">NO.' + no + '</span>') +
         '</div>' +
         '<h3>' + hl(g.title, q) + '</h3>' +
         '<p>' + hl(g.summary || '', q) + '</p>' +
@@ -188,6 +208,7 @@
           '<span class="k">' + (g.chars ? fmt(g.chars) + ' 字' : '图集') + '</span>' +
           (g.imgs ? '<span class="sep"></span><span>' + g.imgs + ' 图</span>' : '') +
           (g.chars ? '<span class="sep"></span><span>' + Math.max(1, Math.round(g.chars / 420)) + ' min</span>' : '') +
+          (g.post ? '<span class="sep"></span><span>' + shortDate(g.created_at) + '</span>' : '') +
           (stat ? '<span class="sep"></span>' : '') +
           stat +
           '<span class="card-tags">' + tags + '</span>' +
@@ -256,10 +277,72 @@
   GUIDES.slice().sort((a, b) => b.w - a.w).forEach((g, i) => { ORDER_MAP[g.id] = i + 1; });
   function sortedIndex(g) { return ORDER_MAP[g.id] || 1; }
 
+  /* ---------- 玩家投稿 ---------- */
+  const countImgs = md => (String(md || '').match(/!\[[^\]]*\]\([^)\s]+\)/g) || []).length;
+
+  function toGuide(p) {
+    const plain = window.WXMD ? window.WXMD.plain(p.body) : String(p.body || '');
+    return {
+      id: p.id, title: p.title, cat: p.cat || 'dungeon', tags: [],
+      w: 0, summary: plain.slice(0, 120), chars: plain.length,
+      imgs: countImgs(p.body), toc: [], blocks: [], src: '',
+      md: p.body || '', post: true, mine: !!p.mine,
+      created_at: p.created_at || new Date().toISOString()
+    };
+  }
+
+  function paintCounts() {
+    const n = listMain().length;
+    const hc = $('#hmCount'); if (hc) hc.textContent = n + ' ENTRIES';
+    const fc = $('#footCount'); if (fc) fc.textContent = n;
+    const pc = $('#pcGuides'); if (pc) pc.textContent = n + ' 篇';
+    // 首屏 HUD 是在投稿到货之前算的，这里只把「篇数」补正
+    const hud = document.querySelector('#stats .hud-num');
+    if (hud) { hud.dataset.n = n; hud.textContent = n; }
+  }
+
+  // 合并云端投稿；已存在的只更新「是不是我发的」，不重建
+  function ingestPosts(arr) {
+    let added = 0;
+    (arr || []).forEach(p => {
+      if (!p || !p.id) return;
+      const old = BY_ID[p.id];
+      if (old) { old.mine = !!p.mine; return; }
+      const g = toGuide(p);
+      BY_ID[g.id] = g;
+      GUIDES.push(g);          // w=0，推荐排序里落在静态攻略之后
+      POSTS.push(g);
+      index.push({ g, txt: (g.title + ' ' + g.summary + ' ' + g.md).toLowerCase() });
+      added++;
+    });
+    if (!added) return false;
+    buildChips();
+    paintCounts();
+    if (!viewHome.hidden) {
+      const y = window.scrollY;
+      renderGrid();
+      window.scrollTo(0, y);
+    }
+    return true;
+  }
+
+  function dropPost(id) {
+    const i = GUIDES.findIndex(g => g.id === id);
+    if (i >= 0) GUIDES.splice(i, 1);
+    const j = POSTS.findIndex(g => g.id === id);
+    if (j >= 0) POSTS.splice(j, 1);
+    const k = index.findIndex(x => x.g.id === id);
+    if (k >= 0) index.splice(k, 1);
+    delete BY_ID[id];
+    buildChips();
+    paintCounts();
+  }
+
   /* ---------- 详情 ---------- */
   function renderReader(id) {
     const g = BY_ID[id];
     if (!g) { location.hash = '#/list'; return; }
+    const isPost = !!g.md;      // 玩家投稿走 Markdown 渲染，不用 blocks
     const accent = ACCENT[g.cat] || '#d9a94f';
     document.documentElement.style.setProperty('--accent', accent);
     const no = pad(sortedIndex(g));
@@ -268,12 +351,14 @@
     $('#crumb').innerHTML =
       '<a href="#/">INDEX</a><span class="sep">/</span>' +
       '<a href="#/c/' + g.cat + '">' + esc(catName(g.cat)) + '</a>' +
-      '<span class="sep">/</span><span class="cur">NO.' + no + '</span>';
+      '<span class="sep">/</span><span class="cur">' + (isPost ? '玩家投稿' : 'NO.' + no) + '</span>';
 
     const head = el('div', 'art-head');
     head.innerHTML =
       '<div class="art-meta">' +
         '<span class="art-cat">' + esc(catName(g.cat)) + '</span>' +
+        (isPost ? '<span class="art-badge">玩家投稿</span>' : '') +
+        (isPost ? '<span>' + fullDate(g.created_at) + '</span><span class="sep"></span>' : '') +
         (g.chars ? '<span>' + fmt(g.chars) + ' 字</span><span class="sep"></span>' : '') +
         (g.imgs ? '<span>' + g.imgs + ' 图</span><span class="sep"></span>' : '') +
         (g.chars ? '<span>' + Math.max(1, Math.round(g.chars / 420)) + ' MIN READ</span>' : '<span>图集</span>') +
@@ -282,6 +367,27 @@
 
     const frag = document.createDocumentFragment();
     frag.appendChild(head);
+
+    if (isPost && g.mine && window.WXPost) {
+      const owner = el('div', 'art-owner');
+      owner.innerHTML = '<span>这是你提交的攻略，别人看不到这条</span>' +
+        '<button type="button" class="post-del">撤回</button>';
+      owner.querySelector('.post-del').onclick = () => {
+        if (!confirm('撤回后这篇投稿会从列表里消失，确定吗？')) return;
+        const b = owner.querySelector('.post-del');
+        b.disabled = true;
+        b.textContent = '撤回中…';
+        window.WXPost.del(g.id).then(() => {
+          dropPost(g.id);
+          window.WXPost.toast('已撤回');
+          location.hash = '#/list';
+        }).catch(() => {
+          b.disabled = false;
+          b.textContent = '重试';
+        });
+      };
+      frag.appendChild(owner);
+    }
 
     if (CloudOn) {
       /* ---- 互动条：点赞 / 阅读 / 留言 ---- */
@@ -354,7 +460,15 @@
     let hIdx = 0;
     const headings = [];
 
-    g.blocks.forEach(b => {
+    if (isPost) {
+      const box = el('div', 'md-view art-md');
+      box.innerHTML = window.WXMD ? window.WXMD.render(g.md) : esc(g.md);
+      frag.appendChild(box);
+      box.querySelectorAll('h2,h3,h4').forEach(h => {
+        h.id = 'sec-' + (hIdx++);
+        if (h.tagName !== 'H4') headings.push({ id: h.id, text: h.textContent });
+      });
+    } else g.blocks.forEach(b => {
       if (b.t === 'p') {
         const p = el('p');
         p.innerHTML = esc(b.text)
@@ -620,7 +734,12 @@
 
     if (mG) {
       const gid = ALIAS[mG[1]] || mG[1];
-      if (!BY_ID[gid]) { location.hash = '#/list'; return; }
+      if (!BY_ID[gid]) {
+        // 可能是刚发的投稿：等云端列表到货再跳，别直接丢掉链接
+        if (/^[a-f0-9]{8,}$/.test(gid) && window.WXPost && window.WXPost.on) pendingGid = gid;
+        location.hash = '#/list';
+        return;
+      }
       if (gid !== mG[1]) { location.replace('#/g/' + gid); return; }
       onlyView(viewReader);
       renderReader(gid);
@@ -643,7 +762,7 @@
     onlyView(viewHome);
     document.title = '攻略大全 · 武仙传说';
     if (mC && mC[1] === 'plugin') { location.replace('#/p'); return; }
-    state.cat = (mC && CAT_MAP[mC[1]]) ? mC[1] : 'all';
+    state.cat = (mC && (CAT_MAP[mC[1]] || mC[1] === 'post')) ? mC[1] : 'all';
     buildChips();
     buildNav();
     renderGrid();
@@ -707,7 +826,7 @@
           '<span class="ci-title">' + hl(g.title, q) + '</span>' +
           '<span class="ci-desc">' + hl((g.summary || '').slice(0, 58), q) + '</span>' +
         '</span>' +
-        '<span class="ci-go">NO.' + pad(sortedIndex(g)) + '</span>';
+        '<span class="ci-go">' + (g.post ? '投稿' : 'NO.' + pad(sortedIndex(g))) + '</span>';
       d.onmouseenter = () => { cmdkIdx = i; paintCmdk(); };
       d.onclick = () => { closeCmdk(); location.hash = '#/g/' + g.id; };
       cmdkList.appendChild(d);
@@ -748,6 +867,10 @@
 
   $('#backBtn').onclick = () => { window.__fromReader = true; history.length > 1 ? history.back() : (location.hash = '#/list'); };
   $('#cmdBtn').onclick = () => openCmdk();
+  ['#postBtn', '#portalPost'].forEach(sel => {
+    const b = $(sel);
+    if (b) b.onclick = () => { if (window.WXPost) window.WXPost.open(); };
+  });
 
   /* ---------- QQ 群 ---------- */
   function openQQ() {
@@ -1003,6 +1126,21 @@
   buildChips();
   buildStats();
   renderGrid();
+
+  /* 玩家投稿：云端列表异步到货，合并进同一套列表与路由 */
+  if (window.WXPost && window.WXPost.on) {
+    window.WXPost.onCreated = post => {
+      ingestPosts([post]);
+      location.hash = '#/g/' + post.id;
+    };
+    window.WXPost.list().then(arr => {
+      ingestPosts(arr);
+      if (!pendingGid) return;
+      const id = pendingGid;
+      pendingGid = '';
+      if (BY_ID[id]) location.hash = '#/g/' + id;
+    });
+  }
 
   /* 互动数据：异步加载，到了再补数字，不阻塞首屏 */
   if (CloudOn) {

@@ -195,13 +195,15 @@
     });
   }
 
-  function upload(blob) {
+  function upload(blob, prefix) {
     if (!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/i.test(BASE) || KEY.length < 20) {
       return Promise.reject(new Error('未连接存储'));
     }
     var d = new Date();
     var ym = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0');
-    var path = 'term/' + ym + '/' + uuid() + '.' + extOf(blob.type || 'image/webp');
+    // 词条正文用 term/，攻略投稿用 guide/，同一个公开桶，路径分开放便于日后清理
+    var dir = String(prefix || 'term').replace(/[^a-z0-9_-]/gi, '') || 'term';
+    var path = dir + '/' + ym + '/' + uuid() + '.' + extOf(blob.type || 'image/webp');
     return fetch(BASE + '/storage/v1/object/' + BUCKET + '/' + path, {
       method: 'POST',
       headers: {
@@ -338,7 +340,7 @@
       var old = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '…';
-      shrink(blob).then(upload).then(function (url) {
+      shrink(blob).then(function (b) { return upload(b, opts.prefix); }).then(function (url) {
         insert('\n\n![' + (alt || '配图') + '](' + url + ')\n\n');
         say('');
       }).catch(function (e) {

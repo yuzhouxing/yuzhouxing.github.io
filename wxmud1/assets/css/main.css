@@ -1948,3 +1948,113 @@ body.has-netbar .to-top{bottom:74px}
   .md-ed .md-prev{max-height:340px;min-height:200px}
   .md-ed textarea{min-height:200px!important}
 }
+
+/* ============================================================
+   玩家投稿：工具条入口 / 列表标记 / 详情署名 / 提交面板
+   ============================================================ */
+.post-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:3px;
+  border:1px solid rgba(217,169,79,.32);color:var(--gold);
+  background:rgba(217,169,79,.06);font-family:var(--mono);font-size:11.5px;
+  letter-spacing:.02em;transition:.2s;white-space:nowrap;
+}
+.post-btn:hover{background:rgba(217,169,79,.14);border-color:rgba(217,169,79,.55)}
+.post-btn svg{width:13px;height:13px}
+.post-btn:active{transform:translateY(1px)}
+
+.card-no.is-post{
+  color:var(--gold);letter-spacing:.14em;
+  padding:2px 6px;border:1px solid rgba(217,169,79,.3);border-radius:2px;
+  background:rgba(217,169,79,.07);
+}
+
+.art-badge{
+  color:var(--gold);letter-spacing:.1em;
+  padding:2px 6px;border-radius:2px;border:1px solid rgba(217,169,79,.28);
+  background:rgba(217,169,79,.08);
+}
+.art-owner{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:0 0 26px;padding:9px 12px;border-radius:4px;
+  border:1px dashed rgba(217,169,79,.28);background:rgba(217,169,79,.04);
+  font-family:var(--mono);font-size:11px;color:var(--ink-4);
+}
+.art-owner .post-del{
+  margin-left:auto;padding:4px 11px;border-radius:3px;
+  border:1px solid rgba(217,120,90,.4);color:#e08a6a;
+  font-family:var(--mono);font-size:11px;transition:.18s;
+}
+.art-owner .post-del:hover{background:rgba(150,50,30,.18);border-color:rgba(217,120,90,.7)}
+.art-owner .post-del:disabled{opacity:.55}
+.art-md{font-size:15px}
+
+/* ---------- 提交面板 ---------- */
+.gpost .gpost-card{
+  width:min(760px,100%);max-height:calc(100vh - 36px);overflow:auto;
+  background:#0a0c11;border:1px solid rgba(217,169,79,.24);
+  border-radius:8px;padding:18px 18px 16px;box-shadow:0 40px 90px -40px #000;
+}
+.gpost-sub{margin:0 0 13px;font-size:11.5px;color:var(--ink-4);font-family:var(--mono);line-height:1.6}
+.gpost-title{
+  width:100%;box-sizing:border-box;height:40px;padding:0 12px;
+  background:#05070b;border:1px solid rgba(255,255,255,.1);border-radius:4px;
+  color:var(--ink);font-size:14.5px;font-family:inherit;letter-spacing:.01em;
+}
+.gpost-title::placeholder{color:#5d584f}
+.gpost-title:focus{outline:none;border-color:rgba(217,169,79,.45)}
+.gpost-cats{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 12px}
+.gc-btn{
+  height:28px;padding:0 11px;border-radius:3px;
+  border:1px solid rgba(255,255,255,.1);color:var(--ink-3);
+  font-family:var(--mono);font-size:11.5px;transition:.16s;
+}
+.gc-btn:hover{color:var(--ink);border-color:rgba(217,169,79,.35)}
+.gc-btn.on{
+  color:#150e02;background:linear-gradient(165deg,#efd49c,#cfa251);
+  border-color:transparent;font-weight:600;
+}
+.gpost-body{
+  width:100%;box-sizing:border-box;min-height:260px;resize:vertical;
+  background:#05070b;color:var(--ink);border:1px solid rgba(255,255,255,.1);
+  border-radius:4px;padding:10px 12px;font-size:13.5px;line-height:1.85;
+  font-family:inherit;
+}
+.gpost-body:focus{outline:none;border-color:rgba(217,169,79,.45)}
+.gpost-body::placeholder{color:#4f4a43}
+.gpost-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.gpost-tip{font-family:var(--mono);font-size:11px;color:#e08a6a}
+.gpost-len{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-4)}
+.gpost-send{flex:none}
+.gpost-fine{margin:10px 0 0;font-size:11px;line-height:1.7;color:var(--ink-4)}
+
+@media (max-width:640px){
+  .toolbar-right{gap:8px}
+  .result-count{display:none}
+  .post-btn{padding:6px 9px}
+  .post-btn span{display:none}
+  .gpost .gpost-card{padding:14px;max-height:calc(100dvh - 12px)}
+  .gpost-sub{margin-bottom:10px}
+  .gpost-title{height:38px;font-size:14px}
+  .gpost-cats{gap:5px;margin:9px 0 10px}
+  .gc-btn{height:27px;padding:0 9px;font-size:11px}
+  .gpost-body{min-height:180px}
+  .art-owner{margin-bottom:20px}
+}
+
+/* 手机端：工具栏收进一行（链接、分割线藏起来，正文里手打也一样），编辑区收高度 */
+@media (max-width:640px){
+  .gpost .md-bar [data-md="link"],
+  .gpost .md-bar [data-md="hr"]{display:none}
+  .gpost .gpost-body{height:190px;min-height:190px!important}
+}
+
+.portal-hint .ph-sep{margin:0 9px;color:var(--line-2)}
+.ph-post{
+  color:var(--gold);font:inherit;letter-spacing:.06em;
+  border-bottom:1px solid rgba(217,169,79,.32);padding-bottom:1px;transition:.18s;
+}
+.ph-post:hover{color:#efd49c;border-bottom-color:var(--gold)}
+
+@media (max-width:900px){
+  .result-count{display:none}
+}
